@@ -184,7 +184,7 @@ Simulate the presence of another person working out alongside you.
 
 Recognise and celebrate flow states.
 
-- Detect sustained high-zone effort (15+ minutes in Zone 4-5 without pause)
+- Detect sustained high-zone effort (15+ minutes in Push/Peak zones without pause)
 - Award "Hyperfocus" badge with special animation
 - Track hyperfocus sessions in history
 - "You found your flow" voice coach message
@@ -462,7 +462,7 @@ Quiet, understated success indicators.
 
 Earn exactly X points for exactly Y effort. No randomness.
 
-- Fixed formula: 1 Burn Point per 1 minute in target zone (or equivalent clear formula)
+- Fixed formula: 1-3 Burn Points per minute based on zone (Active=1, Push=2, Peak=3)
 - No random bonus drops
 - No variable multipliers (unless user explicitly enables streak multiplier)
 - Points calculation explained in a persistent tooltip
@@ -490,10 +490,10 @@ End a workout at any time with zero guilt or friction.
 Zone indicators use distinct patterns and textures, not just colour.
 
 - Zone 1 (Rest): Dotted pattern
-- Zone 2 (Light): Horizontal lines
-- Zone 3 (Moderate): Diagonal hatching
+- Zone 2 (Warm-Up): Horizontal lines
+- Zone 3 (Active): Diagonal hatching
 - Zone 4 (Push): Cross-hatching
-- Zone 5 (Max): Solid fill
+- Zone 5 (Peak): Solid fill
 - Patterns visible on zone bars, heart rate display, and workout timeline
 - Supports users with colour vision differences or sensory processing that doesn't rely on colour alone
 - Patterns consistent everywhere zones appear (never colour-only)
@@ -693,7 +693,7 @@ data class WeeklyRoutine(
     val warmUpMinutes: Int = 5,
     val mainMinutes: Int = 20,
     val coolDownMinutes: Int = 5,
-    val targetZone: HeartRateZone = HeartRateZone.MODERATE,
+    val targetZone: HeartRateZone = HeartRateZone.ACTIVE,
     val scheduledTime: LocalTime?,
     val reminderEnabled: Boolean = true
 )

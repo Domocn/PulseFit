@@ -69,7 +69,8 @@ Calculate and manage HR zones in real-time.
 
 Core gamification currency earned through effort.
 
-- Points per minute based on current zone (0/1/2/3/4 for Zones 1-5)
+- Points per minute based on current zone (0/0/1/2/3 for Rest/Warm-Up/Active/Push/Peak)
+- Daily target: 12 Burn Points (default, adjustable)
 - Accumulated in real-time during workout
 - Running total visible on workout screen
 - **[ND-ADHD]** Points trigger micro-reward pop animations (F111), contribute to XP (F120)
@@ -158,7 +159,7 @@ Countdown and elapsed time display.
 Detect when user is cooling down post-workout.
 
 - Monitor HR decline rate
-- Suggest cool-down start when HR drops below Zone 3 for 2+ minutes
+- Suggest cool-down start when HR drops below Active zone for 2+ minutes
 - Optional automatic cool-down phase trigger
 - ASD mode: transition warning before cool-down suggestion (F137)
 
@@ -180,7 +181,7 @@ Detailed workout recap screen.
 Unlock badges for milestones.
 
 - First workout, 10 workouts, 100 workouts
-- Zone-specific badges (30 min in Zone 4, etc.)
+- Zone-specific badges (30 min in Push zone, etc.)
 - Streak milestones (7, 30, 100 days)
 - Total Burn Points milestones
 - ADHD mode: Hyperfocus Badge (F118), badges trigger Celebration Overkill (F130)
@@ -317,7 +318,7 @@ Simulate presence of another person working out. Ambient gym sounds, ghost avata
 ### F118 Hyperfocus Badge
 **Priority:** P3 | **Depends on:** F4, F14
 
-Detect sustained high-zone effort (15+ min in Zone 4-5 without pause). Award special badge with unique animation. Track hyperfocus sessions in history. Weekly hyperfocus minutes stat.
+Detect sustained high-zone effort (15+ min in Push/Peak zones without pause). Award special badge with unique animation. Track hyperfocus sessions in history. Weekly hyperfocus minutes stat.
 
 ### F119 Quick Start
 **Priority:** P0
@@ -438,7 +439,7 @@ Single "End Workout" button, always visible, one tap to end. No confirmation dia
 ### F141 Texture & Pattern Zones
 **Priority:** P2 | **ND Profile:** ASD
 
-Zone indicators use distinct patterns: Rest (dotted), Light (horizontal lines), Moderate (diagonal hatching), Push (cross-hatching), Max (solid fill). Visible on all zone indicators. Supports colour vision differences.
+Zone indicators use distinct patterns: Rest (dotted), Warm-Up (horizontal lines), Active (diagonal hatching), Push (cross-hatching), Peak (solid fill). Visible on all zone indicators. Supports colour vision differences.
 
 ### F142 Minimal Mode
 **Priority:** P1 | **ND Profile:** ASD

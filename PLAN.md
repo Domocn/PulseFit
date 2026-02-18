@@ -47,17 +47,18 @@ PulseFit connects to Bluetooth Low Energy (BLE) heart rate monitors and turns ev
 
 | Zone | Name | % Max HR | Burn Points / Min |
 |------|------|----------|-------------------|
-| 1 | Rest | < 60% | 0 |
-| 2 | Light | 60-69% | 1 |
-| 3 | Moderate | 70-79% | 2 |
-| 4 | Push | 80-89% | 3 |
-| 5 | Max | 90-100% | 4 |
+| 1 | Rest | < 50% | 0 |
+| 2 | Warm-Up | 50-59% | 0 |
+| 3 | Active | 60-69% | 1 |
+| 4 | Push | 70-84% | 2 |
+| 5 | Peak | 85-100% | 3 |
 
-Max HR calculated as `220 - age` (configurable with manual override).
+Daily target: **12 Burn Points** (default, adjustable). Max HR calculated as `220 - age` (configurable with manual override).
 
 ### Burn Points
 
-- Earned in real-time based on current HR zone
+- Earned in real-time based on current HR zone (1-3 pts/min in Active/Push/Peak)
+- Daily target: 12 Burn Points (default, adjustable)
 - Accumulated per-workout and lifetime
 - ADHD mode: points trigger micro-reward animations (F111) and can earn XP (F120)
 - ASD mode: points follow a fixed, predictable formula (F139) with no random bonuses
