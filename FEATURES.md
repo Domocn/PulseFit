@@ -1,567 +1,537 @@
 # PulseFit — Feature Specification
 
-> Complete feature list for PulseFit, including core features (F1-F22), ADHD Focus Mode features (F111-F130), and ASD Comfort Mode features (F131-F145).
+## MVP Features (v1.0)
 
 ---
 
-## Table of Contents
+### F1. User Onboarding & Profile Setup
 
-1. [Core Features (F1 - F22)](#1-core-features-f1---f22)
-2. [ADHD Focus Mode Features (F111 - F130)](#2-adhd-focus-mode-features-f111---f130)
-3. [ASD Comfort Mode Features (F131 - F145)](#3-asd-comfort-mode-features-f131---f145)
-4. [Feature Priority Matrix](#4-feature-priority-matrix)
+**Goal:** Collect the minimum data needed to calculate personalised HR zones and start tracking.
+
+**Flow:**
+1. **Welcome screen** — app overview, value proposition, "Get Started" CTA
+2. **Basic info** — age, weight, height, biological sex (optional, improves calorie estimate)
+3. **Resting heart rate** — manual entry or auto-detect via connected device
+4. **Max heart rate** — auto-calculated (`220 - age`) with option to override manually (lab test / field test result)
+5. **Daily Burn Point target** — slider (range 8–30, default 12) with plain-language guidance ("12 = moderate 30-min session")
+6. **Device pairing** — scan for Bluetooth LE HR monitors; skip option if using phone/watch sensor
+7. **Health Connect permissions** — explain what data is read/written; request scopes
+8. **Confirmation** — summary card of profile + zones; "Start First Workout" button
+
+**Data stored:** `UserProfile` entity in Room (age, weight, height, restingHr, maxHr, dailyBurnTarget, unitSystem)
 
 ---
 
-## 1. Core Features (F1 - F22)
-
-### F1 Onboarding & Profile Setup
-**Priority:** P0 | **ND Impact:** ADHD + ASD
-
-User registration and initial profile configuration.
-
-- Collect: name, age (for max HR calculation), optional weight/height
-- BLE heart rate monitor pairing walkthrough
-- **[ND] Optional "Personalise your experience" step** — select Standard, ADHD Focus, ASD Comfort, or AuDHD profile (see [NEURODIVERGENT_DESIGN.md - Profile System](NEURODIVERGENT_DESIGN.md#2-neurodivergent-profile-system))
-- Profile selection uses approachable, non-clinical language
-- Skippable — defaults to Standard if skipped
-- Minimal steps to reduce drop-off (especially important for ADHD users)
-
-### F2 BLE Heart Rate Monitor Pairing
-**Priority:** P0
-
-Connect to any Bluetooth Low Energy heart rate monitor.
-
-- Scan for nearby BLE devices advertising Heart Rate Service (UUID 0x180D)
-- Display discovered devices with signal strength
-- One-tap pairing
-- Auto-reconnect to last paired device
-- Support for multiple saved devices
-- Connection status indicator on workout screen
-
-### F3 Real-Time Heart Rate Display
-**Priority:** P0
-
-Show current heart rate with zone indicator.
-
-- Large, readable HR number (BPM)
-- Colour-coded zone indicator (Zone 1-5)
-- HR graph/trend line (last 60 seconds)
-- Connection quality indicator
-- Updates at sensor reporting rate (typically 1Hz)
-
-### F4 Heart Rate Zone Engine
-**Priority:** P0 | **ND Impact:** ADHD + ASD
-
-Calculate and manage HR zones in real-time.
-
-- Five zones based on % of max HR (see [PLAN.md - Zones](PLAN.md#heart-rate-zones))
-- Max HR = 220 - age (with manual override)
-- Zone change detection with configurable hysteresis (avoid zone flickering)
-- Zone change events trigger:
-  - **[ND-ADHD]** Micro-reward animations (F111)
-  - **[ND-ASD]** Texture/pattern zone indicators (F141)
-  - Voice coach announcement
-  - Haptic feedback (respects F131 sensory settings)
-
-### F5 Burn Points System
-**Priority:** P0 | **ND Impact:** ADHD + ASD
-
-Core gamification currency earned through effort.
-
-- Points per minute based on current zone (0/0/1/2/3 for Rest/Warm-Up/Active/Push/Peak)
-- Daily target: 12 Burn Points (default, adjustable)
-- Accumulated in real-time during workout
-- Running total visible on workout screen
-- **[ND-ADHD]** Points trigger micro-reward pop animations (F111), contribute to XP (F120)
-- **[ND-ASD]** Fixed, predictable formula with no random bonuses (F139); estimated total shown before workout starts
-- Lifetime accumulation tracked in UserProfile
-
-### F6 Voice Coach
-**Priority:** P1 | **ND Impact:** ADHD + ASD
-
-Real-time audio coaching using text-to-speech.
-
-- Zone change announcements
-- Periodic time and progress updates
-- Encouragement at milestones
-- Three voice styles:
-  - **Standard:** Balanced encouragement and information
-  - **[ND-ADHD] Hype:** High energy, exclamation-heavy, "You're crushing it!" (see HypeCoach.kt)
-  - **[ND-ASD] Literal:** Factual, calm, no slang or metaphors (F133, see LiteralCoach.kt)
-- Three verbosity levels: Minimal / Standard / Detailed
-- Controlled by Sensory Control Panel (F131) when ASD mode active
-- Mute button always accessible during workout
-
-### F7 Streak & Consistency Tracking
-**Priority:** P1 | **ND Impact:** ADHD + ASD
-
-Track consecutive workout days.
-
-- Current streak count on home screen
-- Longest streak record
-- Calendar view of workout days
-- **[ND-ADHD]** Streak multiplier on Burn Points (F114); Streak Shield (one free miss/week); streak milestones trigger Celebration Overkill (F130)
-- **[ND-ASD]** No guilt messaging for broken streaks; Safe Exit (F140) never warns about streak loss; streak display can be hidden via Social Pressure Shield (F135)
-
-### F8 Workout History & Review
-**Priority:** P1
-
-Browse and review past workouts.
-
-- Chronological list of all workouts
-- Per-workout detail: duration, Burn Points, avg/max HR, zone breakdown
-- Filterable by date range, workout type, duration
-- Delete/edit workout entries
-- Summary statistics (weekly, monthly)
-
-### F9 Haptic Feedback System
-**Priority:** P1 | **ND Impact:** ADHD + ASD
-
-Vibration patterns for workout events.
-
-- Zone change haptic pattern
-- Point earned pulse
-- Workout milestone vibration
-- **[ND-ADHD]** Fidget haptics during rest periods — stimulating, varied patterns (F123)
-- **[ND-ASD]** Calming, predictable rhythmic patterns; full control via Sensory Control Panel (F131); can be disabled entirely
-- Respects system-level haptic settings
-
-### F10 Settings & Preferences
-**Priority:** P1 | **ND Impact:** ADHD + ASD
-
-App configuration screen.
-
-- Profile editing (name, age, max HR override)
-- HR monitor management
-- Notification preferences
-- Data export options
-- **[ND] Neurodivergent Profile section:**
-  - Change ND profile (Standard / ADHD / ASD / AuDHD)
-  - **[ND-ADHD]** ADHD settings: micro-rewards, streak multiplier, novelty, celebrations, etc.
-  - **[ND-ASD]** ASD settings: Sensory Control Panel (F131), Predictable UI Lock (F134), Social Shield (F135), voice coach style, etc.
-  - Individual setting overrides regardless of profile
-
-### F11 Workout Timer
-**Priority:** P1
-
-Countdown and elapsed time display.
-
-- Elapsed time (always visible)
-- Countdown timer for timed workouts
-- Phase timer for interval workouts (warm-up, work, rest, cool-down)
-- Large, readable format
-- ASD mode: time display never changes position (F134)
-
-### F12 Cool-Down Detection
-**Priority:** P2
-
-Detect when user is cooling down post-workout.
-
-- Monitor HR decline rate
-- Suggest cool-down start when HR drops below Active zone for 2+ minutes
-- Optional automatic cool-down phase trigger
-- ASD mode: transition warning before cool-down suggestion (F137)
-
-### F13 Post-Workout Summary
-**Priority:** P1
-
-Detailed workout recap screen.
-
-- Total duration, Burn Points, XP earned
-- Zone time breakdown (bar chart)
-- HR graph over full workout
-- Personal records highlighted
-- ADHD mode: celebratory animation, level progress shown
-- ASD mode: clean data layout, no auto-sharing prompts, Shutdown Routine (F145) before summary
-
-### F14 Achievement Badges
-**Priority:** P2
-
-Unlock badges for milestones.
-
-- First workout, 10 workouts, 100 workouts
-- Zone-specific badges (30 min in Push zone, etc.)
-- Streak milestones (7, 30, 100 days)
-- Total Burn Points milestones
-- ADHD mode: Hyperfocus Badge (F118), badges trigger Celebration Overkill (F130)
-- ASD mode: Calm Celebration (F138), badges displayed in predictable grid
-
-### F15 Weekly Goals
-**Priority:** P2
-
-Set and track weekly workout targets.
-
-- Target: workouts per week, total minutes, total Burn Points
-- Progress bar on home screen
-- Weekly reset with summary
-- ADHD mode: quest-like framing via Daily Quests (F121)
-- ASD mode: same goals every week unless manually changed
-
-### F16 Calorie Estimation
-**Priority:** P2
-
-Estimate calories burned using HR data.
-
-- Formula based on age, weight, sex, HR
-- Displayed on workout and summary screens
-- Clearly labelled as estimate
-- ASD Deep Data mode (F136): show formula and confidence interval
-
-### F17 Workout Types / Templates
-**Priority:** P2
-
-Predefined and custom workout structures.
-
-- Templates: Free Run, Interval, HIIT, Steady State, Cool-Down
-- Custom template creation
-- Template sets target zones and phase durations
-- ASD mode: templates provide the predictable structure users need
-- ADHD mode: "Surprise Me" random template option (F116)
-
-### F18 Rest Timer
-**Priority:** P2
-
-Countdown timer for rest periods between intervals.
-
-- Configurable rest duration
-- Audio and haptic alert at end of rest
-- ADHD mode: fidget haptics (F123) available during rest
-- ASD mode: transition warning before rest ends (F137)
-
-### F19 Progress Dashboard
-**Priority:** P2
-
-Overview of fitness progress over time.
-
-- Weekly/monthly/yearly views
-- Trend lines for: workout frequency, avg HR, total Burn Points, avg duration
-- ADHD mode: Progress Visualisation (F122) — heat maps, mountain, garden
-- ASD mode: Deep Data Dashboard (F136) — raw numbers, tables, CSV export
-
-### F20 Leaderboards
-**Priority:** P2 | **ND Impact:** ASD
-
-Compare performance with other users.
-
-- Weekly Burn Points leaderboard
-- Friend leaderboard
-- Global leaderboard
-- Opt-in only
-- **[ND-ASD]** Hidden entirely when Social Pressure Shield (F135) is enabled
-- **[ND-ADHD]** Enhanced with Social Contracts (F128) — promise a friend you'll work out
-
-### F21 Activity Feed
-**Priority:** P2 | **ND Impact:** ASD
-
-Social feed of friend activity.
-
-- "X completed a workout" updates
-- Achievement unlocks from friends
-- Streak milestones
-- Like / high-five reactions
-- **[ND-ASD]** Hidden entirely when Social Pressure Shield (F135) is enabled
-- **[ND-ADHD]** Shows Body Double count ("12 people working out now") (F117)
-
-### F22 Friend System
-**Priority:** P2
-
-Add and manage friends.
-
-- Search by username
-- Friend request / accept / decline
-- Friend list with online status
-- Privacy controls (what friends can see)
-- ASD mode: profile defaults to private (F135)
+### F2. Heart Rate Zone Engine
+
+**Goal:** Classify any heart rate reading into one of five zones in real time.
+
+| Zone | Name     | % of Max HR | Colour | Burn Points/min |
+|------|----------|-------------|--------|-----------------|
+| 1    | Rest     | 50–60%      | Grey   | 0               |
+| 2    | Warm-Up  | 61–70%      | Blue   | 0               |
+| 3    | Active   | 71–83%      | Green  | 1               |
+| 4    | Push     | 84–91%      | Orange | 2               |
+| 5    | Peak     | 92–100%     | Red    | 3               |
+
+**Customisation:**
+- Users can adjust zone boundaries in Settings (e.g., move the Active/Push threshold from 84% to 82%)
+- Users can override max HR at any time
+- Resting HR can be used for a Karvonen-based formula (optional advanced setting)
 
 ---
 
-## 2. ADHD Focus Mode Features (F111 - F130)
+### F3. Bluetooth LE Heart Rate Pairing
 
-> Full design details, principles, and rationale in [NEURODIVERGENT_DESIGN.md - ADHD Focus Mode](NEURODIVERGENT_DESIGN.md#3-adhd-focus-mode)
+**Goal:** Connect to any standard Bluetooth LE heart rate monitor for real-time HR data.
 
-### F111 Micro-Reward Engine
-**Priority:** P0 | **Depends on:** F5
+**Supported devices (standard HR profile `0x180D`):**
+- Chest straps — Polar H10/H9, Wahoo TICKR, Garmin HRM-Pro/Dual, Coospo, etc.
+- Arm bands — Polar Verity Sense, Wahoo TICKR Fit, Scosche Rhythm+
+- Most BLE-enabled fitness watches broadcasting HR
 
-Small, frequent dopamine hits throughout the workout. Points earned every 30 seconds in-zone with visual pop animation, haptic pulse, and sound effect on milestones. Running total always visible.
+**Behaviour:**
+- Scan & pair screen with device name + signal strength
+- Auto-reconnect to last paired device on workout start
+- Connection status indicator (connected / searching / lost)
+- If signal lost mid-workout, show banner alert and buffer gap; resume when reconnected
+- Support multiple saved devices (user picks active device before each workout)
 
-### F112 "Just 5 Minutes" Mode
-**Priority:** P0 | **Depends on:** F4, F5
-
-One-tap 5-minute workout from home screen. Eliminates initiation barrier. At 5 minutes, gentle prompt to continue with rolling "+1 min" counter. Full celebration if user stops at 5 minutes.
-
-### F113 Variable Reward Drops
-**Priority:** P1 | **Depends on:** F111
-
-Random loot drops during workout: bonus XP, cosmetic unlocks, achievement fragments. Drop probability increases with time in-zone. Visual and haptic surprise effect. Never the same drop twice per session.
-
-### F114 Streak Multiplier
-**Priority:** P1 | **Depends on:** F7
-
-Escalating Burn Point multiplier for consecutive days. Day 1: 1x through Day 30: 5x. Streak Shield allows one free miss per week. Streak freeze earnable through Reward Shop (F126).
-
-### F115 Time Blindness Timer
-**Priority:** P1 | **Depends on:** F11
-
-Large colour-coded timer with visual progress bar. Periodic voice announcements of elapsed time. Vibration pattern changes every 5 minutes. Optional "time chunks" view dividing workout into 5-min blocks.
-
-### F116 Novelty Engine
-**Priority:** P2
-
-Rotate UX elements to prevent habituation. Weekly colour theme rotation, randomised celebration animations (pool of 20+), daily challenge flavour rotation, seasonal events. "Surprise me" workout mode.
-
-### F117 Body Double Mode
-**Priority:** P2
-
-Simulate presence of another person working out. Ambient gym sounds, ghost avatar, optional live friend sync, anonymous count of active PulseFit users. Purely presence-based, no competition.
-
-### F118 Hyperfocus Badge
-**Priority:** P3 | **Depends on:** F4, F14
-
-Detect sustained high-zone effort (15+ min in Push/Peak zones without pause). Award special badge with unique animation. Track hyperfocus sessions in history. Weekly hyperfocus minutes stat.
-
-### F119 Quick Start
-**Priority:** P0
-
-One tap from app open to heart rate tracking. Large "GO" button on home screen. Uses last workout settings. HR monitor auto-connects if previously paired. Zero configuration required.
-
-### F120 XP & Leveling System
-**Priority:** P1 | **Depends on:** F5
-
-Every Burn Point earns XP. XP accumulates across all workouts with scaling level curve. Each level unlocks something (theme, badge, shop item). Level-up celebration with special animation.
-
-### F121 Daily Quests
-**Priority:** P1 | **Depends on:** F5
-
-Three daily quests generated each morning. Mix of Easy/Medium/Hard. Each awards bonus XP. Quests rotate themes. Completing all three awards "Quest Master" bonus.
-
-### F122 Progress Visualisation
-**Priority:** P2 | **Depends on:** F8
-
-Weekly heat map, monthly "mountain" visualisation, "garden" metaphor. Before/after stat comparisons. Exportable progress images.
-
-### F123 Fidget Haptics
-**Priority:** P3 | **Depends on:** F9
-
-Selectable stimulating haptic patterns during rest periods: heartbeat, metronome, wave, random. Intensity adjustable. Can be combined with music tempo. Different from ASD calming haptics.
-
-### F124 Accountability Alarm
-**Priority:** P3
-
-Escalating reminders: gentle -> persistent -> alarm. "Your workout buddy is waiting" framing. 5-min snooze only. Smart timing learns user patterns. Linkable to Body Double Mode (F117).
-
-### F125 Task Chunking
-**Priority:** P1 | **Depends on:** F11
-
-Display workouts as 5-minute chunks. Each chunk has mini-goal and mini-celebration. "Just one more chunk" prompting. Current chunk highlighted, future dimmed. Visible progress blocks.
-
-### F126 Reward Shop
-**Priority:** P2 | **Depends on:** F120
-
-Spend XP on themes, celebration animations, avatar items, streak shields. Rotating inventory for novelty. Daily deal featured item. Earn-only prestige items.
-
-### F127 Anti-Burnout System
-**Priority:** P2 | **Depends on:** F8
-
-Track frequency and intensity over 7-day rolling window. Suggest rest days when trending toward overtraining. Rest days earn small XP bonus. No streak penalty for system-recommended rest.
-
-### F128 Social Contracts
-**Priority:** P3 | **Depends on:** F22
-
-Promise a friend you'll work out today. Friend gets notified on completion. Two-way contracts available. Gentle, not punitive. Maximum 3 active contracts.
-
-### F129 Parallel Stimulation
-**Priority:** P2
-
-Podcast/music integration, picture-in-picture video, minimal overlay mode, background mode with notification tracking, audio-only coaching when screen off.
-
-### F130 Celebration Overkill
-**Priority:** P1 | **Depends on:** F9
-
-Full-screen animation + sound + haptic burst on completion. Extra-long level-up sequence. Special themed streak milestone celebrations. Unique PR animation. Trophy Room for revisiting.
+**Fallback:** If no external device, the app reads HR from Health Connect (wrist-based watch sensor).
 
 ---
 
-## 3. ASD Comfort Mode Features (F131 - F145)
+### F4. Live Workout Screen
 
-> Full design details, principles, and rationale in [NEURODIVERGENT_DESIGN.md - ASD Comfort Mode](NEURODIVERGENT_DESIGN.md#4-asd-comfort-mode)
+**Goal:** The core experience — a real-time dashboard showing HR, zone, and Burn Points as the user exercises.
 
-### F131 Sensory Control Panel
-**Priority:** P0 | **ND Profile:** ASD, AUDHD
+**Layout:**
 
-Master controls for all sensory output. Animations (Off/Reduced/Full), Sounds (Off/Quiet/Normal), Haptics (Off/Gentle/Strong), Colour Intensity (Muted/Standard/Vivid). Accessible from Settings and during workout. Individual overrides per feature. Changes apply immediately with no transition animation.
+```
+┌──────────────────────────────────┐
+│  [Zone colour fills background]  │
+│                                  │
+│         ♥ 156 BPM               │
+│        Zone: PUSH               │
+│                                  │
+│  ┌────┬────┬────┬────┬────┐     │
+│  │ Z1 │ Z2 │ Z3 │ Z4 │ Z5 │     │  ← zone time bar (fills live)
+│  └────┴────┴────┴────┴────┘     │
+│                                  │
+│     🔥 8 Burn Points            │
+│     Target: 12                   │
+│     ██████████░░░░  67%          │  ← progress bar to daily target
+│                                  │
+│     ⏱ 22:45 elapsed             │
+│     🔥 ~187 kcal                │
+│                                  │
+│  [ PAUSE ]         [ END ]      │
+└──────────────────────────────────┘
+```
 
-### F132 Routine Builder & Scheduler
-**Priority:** P1 | **ND Profile:** ASD, AUDHD
-
-Fixed weekly workout schedule. Define workout per day with warm-up, main, cool-down durations and target zone. Remind at exact same time daily. "Today's workout" on home screen. Deviation requires explicit confirmation. Full-week visual grid.
-
-### F133 Literal Voice Coach Mode
-**Priority:** P1 | **Depends on:** F6 | **ND Profile:** ASD, AUDHD
-
-Factual, calm voice coaching. No exclamation marks, slang, colloquialisms, rhetorical questions, or metaphors. Numbers and facts only. Calm TTS voice. Configurable verbosity: Minimal (zone changes) / Standard (periodic) / Detailed (every 30s).
-
-### F134 Predictable UI Lock
-**Priority:** P0 | **ND Profile:** ASD, AUDHD
-
-Freeze interface layout. No UI element changes position. No rotating banners, tip cards, dynamic content, or "what's new" pop-ups. No A/B tests applied. New features only in dedicated Settings section.
-
-### F135 Social Pressure Shield
-**Priority:** P1 | **ND Profile:** ASD, AUDHD
-
-One toggle to remove all social and comparative elements. Hides leaderboards (F20), activity feed (F21), friend notifications, comparative language. Profile set to private. Individual social features can be re-enabled selectively.
-
-### F136 Deep Data Dashboard
-**Priority:** P2 | **ND Profile:** ASD
-
-Raw HR data table (per-second), zone time breakdown (exact seconds), statistical analysis (mean, median, std dev, min, max), HRV if supported, per-workout comparison graphs, exportable CSV, customisable dashboard, trend analysis. No interpretation unless requested.
-
-### F137 Transition Warnings
-**Priority:** P1 | **ND Profile:** ASD, AUDHD
-
-Advance notice before any change. "Changing to cool-down in 30 seconds." Countdown overlay for phase transitions. Audio announcement in Literal Voice Coach style. Warning intervals configurable: 10s/30s/60s. No sudden screen changes.
-
-### F138 Calm Celebration Mode
-**Priority:** P1 | **ND Profile:** ASD, AUDHD
-
-Quiet success indicators. Gentle checkmark (no confetti), subtle badge glow with soft tone, progress bar fill with quiet chime. All celebrations under 2 seconds. No full-screen takeovers. Option to disable all celebration animations.
-
-### F139 Predictable Reward Schedule
-**Priority:** P1 | **ND Profile:** ASD, AUDHD
-
-Fixed formula: earn exactly X points for exactly Y effort. No random bonuses, no variable multipliers (unless user opts in). Formula explained in persistent tooltip. Estimated points shown before workout. End-of-workout total matches running total exactly.
-
-### F140 Safe Exit Protocol
-**Priority:** P0 | **ND Profile:** ASD, AUDHD
-
-Single "End Workout" button, always visible, one tap to end. No confirmation dialog, no streak warnings, no "you were so close" messages. End message always: "Workout saved. Well done." Partial workout saved and earns proportional points.
-
-### F141 Texture & Pattern Zones
-**Priority:** P2 | **ND Profile:** ASD
-
-Zone indicators use distinct patterns: Rest (dotted), Warm-Up (horizontal lines), Active (diagonal hatching), Push (cross-hatching), Peak (solid fill). Visible on all zone indicators. Supports colour vision differences.
-
-### F142 Minimal Mode
-**Priority:** P1 | **ND Profile:** ASD
-
-Stripped UI showing only: current HR (large, centre), zone name, elapsed time, Burn Points. No zone bar, graphs, avatar, animations, or secondary stats. Black/dark grey background. Maximum contrast. Largest font sizes.
-
-### F143 Pre-Workout Visual Schedule
-**Priority:** P2 | **ND Profile:** ASD
-
-Full workout timeline upfront showing all phases with duration, target zone, expected effort. Scrollable and zoomable. "Start" only appears after review. During workout, current position highlighted. No deviations from shown schedule.
-
-### F144 Consistent Audio Palette
-**Priority:** P2 | **ND Profile:** ASD
-
-Fixed sound mapping: zone up = rising tone, zone down = falling tone, point = soft click, start = chime, end = double chime, transition = triple chime. No randomised sounds. No seasonal changes. Sound map documented in Settings.
-
-### F145 Shutdown Routine
-**Priority:** P2 | **ND Profile:** ASD
-
-Guided post-workout wind-down: cool-down text (3s) -> breathing guide (1 min, 4-4-4) -> stretch prompt (30s, skippable) -> summary screen -> "Session complete." Same sequence every time. Each step has visible countdown. No share/rate/review prompts.
+**Behaviour:**
+- Background colour smoothly transitions to match current zone colour
+- HR updates every 1 second (or as fast as the BLE device sends)
+- Burn Points increment in real time (awarded per completed minute in zone)
+- Calorie counter updates continuously (HR-based formula)
+- Pause freezes timer and point accumulation; resume continues
+- End triggers the summary screen
+- Screen stays awake (wake lock) during active workout
+- Works in landscape mode for gym-mounted phones/tablets
 
 ---
 
-## 4. Feature Priority Matrix
+### F5. Workout Summary
 
-### P0 — MVP (Must Ship)
+**Goal:** Post-workout recap showing performance breakdown and Burn Points earned.
 
-| ID | Feature | Category |
-|----|---------|----------|
-| F2 | BLE HR Monitor Pairing | Core |
-| F3 | Real-Time HR Display | Core |
-| F4 | HR Zone Engine | Core |
-| F5 | Burn Points System | Core |
-| F1 | Onboarding & Profile Setup | Core |
-| F119 | Quick Start | ADHD |
-| F112 | "Just 5 Minutes" Mode | ADHD |
-| F111 | Micro-Reward Engine | ADHD |
-| F131 | Sensory Control Panel | ASD |
-| F134 | Predictable UI Lock | ASD |
-| F140 | Safe Exit Protocol | ASD |
-
-### P1 — Core Experience
-
-| ID | Feature | Category |
-|----|---------|----------|
-| F6 | Voice Coach | Core |
-| F7 | Streak & Consistency | Core |
-| F8 | Workout History | Core |
-| F9 | Haptic Feedback | Core |
-| F10 | Settings & Preferences | Core |
-| F11 | Workout Timer | Core |
-| F13 | Post-Workout Summary | Core |
-| F113 | Variable Reward Drops | ADHD |
-| F114 | Streak Multiplier | ADHD |
-| F115 | Time Blindness Timer | ADHD |
-| F120 | XP & Leveling | ADHD |
-| F121 | Daily Quests | ADHD |
-| F125 | Task Chunking | ADHD |
-| F130 | Celebration Overkill | ADHD |
-| F132 | Routine Builder & Scheduler | ASD |
-| F133 | Literal Voice Coach Mode | ASD |
-| F135 | Social Pressure Shield | ASD |
-| F137 | Transition Warnings | ASD |
-| F138 | Calm Celebration Mode | ASD |
-| F139 | Predictable Reward Schedule | ASD |
-| F142 | Minimal Mode | ASD |
-
-### P2 — Enhanced Experience
-
-| ID | Feature | Category |
-|----|---------|----------|
-| F12 | Cool-Down Detection | Core |
-| F14 | Achievement Badges | Core |
-| F15 | Weekly Goals | Core |
-| F16 | Calorie Estimation | Core |
-| F17 | Workout Types / Templates | Core |
-| F18 | Rest Timer | Core |
-| F19 | Progress Dashboard | Core |
-| F20 | Leaderboards | Core |
-| F21 | Activity Feed | Core |
-| F22 | Friend System | Core |
-| F116 | Novelty Engine | ADHD |
-| F117 | Body Double Mode | ADHD |
-| F122 | Progress Visualisation | ADHD |
-| F126 | Reward Shop | ADHD |
-| F127 | Anti-Burnout System | ADHD |
-| F129 | Parallel Stimulation | ADHD |
-| F136 | Deep Data Dashboard | ASD |
-| F141 | Texture & Pattern Zones | ASD |
-| F143 | Pre-Workout Visual Schedule | ASD |
-| F144 | Consistent Audio Palette | ASD |
-| F145 | Shutdown Routine | ASD |
-
-### P3 — Nice to Have
-
-| ID | Feature | Category |
-|----|---------|----------|
-| F118 | Hyperfocus Badge | ADHD |
-| F123 | Fidget Haptics | ADHD |
-| F124 | Accountability Alarm | ADHD |
-| F128 | Social Contracts | ADHD |
+**Content:**
+- **Total Burn Points** earned (large, prominent number)
+- **Target hit?** — visual indicator (checkmark + celebration animation if target met)
+- **Time in each zone** — horizontal stacked bar chart (colour-coded)
+- **Zone detail table** — minutes and Burn Points per zone
+- **Heart rate graph** — line chart of HR over time with zone colour bands behind it
+- **Stats row** — total time, avg HR, max HR, total calories
+- **Afterburn Estimate** — estimated extra calories over next 24h (EPOC), clearly labeled as estimate
+- **Notes field** — optional free-text (e.g., "Treadmill intervals" or "Outdoor run")
+- **Share button** — export summary as image for social media
+- **Save** — auto-saved to Room + written to Health Connect
 
 ---
 
-### Feature Count Summary
+### F6. Burn Points System & Streaks
 
-| Category | Count |
-|----------|-------|
-| Core Features (F1-F22) | 22 |
-| ADHD Features (F111-F130) | 20 |
-| ASD Features (F131-F145) | 15 |
-| **Total** | **57** |
+**Goal:** Gamify consistency with a simple, motivating points and streak system.
 
-| Priority | Count |
-|----------|-------|
-| P0 (MVP) | 11 |
-| P1 (Core) | 21 |
-| P2 (Enhanced) | 21 |
-| P3 (Nice to Have) | 4 |
+**Mechanics:**
+- Points accumulate per completed minute in Zones 3–5 (see zone table above)
+- **Daily target** — configurable (default 12); hit = day counts as "active"
+- **Streak counter** — consecutive days hitting target
+- **Streak bonus** — +2 bonus Burn Points added to any session on day 3+ of a streak
+- **Streak freeze** (1 per week) — skip a day without breaking your streak (user activates manually or auto on rest day)
+- **Personal bests** tracked: highest single-session points, longest streak, most points in a week
+
+**Home screen widgets:**
+- Today's Burn Points (0 if no workout yet, with "Start Workout" prompt)
+- Current streak count + flame icon
+- Weekly points progress bar
 
 ---
 
-*See also:*
-- [PLAN.md](PLAN.md) — Project plan, data model, phases, architecture
-- [NEURODIVERGENT_DESIGN.md](NEURODIVERGENT_DESIGN.md) — Full ND design philosophy, all ND features detailed
+### F7. Workout History & Trends
+
+**Goal:** Let users review past performance and see progress over time.
+
+**History list:**
+- Reverse-chronological list of all workouts
+- Each card shows: date, duration, total Burn Points, zone colour breakdown mini-bar
+- Tap to expand into full workout summary (same as F5)
+
+**Calendar view:**
+- Monthly calendar with colour-coded dots per day (green = target hit, yellow = workout but missed target, empty = rest day)
+- Streak highlight bar across consecutive green days
+
+**Trend charts (Vico):**
+- **Weekly Burn Points** — bar chart, last 8 weeks
+- **Avg HR per session** — line chart
+- **Time in Zone distribution** — stacked area chart over time
+- **Streak history** — timeline showing streak lengths
+
+---
+
+### F8. Health Connect Integration
+
+**Goal:** Bi-directional sync with Android's Health Connect platform so data flows between PulseFit and other health/fitness apps.
+
+**Reads from Health Connect:**
+- Heart rate records (from Wear OS watches, Samsung Health, Fitbit, etc.)
+- Resting heart rate (to refine zone boundaries)
+- Exercise sessions from other apps (import and apply Burn Points retroactively)
+
+**Writes to Health Connect:**
+- Exercise session record (type, duration, start/end time)
+- Heart rate samples captured via BLE
+- Total calories burned (active + Afterburn Estimate)
+
+**Sync behaviour:**
+- Auto-sync after each workout (writes)
+- Background sync every 6 hours for imported data (reads, via WorkManager)
+- Manual "Sync Now" button in Settings
+- Clear permission explanations with per-scope toggles
+
+---
+
+### F9. Notifications & Reminders
+
+**Goal:** Keep users engaged without being annoying.
+
+| Notification          | Trigger                                    | Default  |
+|-----------------------|--------------------------------------------|----------|
+| Workout reminder      | User-set time of day (e.g., 6:00 AM)       | Off      |
+| Streak at risk        | 8 PM if no workout logged today + active streak | On   |
+| Streak milestone      | Hit 7, 14, 30, 60, 100 day streak          | On       |
+| Weekly summary        | Sunday evening — total points, time, comparison to last week | On |
+| Personal best         | New record for single-session or weekly points | On    |
+| Inactivity nudge      | No workout in 3+ days                       | Off      |
+
+All notifications are individually toggleable in Settings.
+
+---
+
+### F10. Profile & Settings
+
+**Goal:** Full control over personal data, zones, preferences, and connected services.
+
+**Sections:**
+- **Personal info** — edit age, weight, height, resting HR, max HR
+- **Zone settings** — adjust zone boundary percentages, toggle Karvonen formula
+- **Daily target** — change Burn Point target
+- **Units** — metric / imperial toggle
+- **Connected devices** — manage paired BLE monitors
+- **Health Connect** — permission status, sync settings, manual sync
+- **Notifications** — per-notification toggles + reminder time picker
+- **Data export** — export all workouts as CSV or JSON
+- **Delete account / data** — wipe all local data with confirmation
+- **About** — version, licenses, privacy policy link
+
+---
+
+## Post-MVP Features (v1.x – v2.0)
+
+---
+
+### F11. Group Workout Mode
+
+**Goal:** Replicate the energy of group fitness classes — an instructor runs a session and all participants see a shared live display.
+
+**How it works:**
+1. Instructor creates a **Session** in the app → gets a 6-digit join code
+2. Participants enter the code (or scan QR) to join
+3. During workout, a **shared display** (TV/tablet via Chromecast or companion web view) shows all participants:
+   - Name / alias
+   - Current zone (colour tile)
+   - Burn Points accumulated
+   - Percentage of daily target reached
+4. Instructor can start/pause/end the session for all participants
+5. Post-session: everyone gets their individual summary + group leaderboard
+
+**Tech:** Firebase Realtime Database or Firestore for low-latency sync between devices.
+
+---
+
+### F12. Instructor Dashboard
+
+**Goal:** A tablet/TV-optimised view for gym instructors to monitor the class.
+
+**Features:**
+- Grid of participant tiles (name, HR, zone colour, points)
+- Sorting options (by zone, by points, alphabetical)
+- Class-wide stats: avg zone, total class Burn Points, % of class in Push/Peak
+- Timer controls (interval timer with work/rest segments)
+- Chromecast / screen mirror support for gym TVs
+- Session history for the instructor (attendance, avg performance)
+
+---
+
+### F13. Workout Templates
+
+**Goal:** Pre-built structured workouts that guide users through timed segments.
+
+**Template structure:**
+```
+Template: "30-Min Interval Burner"
+├── Warm-Up    — 5 min  (target: Zone 2)
+├── Push Block  — 4 min  (target: Zone 4)
+├── Active Recovery — 2 min (target: Zone 3)
+├── Push Block  — 4 min  (target: Zone 4)
+├── Active Recovery — 2 min (target: Zone 3)
+├── Peak Effort — 2 min  (target: Zone 5)
+├── Active Recovery — 2 min (target: Zone 3)
+├── Push Block  — 4 min  (target: Zone 4)
+├── Peak Effort — 1 min  (target: Zone 5)
+└── Cool Down   — 4 min  (target: Zone 2)
+```
+
+**Behaviour:**
+- Audio/haptic cues when segments change
+- On-screen target zone indicator ("Get to PUSH!")
+- Live feedback on whether you're hitting the target zone
+- Built-in library: Interval Burner, Endurance Builder, Peak Chaser, Easy Recovery, HIIT Blast
+- Templates filterable by duration (15/30/45/60 min) and difficulty
+
+---
+
+### F14. Custom Workout Builder
+
+**Goal:** Let users design their own segment-based workouts.
+
+**Builder UI:**
+- Add segments with: name, duration, target zone
+- Drag to reorder segments
+- Duplicate / delete segments
+- Preview total duration and estimated Burn Points
+- Save as personal template (reusable)
+- Share template via link or code (post-MVP social feature)
+
+---
+
+### F15. Social Features & Leaderboards
+
+**Goal:** Community motivation through friendly competition.
+
+**Features:**
+- **Friends list** — add by username or invite link
+- **Weekly leaderboard** — ranked by total Burn Points among friends
+- **Challenges** — e.g., "Earn 100 Burn Points this week", "7-day streak challenge"
+- **Achievement badges:**
+  - First Workout
+  - 7-Day Streak / 30-Day Streak / 100-Day Streak
+  - 1,000 Lifetime Burn Points / 10,000 / 50,000
+  - Peak Performer (20+ min in Zone 5 in one session)
+  - Early Bird (workout before 7 AM)
+  - Night Owl (workout after 9 PM)
+  - Century Club (100 workouts logged)
+- **Activity feed** — see friends' workout completions (opt-in)
+- **Privacy controls** — choose what's visible (points only, full summary, nothing)
+
+---
+
+### F16. Wear OS Companion App
+
+**Goal:** See live workout data on your wrist without pulling out your phone.
+
+**Watch face during workout:**
+- Current HR + zone colour background
+- Burn Points counter
+- Elapsed time
+- Haptic buzz on zone transitions
+
+**Standalone capability:**
+- Start/stop workout from watch
+- Use watch's built-in HR sensor (no chest strap needed)
+- Sync data to phone app when reconnected
+
+---
+
+### F17. Third-Party Fitness Platform Integration
+
+**Goal:** Go beyond Health Connect with direct API integrations for richer data.
+
+| Platform        | Data In                        | Data Out                     |
+|----------------|--------------------------------|------------------------------|
+| **Fitbit**      | HR, resting HR, sleep, steps  | Workout session              |
+| **Garmin Connect** | HR, VO2 max, training load | Workout session              |
+| **Samsung Health** | HR, exercise sessions       | Workout session, calories    |
+| **Strava**      | GPS routes, exercise sessions  | Workout session + Burn Points in description |
+| **Apple Health** | (iOS version) HR, workouts    | Workout session, calories    |
+
+Each integration is opt-in with OAuth-based authorisation flows.
+
+---
+
+### F18. AI Coach Suggestions
+
+**Goal:** Personalised post-workout tips powered by on-device analysis of workout patterns.
+
+**Example suggestions:**
+- "You spent 80% of today's session in Zone 3. Try adding 2-minute Zone 5 intervals to boost your Burn Points."
+- "Your average HR has dropped 5 BPM over the last month at the same effort — your fitness is improving!"
+- "You've done 5 Push-heavy workouts in a row. Consider an Active Recovery session tomorrow."
+- "You hit your target in 22 minutes today — try increasing your daily target to 15 for a bigger challenge."
+
+**Implementation:**
+- Rule-based engine in v1.x (pattern matching on zone distributions, trends, streaks)
+- Optional LLM-powered coaching in v2.0 (on-device or API-based, premium feature)
+
+---
+
+### F19. Data Export & Backup
+
+**Goal:** Users own their data and can take it anywhere.
+
+**Export formats:**
+- **CSV** — one row per workout with summary stats; separate file for HR samples
+- **JSON** — full structured export of all workouts, zone data, profile
+- **GPX** (future, if GPS tracking added) — route + HR data for mapping apps
+
+**Backup:**
+- Auto-backup to Google Drive (encrypted, opt-in)
+- Manual export to local storage
+- Import from backup file to restore on new device
+
+---
+
+### F20. Accessibility & Inclusivity
+
+**Goal:** Ensure PulseFit is usable by everyone.
+
+**Features:**
+- Full TalkBack / screen reader support with descriptive labels
+- High-contrast mode for outdoor visibility
+- Haptic feedback for zone transitions (useful when screen isn't visible)
+- Audio zone announcements ("You're now in the Push zone!") — toggleable
+- Configurable font sizes
+- Colour-blind-friendly zone palette option (patterns + labels supplement colours)
+- Support for seated / wheelchair workouts (adjusted calorie formulas)
+
+---
+
+### F21. Real-Time Voice Coach
+
+**Goal:** An in-workout audio coach that gives spoken feedback, encouragement, and cues so users stay motivated without needing to look at the screen.
+
+**Voice Event Types:**
+
+| Category | Example Callouts |
+|----------|-----------------|
+| **Zone transitions** | "You've entered the Push zone — keep it up!" / "You've dropped to Warm-Up — pick up the pace!" |
+| **Target progress** | "6 Burn Points earned — you're halfway to your target." / "One more point to hit your daily goal!" |
+| **Target hit** | "You've hit your Burn Point target — amazing work! Keep going for bonus points." |
+| **Streak motivation** | "Day 5 of your streak — don't stop now!" |
+| **Interval cues** (templates) | "Push block starting in 3… 2… 1… GO!" / "10 seconds left in this interval." / "Recovery — bring your heart rate down." |
+| **Milestone alerts** | "That's 20 minutes in the Push zone — a new personal best!" |
+| **Pacing guidance** | "You've been in Peak for 3 minutes — consider easing back to Push to sustain your effort." |
+| **Warm-up / cool-down** | "Let's start with a 5-minute warm-up — keep it easy in Zone 2." / "Great session. Cool down and bring your heart rate below 120." |
+| **Encouragement** | "You're crushing it!" / "Strong effort — stay in this zone." / "Almost there, finish strong!" |
+
+**How it works:**
+
+1. **Text-to-Speech (TTS) engine** — uses Android's built-in `TextToSpeech` API
+2. **Event-driven architecture** — a `VoiceCoachService` listens to the live workout state (zone changes, points earned, timer events) and triggers speech from a phrase library
+3. **Phrase library** — each event type has multiple phrase variants to avoid repetition; phrases are randomly rotated
+4. **Cooldown timer** — minimum 15-second gap between callouts to avoid overwhelming the user (configurable: 10s / 15s / 30s / 60s)
+5. **Priority queue** — if multiple events fire simultaneously, highest priority speaks first (target hit > zone change > encouragement)
+
+**Audio behaviour:**
+
+- **Audio ducking** — when the voice coach speaks, any playing music (Spotify, YouTube Music, etc.) is temporarily lowered via `AudioFocus` with `AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK`
+- Music volume ducks ~70% during speech, then restores
+- Works with Bluetooth headphones, phone speaker, or watch speaker
+- Voice plays over any media — no need to pause music manually
+
+**Voice settings (in Settings > Voice Coach):**
+
+| Setting | Options | Default |
+|---------|---------|---------|
+| **Voice Coach toggle** | On / Off | On |
+| **Voice selection** | System TTS voices (device-dependent — typically 5–10 options) | Device default |
+| **Speech rate** | Slow / Normal / Fast | Normal |
+| **Volume** | Independent slider (0–100%) | 80% |
+| **Minimum gap between callouts** | 10s / 15s / 30s / 60s | 15s |
+| **Zone transition callouts** | On / Off | On |
+| **Burn Point updates** | Every point / Every 3 points / Target only / Off | Every 3 points |
+| **Interval countdown** | On / Off (only relevant with templates) | On |
+| **Encouragement** | Frequent / Occasional / Off | Occasional |
+| **Pacing warnings** | On / Off | On |
+
+**Template integration:**
+- When running a Workout Template (F13), the voice coach reads out each segment transition: "Next up: 4-minute Push block. Get ready!"
+- Countdown at end of each segment: "3… 2… 1… switch!"
+- Target zone reminders mid-segment: "You should be in the Push zone right now — you're in Active, push a bit harder."
+
+**Custom phrases (Premium):**
+- Users can replace default phrases with custom text per event type
+- e.g., change "You've entered the Push zone" to "Time to send it!"
+- Useful for personal motivation or language preferences
+
+**Group workout interaction (F11):**
+- In group mode, the instructor can trigger voice announcements to all participants: "Let's go, class! Push zone NOW!"
+- Individual voice coach still runs locally for personal stats
+
+**Technical implementation:**
+
+```kotlin
+class VoiceCoachService(
+    private val tts: TextToSpeech,
+    private val settings: VoiceCoachSettings
+) {
+    private val phraseLibrary = PhraseLibrary()
+    private var lastCalloutTime: Instant = Instant.MIN
+
+    fun onZoneChanged(oldZone: Int, newZone: Int) {
+        if (!settings.zoneCallouts) return
+        if (!canSpeak()) return
+
+        val phrase = if (newZone > oldZone) {
+            phraseLibrary.randomFor(PhraseType.ZONE_UP, mapOf("zone" to zoneNameFor(newZone)))
+        } else {
+            phraseLibrary.randomFor(PhraseType.ZONE_DOWN, mapOf("zone" to zoneNameFor(newZone)))
+        }
+        speak(phrase, Priority.MEDIUM)
+    }
+
+    fun onBurnPointsEarned(total: Int, target: Int) {
+        if (total == target) {
+            speak(phraseLibrary.randomFor(PhraseType.TARGET_HIT), Priority.HIGH)
+        } else if (settings.pointUpdateFrequency.shouldAnnounce(total)) {
+            speak(phraseLibrary.randomFor(
+                PhraseType.POINT_UPDATE,
+                mapOf("points" to total, "target" to target)
+            ), Priority.LOW)
+        }
+    }
+
+    fun onSegmentChange(segment: WorkoutSegment, countdown: Boolean) {
+        if (!settings.intervalCountdown) return
+        speak("Next up: ${segment.name}. Target zone: ${zoneNameFor(segment.targetZone)}.", Priority.HIGH)
+    }
+
+    private fun canSpeak(): Boolean {
+        return Duration.between(lastCalloutTime, Instant.now()) >= settings.minGap
+    }
+
+    private fun speak(text: String, priority: Priority) {
+        requestAudioFocus()
+        tts.speak(text, TextToSpeech.QUEUE_ADD, null, UUID.randomUUID().toString())
+        lastCalloutTime = Instant.now()
+    }
+}
+```
+
+---
+
+## Feature Priority Matrix
+
+| Priority | Feature | Effort | Impact |
+|----------|---------|--------|--------|
+| P0 (MVP) | F1 Onboarding | Medium | High |
+| P0 (MVP) | F2 Zone Engine | Low | High |
+| P0 (MVP) | F3 BLE Pairing | Medium | High |
+| P0 (MVP) | F4 Live Workout | High | High |
+| P0 (MVP) | F5 Workout Summary | Medium | High |
+| P0 (MVP) | F6 Burn Points & Streaks | Medium | High |
+| P0 (MVP) | F7 History & Trends | Medium | Medium |
+| P0 (MVP) | F8 Health Connect | Medium | High |
+| P0 (MVP) | F9 Notifications | Low | Medium |
+| P0 (MVP) | F10 Profile & Settings | Low | Medium |
+| P1 | F11 Group Workout | High | High |
+| P1 | F12 Instructor Dashboard | High | Medium |
+| P1 | F13 Workout Templates | Medium | High |
+| P1 | F14 Custom Builder | Medium | Medium |
+| P2 | F15 Social & Leaderboards | High | High |
+| P2 | F16 Wear OS | High | Medium |
+| P2 | F17 Third-Party APIs | High | Medium |
+| P2 | F18 AI Coach | Medium | Medium |
+| P3 | F19 Data Export | Low | Low |
+| P1 | F21 Voice Coach | Medium | High |
+| P3 | F20 Accessibility | Medium | High |

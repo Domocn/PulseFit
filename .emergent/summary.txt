@@ -1,0 +1,157 @@
+<analysis>**original_problem_statement:**
+The user wants to build a heart-rate-zone training app called PulseFit.
+
+**PRODUCT REQUIREMENTS:**
+- **Core Functionality:** Track workouts based on heart rate zones (Rest, Warm-Up, Active, Push, Peak) and award Burn Points (1-3 points/minute in active zones). It includes a daily point target and streak bonuses.
+- **Neurodivergent-Aware Modes:** The app's key differentiator is providing dedicated experience modes for ADHD and ASD users.
+    - **ADHD Focus Mode:** Features zero-friction start, micro-rewards, Just 5 Minutes mode, XP leveling, and celebration animations.
+    - **ASD Comfort Mode:** Features a sensory control panel (to reduce animations/sounds), a frozen UI layout, a literal voice coach, and predictable mechanics.
+    - **Combined Mode:** A tunable mix of ADHD and ASD features.
+- **Tech Stack:** The user initially requested a native Android app (Kotlin/Jetpack Compose) but later pivoted to a **Progressive Web App (PWA)** that can be converted to an Android app later. The current stack is React, FastAPI, and MongoDB.
+- **Integrations:** The original plan included Health Connect and Bluetooth LE, but this was deferred for the PWA version, which uses simulated HR data. The user most recently requested integration with **ElevenLabs** for voice coaching.
+
+**User's preferred language**: English
+
+**what currently exists?**
+A functional PWA (React frontend, FastAPI backend) that implements the core MVP of PulseFit. This includes user onboarding, neurodivergent mode selection, a home screen with a streak counter, a live workout screen with simulated HR data and a Burn Points tracker, workout summary, history, and settings pages. It also includes advanced features like workout templates, a Just 5 Min mode, and streak freezes. The foundation for ElevenLabs integration is present but currently non-functional due to an API key issue.
+
+**Last working item**:
+-   **Last item agent was working**: The agent was integrating the ElevenLabs Text-to-Speech (TTS) service for the voice coach feature. It encountered a  error from the ElevenLabs API, likely because the user-provided key is on a restricted free tier. The backend was updated to handle this error without crashing, and the agent was in the process of updating the frontend to gracefully fall back to the browser's native TTS when the ElevenLabs API call fails.
+-   **Status**: IN PROGRESS
+-   **Agent Testing Done**: N
+-   **Which testing method agent to use?**: both
+-   **User Testing Done**: N
+
+**All Pending/In progress Issue list**:
+-   **Issue 1**:  ElevenLabs integration is broken due to a restricted API key (P0)
+
+    -   **Issues Detail**:
+        -   **Issue 1**: The backend crashes with a 500 error when attempting to generate voice via the  endpoint because it receives a  from the ElevenLabs API. The frontend currently does not handle this failure, leading to a silent failure of the voice coach feature.
+            -   **Attempted fixes**: The agent installed  and added  to  to ensure the API key is loaded. It also wrapped the ElevenLabs API call in the backend with a  block to prevent the server from crashing. The last action was an attempt to modify  to catch the error and fall back to browser TTS.
+            -   **Next debug checklist**:
+                1.  Complete the implementation in  to ensure the  block correctly triggers the browser's native TTS as a fallback.
+                2.  Verify the backend logs at  to confirm the server no longer crashes and logs the 401 error gracefully.
+                3.  Manually test the workout page to confirm that voice cues are still delivered using the browser's TTS, even though the ElevenLabs integration is failing.
+            -   **Why fix this issue and what will be achieved with the fix?**: This will make the voice coach feature robust. The app will provide a premium voice experience when possible and degrade gracefully to a standard experience when not, preventing a broken user experience.
+            -   **Status**: IN PROGRESS
+            -   **Is recurring issue?**: N
+            -   **Should Test frontend/backend/both after fix?**: both
+            -   **Blocked on other issue**: None. The fix requires working around the restricted API key, not getting a new one.
+
+**In progress Task List**:
+-   **Task 1**: Finalize the ElevenLabs voice integration with a fallback mechanism (P0)
+
+    -   **Task Detail**:
+        -   **Task 1**:
+            -   **Where to resume**: Resume modifying the file . The  logic needs to be finalized to ensure that if the  call to the  endpoint fails, the app seamlessly uses the existing browser-based TTS functionality.
+            -   **What will be achieved with this?**: A resilient voice coach feature that enhances the user experience with premium voices when available but remains functional with standard voices if the premium service fails.
+            -   **Status**: IN PROGRESS
+            -   **Should Test frontend/backend/both after fix?**: both
+            -   **Blocked on something**: Blocked on the user's ElevenLabs API key having usage restrictions. The task is to build a workaround, not to acquire a new key.
+
+**Upcoming and Future Tasks**
+- **Upcoming Tasks:**
+    - (P1) UI Polish & Accessibility Audit: Review the app for visual consistency and ensure it meets accessibility standards.
+- **Future Tasks:**
+    - (P2) Real Hardware Integration: Integrate with Bluetooth LE for direct heart rate monitor pairing and Health Connect (Google) for reading data from wearables. This would be part of a native app conversion.
+    - (P2) Wear OS Companion App.
+    - (P3) Social Features: Implement group modes and other social functionality as described in the original brief.
+    - (P3) Direct Wearable Integrations: Post-MVP integration with Fitbit, Garmin, and Samsung APIs.
+
+**Completed work in this session**
+- **PWA Scaffolding**: Set up a full-stack application with React (frontend), FastAPI (backend), and MongoDB (database).
+- **Core Feature Implementation**:
+    - User Onboarding ()
+    - Home Dashboard ()
+    - Live Workout screen with simulated HR ()
+    - Workout Summary and History (, )
+    - Settings page with Neurodivergent mode selection and Sensory Controls ()
+- **Advanced Features**:
+    - Workout Templates ()
+    - Just 5 Min ADHD mode feature.
+    - Backend logic for Achievements, Trends, and Streak Freezes ().
+- **Initial ElevenLabs Integration**: Added backend endpoints, environment variable setup, and a frontend hook for ElevenLabs.
+
+**Earlier issues found/mentioned but not fixed**
+- None.
+
+**Known issue recurrence from previous fork**
+- None.
+
+**Code Architecture**
+
+
+**Key Technical Concepts**
+- **Tech Stack**: PWA using React, FastAPI, and MongoDB.
+- **State Management**: React Context API () for global user and settings state.
+- **Frontend Logic**: Custom React Hooks for separating concerns like HR simulation () and TTS ().
+- **API**: RESTful API built with FastAPI.
+- **Persistence**: Frontend uses  to persist the user session, avoiding the need to re-board on refresh.
+- **Data Simulation**: Heart rate data is currently simulated on the frontend for development purposes.
+
+**key DB schema**
+- **users**: 
+- **workouts**: 
+- **workout_templates**: 
+
+**changes in tech stack**
+- The project pivoted from an initial request for a native Android application (Kotlin, Jetpack Compose) to a Progressive Web App (React, FastAPI) at the user's direction.
+
+**All files of reference**
+- : Contains all backend logic, API endpoints, and database models.
+- : The file currently being worked on to handle TTS logic and fallback.
+- : The core live workout screen that integrates multiple hooks and components.
+- : Manages global application state.
+- : Defines all application routes.
+- : Contains the .
+- : The project requirements document.
+
+**Areas that need refactoring**:
+-  is becoming complex with many  hooks for different concerns (timer, HR, voice cues, points). This logic could be further modularized into more granular custom hooks to improve readability and maintenance.
+
+**key api endpoints**
+- : Creates a new user.
+- : Fetches the current user's data.
+- : Saves a completed workout.
+- : Retrieves workout history.
+- : Checks if the ElevenLabs integration is enabled.
+- : Generates speech from text (currently failing).
+
+**Critical Info for New Agent**
+- The project's tech stack was changed from native Android to a PWA (React/FastAPI). Do not attempt to implement native features.
+- The heart rate data is **simulated** in . Real BLE/Health Connect integration is a future task.
+- The user not persisting issue previously observed was a testing artifact of Playwright creating new browser sessions. The  implementation works correctly in a normal user session.
+- The ElevenLabs API key provided by the user is restricted. Your task is **not** to fix the key but to **implement a graceful fallback** to the browser's native TTS. The backend should not crash, and the frontend should still produce audio.
+
+**documents and test reports created in this job**
+- 
+- Test reports from  are located in .
+
+**Last 10 User Messages and any pending HUMAN messages**
+1. : User requested the ElevenLabs feature. (In Progress)
+2. : User provided the ElevenLabs API key.
+3. : User requested implementation of all features from the project brief. (Completed for MVP+)
+4. : User changed the project's core technology from native to PWA. (Completed)
+5. : User initiated the session. (Completed)
+
+**Project Health Check:**
+- **Broken**:
+    - ElevenLabs voice generation ().
+- **Mocked**:
+    - Heart rate data generation (simulated in the frontend).
+
+**3rd Party Integrations**
+- **ElevenLabs (Text-to-Speech)**: Integration attempted. Requires a user-provided API key. The current key is on a restricted tier, causing  errors.
+
+**Testing status**
+- **Testing agent used after significant changes**: YES
+- **Troubleshoot agent used after agent stuck in loop**: NO
+- **Test files created**: None.
+- **Known regressions**: None.
+
+**Credentials to test flow:**
+- **ElevenLabs API Key**:  (Note: This key is known to be restricted and will cause a 401 error).
+- **Application Login**: No credentials needed. The flow starts with user onboarding.
+
+**What agent forgot to execute**
+- The agent was mid-execution on a task. It did not forget, but it needs to complete the implementation of the graceful fallback mechanism for the failing ElevenLabs API in .</analysis>

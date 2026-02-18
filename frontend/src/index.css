@@ -1,0 +1,103 @@
+@import url('https://fonts.googleapis.com/css2?family=Chivo:wght@400;700;900&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg-default: #09090b;
+  --bg-card: #18181b;
+  --bg-subtle: #27272a;
+  
+  --zone-rest: #71717a;
+  --zone-warmup: #3b82f6;
+  --zone-active: #22c55e;
+  --zone-push: #f97316;
+  --zone-peak: #ef4444;
+  
+  --zone-rest-asd: #a1a1aa;
+  --zone-warmup-asd: #93c5fd;
+  --zone-active-asd: #86efac;
+  --zone-push-asd: #fdba74;
+  --zone-peak-asd: #fca5a5;
+  
+  --primary: #8b5cf6;
+  --secondary: #10b981;
+  --accent: #f43f5e;
+  
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  
+  --font-heading: 'Chivo', sans-serif;
+  --font-body: 'Manrope', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  font-family: var(--font-body);
+  background: var(--bg-default);
+  color: var(--text-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* ASD Comfort Mode Overrides */
+.asd-mode {
+  --zone-rest: var(--zone-rest-asd);
+  --zone-warmup: var(--zone-warmup-asd);
+  --zone-active: var(--zone-active-asd);
+  --zone-push: var(--zone-push-asd);
+  --zone-peak: var(--zone-peak-asd);
+}
+
+.asd-mode * {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Utility Classes */
+.font-heading {
+  font-family: var(--font-heading);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-default);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-subtle);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Touch Optimization */
+button, a, input, select, textarea {
+  touch-action: manipulation;
+}
+
+/* Safe Area for Mobile */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

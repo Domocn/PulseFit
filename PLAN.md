@@ -1,368 +1,389 @@
-# PulseFit — Project Plan
-
-> A heart-rate zone fitness app that gamifies workouts through real-time Burn Points, voice coaching, and the first neurodivergent-aware fitness experience.
-
----
-
-## Table of Contents
-
-1. [Concept Overview](#1-concept-overview)
-2. [Core Mechanics](#2-core-mechanics)
-3. [Data Model](#3-data-model)
-4. [Project Structure](#4-project-structure)
-5. [Development Phases](#5-development-phases)
-6. [Summary](#6-summary)
-
----
+# PulseFit - Android Fitness App Plan
 
 ## 1. Concept Overview
 
-### What PulseFit Does
+**PulseFit** is a heart-rate-zone-based group and solo fitness app that gamifies workouts through a proprietary points system called **"Burn Points"**. Users earn Burn Points by spending time in elevated heart rate zones during any workout. The app tracks real-time heart rate data from wearables and fitness trackers, displays live zone feedback, and rewards sustained effort with points that accumulate over sessions.
 
-PulseFit connects to Bluetooth Low Energy (BLE) heart rate monitors and turns every workout into a real-time game. Users earn **Burn Points** by spending time in their target heart rate zones. A voice coach provides live feedback, and a gamification layer (streaks, XP, achievements, leaderboards) drives long-term engagement.
-
-### Key Market Differentiators
-
-1. **Zone-Based Gamification** — Burn Points tied directly to physiological effort via HR zones, not just step counts or duration
-2. **Real-Time Voice Coach** — Adaptive coaching that responds to live heart rate data
-3. **Neurodivergent Profiles** — Industry-first ADHD Focus Mode, ASD Comfort Mode, and AuDHD Combined Mode. See [NEURODIVERGENT_DESIGN.md](NEURODIVERGENT_DESIGN.md) for full design philosophy and feature specs (F111-F145)
-4. **Sensor Agnostic** — Works with any BLE heart rate monitor (chest strap, arm band, wearable)
-5. **Privacy First** — All workout data stored locally; cloud sync optional and user-controlled
-
-### Target Users
-
-| Segment | Need | PulseFit Answer |
-|---------|------|-----------------|
-| General fitness | Motivation to stay consistent | Streaks, XP, leaderboards |
-| ADHD users | Task initiation, dopamine, novelty | ADHD Focus Mode (F111-F130) |
-| ASD users | Predictability, calm, control | ASD Comfort Mode (F131-F145) |
-| AuDHD users | Structure + reward | Combined Mode with cherry-picked defaults |
-| Data enthusiasts | Deep performance analytics | Deep Data Dashboard (F136) |
+> **Trademark / IP Note:** All naming, branding, scoring mechanics, and zone definitions in this document are original. No trademarked names, proprietary zone labels, or copyrighted visual designs from any existing fitness brand are used. "Burn Points" and "PulseFit" are working names — a trademark search should be conducted before launch.
 
 ---
 
 ## 2. Core Mechanics
 
-### Heart Rate Zones
+### 2.1 Heart Rate Zones
 
-| Zone | Name | % Max HR | Burn Points / Min |
-|------|------|----------|-------------------|
-| 1 | Rest | < 50% | 0 |
-| 2 | Warm-Up | 50-59% | 0 |
-| 3 | Active | 60-69% | 1 |
-| 4 | Push | 70-84% | 2 |
-| 5 | Peak | 85-100% | 3 |
+The app uses five colour-coded heart rate zones based on each user's **estimated or tested max heart rate (MHR)**. MHR is calculated via the standard formula (`220 - age`) or entered manually from a lab/field test.
 
-Daily target: **12 Burn Points** (default, adjustable). Max HR calculated as `220 - age` (configurable with manual override).
+| Zone | Name         | % of MHR   | Colour  | Burn Points / min |
+|------|------------- |-----------|---------|-------------------|
+| 1    | Rest         | 50 – 60%  | Grey    | 0                 |
+| 2    | Warm-Up      | 61 – 70%  | Blue    | 0                 |
+| 3    | Active       | 71 – 83%  | Green   | 1                 |
+| 4    | Push         | 84 – 91%  | Orange  | 2                 |
+| 5    | Peak         | 92 – 100% | Red     | 3                 |
 
-### Burn Points
+- Zones 1–2 are recovery / warm-up and earn no points.
+- Zones 3–5 earn escalating Burn Points per full minute spent in that zone.
+- A **partial minute** at the end of a workout rounds down (no fractional points).
 
-- Earned in real-time based on current HR zone (1-3 pts/min in Active/Push/Peak)
-- Daily target: 12 Burn Points (default, adjustable)
-- Accumulated per-workout and lifetime
-- ADHD mode: points trigger micro-reward animations (F111) and can earn XP (F120)
-- ASD mode: points follow a fixed, predictable formula (F139) with no random bonuses
+### 2.2 Burn Points Scoring
 
-### Voice Coach
+| Metric               | Detail                                                    |
+|-----------------------|-----------------------------------------------------------|
+| **Daily Target**      | 12 Burn Points (configurable by user, default = 12)       |
+| **Session Goal**      | Hit your daily target during a single workout              |
+| **Streak Bonus**      | +2 bonus points for 3+ consecutive days hitting target     |
+| **Weekly Summary**    | Total Burn Points, avg per session, time in each zone      |
+| **Monthly Challenge** | Community leaderboard, opt-in, ranked by total points      |
 
-- Real-time audio feedback based on HR zone, elapsed time, and points
-- Three styles: Standard, Hype (ADHD), Literal (ASD/F133)
-- Three verbosity levels: Minimal, Standard, Detailed
-- Controlled by Sensory Control Panel (F131) in ASD mode
+### 2.3 Afterburn Estimate
+
+After each session, the app shows an **Afterburn Estimate** — an estimated additional calorie burn over the next 24 hours based on time spent in Zones 4–5 (EPOC effect). This is calculated using a simplified model:
+
+```
+afterburn_kcal = (minutes_in_zone_4 * 1.5 + minutes_in_zone_5 * 2.5) * body_weight_kg * 0.05
+```
+
+This is clearly labeled as an **estimate** (not medical advice).
 
 ---
 
-## 3. Data Model
+## 3. Feature Set
 
-### UserProfile
+### 3.1 MVP (v1.0)
+
+| # | Feature                        | Description                                                                 |
+|---|-------------------------------|-----------------------------------------------------------------------------|
+| 1 | **User Onboarding**            | Age, weight, height, resting HR, fitness level → auto-calculate MHR & zones |
+| 2 | **Live Workout Screen**        | Real-time HR, current zone colour, Burn Points accumulator, elapsed time     |
+| 3 | **Workout Summary**            | Total Burn Points, time per zone (bar chart), calories, Afterburn Estimate   |
+| 4 | **History & Trends**           | Calendar view of past workouts, weekly/monthly Burn Point trends             |
+| 5 | **Heart Rate Device Pairing**  | Bluetooth LE pairing for chest straps & wrist monitors                      |
+| 6 | **Google Health Connect**      | Bi-directional sync — read HR, write workout summaries                      |
+| 7 | **Profile & Settings**         | Edit MHR, zone thresholds, daily target, units (metric/imperial)            |
+| 8 | **Notifications**              | Workout reminders, streak alerts, weekly summary push                       |
+
+### 3.2 Post-MVP (v1.x – v2.0)
+
+| # | Feature                          | Description                                                                  |
+|---|----------------------------------|------------------------------------------------------------------------------|
+| 9 | **Group Workout Mode**            | Instructor creates a session code; participants join and see a shared display |
+| 10| **Instructor Dashboard**          | Tablet/TV view showing all participants' live zones and points               |
+| 11| **Workout Templates**             | Pre-built interval/circuit/endurance templates with timed segments           |
+| 12| **Custom Workout Builder**        | Users create their own segment-based workouts (warm-up, push, peak, cool-down)|
+| 13| **Social & Leaderboards**         | Friends list, challenges, weekly leaderboard, achievement badges             |
+| 14| **Wearable Companion App**        | Wear OS companion showing live zone and points on wrist                      |
+| 15| **Fitbit / Garmin / Samsung**     | Direct API integration beyond Health Connect                                 |
+| 16| **AI Coach Suggestions**          | Post-workout tips based on zone distribution (e.g., "Try more time in Push") |
+| 17| **Apple Health (iOS)**            | iOS port with HealthKit integration                                          |
+
+---
+
+## 4. Technical Architecture
+
+### 4.1 Platform & Language
+
+| Layer        | Technology                                |
+|-------------|------------------------------------------|
+| Language     | **Kotlin** (100%)                        |
+| UI           | **Jetpack Compose** + Material 3         |
+| Min SDK      | API 26 (Android 8.0)                     |
+| Target SDK   | API 35 (Android 15)                      |
+| Build        | Gradle with Kotlin DSL, version catalogs |
+
+### 4.2 App Architecture
+
+```
+┌─────────────────────────────────────────────────┐
+│                    UI Layer                      │
+│         Jetpack Compose + ViewModels             │
+├─────────────────────────────────────────────────┤
+│                  Domain Layer                    │
+│     Use Cases / Interactors (pure Kotlin)        │
+├─────────────────────────────────────────────────┤
+│                  Data Layer                      │
+│  Room DB  │  Health Connect  │  BLE Service      │
+│  DataStore│  Remote API      │  WorkManager       │
+└─────────────────────────────────────────────────┘
+```
+
+**Pattern:** MVVM + Clean Architecture (UI → ViewModel → UseCase → Repository → DataSource)
+
+### 4.3 Key Libraries & APIs
+
+| Concern               | Library / API                                        |
+|-----------------------|------------------------------------------------------|
+| DI                    | Hilt                                                 |
+| Database              | Room                                                 |
+| Preferences           | DataStore (Proto)                                    |
+| Async                 | Kotlin Coroutines + Flow                             |
+| Navigation            | Compose Navigation                                   |
+| Charts                | Vico (Compose-native charting)                       |
+| Bluetooth LE          | Android BLE API + companion library (ABLE / Kable)   |
+| Health data           | **Health Connect API** (Google)                      |
+| Background work       | WorkManager                                          |
+| Notifications         | Firebase Cloud Messaging (FCM)                       |
+| Auth (post-MVP)       | Firebase Auth                                        |
+| Backend (post-MVP)    | Firebase Firestore / Cloud Functions                 |
+| CI/CD                 | GitHub Actions                                       |
+
+### 4.4 Health Connect Integration
+
+Health Connect (formerly Google Health) is the primary hub for reading/writing health data on Android.
+
+**Read:**
+- `HeartRateRecord` — live and historical HR data from any connected wearable
+- `RestingHeartRateRecord` — to refine zone calculations
+- `ExerciseSessionRecord` — import workouts from other apps
+
+**Write:**
+- `ExerciseSessionRecord` — export PulseFit workouts
+- `TotalCaloriesBurnedRecord` — calories including Afterburn Estimate
+- `HeartRateRecord` — if captured directly via BLE
+
+**Permissions:** The app requests only the minimum scopes needed and clearly explains each permission during onboarding.
+
+### 4.5 Bluetooth LE Heart Rate Service
+
+Standard Bluetooth Heart Rate Profile (UUID `0x180D`):
+- Characteristic `0x2A37` — Heart Rate Measurement (notify)
+- Supports chest straps (Polar, Wahoo, Garmin HRM) and most BLE wrist monitors
+- Fallback: phone's own optical sensor via Health Connect if no external device
+
+---
+
+## 5. Data Model (Room)
+
+### Core Entities
 
 ```kotlin
-@Entity(tableName = "user_profiles")
+@Entity
 data class UserProfile(
-    @PrimaryKey val id: String,
-    val displayName: String,
+    @PrimaryKey val id: Long = 1,
     val age: Int,
-    val maxHeartRate: Int,              // 220 - age, or manual override
-    val restingHeartRate: Int?,
-    val weight: Float?,                 // kg, optional
-    val height: Float?,                 // cm, optional
-
-    // Neurodivergent profile
-    val ndProfile: NdProfile = NdProfile.STANDARD,
-    val adhdFocusMode: Boolean = false,
-    val asdComfortMode: Boolean = false,
-
-    // Gamification
-    val xpLevel: Int = 1,
-    val totalXp: Long = 0L,
-    val currentStreak: Int = 0,
-    val longestStreak: Int = 0,
-    val totalBurnPoints: Long = 0L,
-    val totalWorkouts: Int = 0,
-
-    // Sensory
-    val sensoryLevel: SensoryLevel = SensoryLevel.STANDARD,
-
-    // Timestamps
-    val createdAt: Instant,
-    val lastWorkoutAt: Instant?
+    val weightKg: Float,
+    val heightCm: Float,
+    val restingHr: Int,
+    val maxHr: Int,              // calculated or manual
+    val dailyBurnTarget: Int,    // default 12
+    val unitSystem: UnitSystem   // METRIC or IMPERIAL
 )
 
-enum class NdProfile { STANDARD, ADHD, ASD, AUDHD }
-enum class SensoryLevel { MUTED, STANDARD, VIVID }
-```
-
-### Workout
-
-```kotlin
-@Entity(tableName = "workouts")
+@Entity
 data class Workout(
-    @PrimaryKey val id: String,
-    val userId: String,
-    val startedAt: Instant,
-    val endedAt: Instant?,
-    val durationSeconds: Int,
-    val burnPoints: Int,
-    val xpEarned: Int,
-    val averageHeartRate: Int,
-    val maxHeartRate: Int,
-    val zoneTimeSeconds: Map<HeartRateZone, Int>,  // time in each zone
-    val workoutType: WorkoutType,
-    val isQuickStart: Boolean = false,              // F119
-    val isJustFiveMin: Boolean = false              // F112
-)
-```
-
-### ND-Specific Entities
-
-See [NEURODIVERGENT_DESIGN.md - Data Model](NEURODIVERGENT_DESIGN.md#6-data-model-additions) for:
-- `DailyQuest` — daily quest system (ADHD, F121)
-- `RewardShopItem` — reward shop inventory (ADHD, F126)
-- `ProgressVisualisation` — progress viz data (ADHD, F122)
-- `WeeklyRoutine` — weekly schedule (ASD, F132)
-- `SensoryPreferences` — sensory control settings (ASD, F131)
-
-### HeartRateReading
-
-```kotlin
-@Entity(tableName = "heart_rate_readings")
-data class HeartRateReading(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val workoutId: String,
+    val startTime: Instant,
+    val endTime: Instant,
+    val totalBurnPoints: Int,
+    val caloriesBurned: Int,
+    val afterburnEstimate: Int,
+    val avgHr: Int,
+    val maxHr: Int,
+    val notes: String? = null
+)
+
+@Entity(foreignKeys = [ForeignKey(entity = Workout::class, ...)])
+data class ZoneSample(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val workoutId: Long,
     val timestamp: Instant,
     val heartRate: Int,
-    val zone: HeartRateZone,
-    val burnPointsEarned: Int        // points earned this reading
+    val zone: Int              // 1-5
+)
+
+@Entity(foreignKeys = [ForeignKey(entity = Workout::class, ...)])
+data class ZoneSummary(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val workoutId: Long,
+    val zone: Int,
+    val durationSeconds: Int,
+    val burnPointsEarned: Int
 )
 ```
 
 ---
 
-## 4. Project Structure
+## 6. Screen Map
 
 ```
-app/src/main/java/com/example/pulsefit/
-    |
-    +-- data/
-    |   +-- local/
-    |   |   +-- dao/                  # Room DAOs
-    |   |   +-- entity/               # Room entities
-    |   |   +-- PulseFitDatabase.kt
-    |   +-- repository/               # Repository implementations
-    |   +-- model/                    # Domain models & enums
-    |
-    +-- domain/
-    |   +-- usecase/                  # Business logic use cases
-    |   +-- repository/               # Repository interfaces
-    |
-    +-- ui/
-    |   +-- onboarding/               # F1 Onboarding + ND profile selection
-    |   +-- home/                     # Home screen, quick start (F119)
-    |   +-- workout/                  # Active workout screen
-    |   +-- history/                  # Workout history & review
-    |   +-- settings/                 # F10 Settings
-    |   +-- leaderboard/              # F20 Leaderboards
-    |   +-- social/                   # F21 Activity feed, friend system
-    |   +-- theme/                    # App theming, colour palettes
-    |   +-- components/               # Shared UI components
-    |
-    +-- voice/                        # Voice coach system
-    |   +-- VoiceCoachEngine.kt       # Core TTS engine
-    |   +-- StandardCoach.kt          # Standard voice style
-    |   +-- HypeCoach.kt              # ADHD hype voice style
-    |   +-- LiteralCoach.kt           # ASD literal voice style (F133)
-    |
-    +-- adhd/                         # ADHD Focus Mode features
-    |   +-- MicroRewardEngine.kt      # F111 Micro-rewards
-    |   +-- JustFiveMinManager.kt     # F112 "Just 5 Min"
-    |   +-- VariableDropEngine.kt     # F113 Variable drops
-    |   +-- StreakMultiplier.kt       # F114 Streak multiplier
-    |   +-- TimeBlindnessTimer.kt     # F115 Time blindness timer
-    |   +-- NoveltyEngine.kt          # F116 Novelty rotation
-    |   +-- BodyDoubleManager.kt      # F117 Body double
-    |   +-- XpLevelingSystem.kt       # F120 XP & leveling
-    |   +-- DailyQuestManager.kt      # F121 Daily quests
-    |   +-- RewardShopManager.kt      # F126 Reward shop
-    |   +-- AntiBurnoutSystem.kt      # F127 Anti-burnout
-    |   +-- CelebrationEngine.kt      # F130 Celebration overkill
-    |
-    +-- asd/                          # ASD Comfort Mode features
-    |   +-- SensoryControlPanel.kt    # F131 Sensory controls
-    |   +-- RoutineBuilder.kt         # F132 Routine builder
-    |   +-- PredictableUiLock.kt      # F134 UI lock
-    |   +-- SocialPressureShield.kt   # F135 Social shield
-    |   +-- DeepDataDashboard.kt      # F136 Deep data
-    |   +-- TransitionWarnings.kt     # F137 Transition warnings
-    |   +-- CalmCelebration.kt        # F138 Calm celebrations
-    |   +-- PredictableRewards.kt     # F139 Predictable rewards
-    |   +-- SafeExitProtocol.kt       # F140 Safe exit
-    |   +-- MinimalMode.kt            # F142 Minimal mode
-    |   +-- ShutdownRoutine.kt        # F145 Shutdown routine
-    |
-    +-- nd/                           # Shared neurodivergent infrastructure
-    |   +-- NdProfileManager.kt       # Profile selection & management
-    |   +-- NdSettingsApplier.kt      # Apply profile defaults to settings
-    |   +-- AuDhdConflictResolver.kt  # Resolve ADHD/ASD setting conflicts
-    |
-    +-- ble/                          # Bluetooth LE heart rate monitor
-    |   +-- BleScanner.kt
-    |   +-- HeartRateMonitorService.kt
-    |   +-- BleConnectionManager.kt
-    |
-    +-- util/                         # Shared utilities
-        +-- ZoneCalculator.kt
-        +-- BurnPointsCalculator.kt
-        +-- TimeFormatter.kt
+Onboarding (first launch)
+  ├── Welcome
+  ├── Profile Setup (age, weight, height)
+  ├── HR Device Pairing (optional)
+  ├── Health Connect Permission
+  └── Daily Target Selection
+
+Main App (BottomNav)
+  ├── Home
+  │     ├── Today's Summary Card
+  │     ├── Streak Counter
+  │     └── Quick Start Workout button
+  ├── Workout
+  │     ├── Pre-Workout (device check, template select)
+  │     ├── Live Workout (HR gauge, zone bar, points counter)
+  │     └── Post-Workout Summary
+  ├── History
+  │     ├── Calendar View
+  │     ├── Workout Detail
+  │     └── Trends (weekly/monthly charts)
+  └── Profile
+        ├── Edit Profile
+        ├── Zone Settings
+        ├── Connected Devices
+        ├── Health Connect Settings
+        └── App Preferences
 ```
 
 ---
 
-## 5. Development Phases
+## 7. Burn Points Algorithm (Detail)
 
-### Phase 1 — MVP Core (Weeks 1-4)
+```kotlin
+class BurnPointsCalculator(private val maxHr: Int) {
 
-**Goal:** Minimal working app — connect HR monitor, show zones, earn points.
+    fun zoneFor(heartRate: Int): Int = when {
+        heartRate < (maxHr * 0.50) -> 0  // below tracking
+        heartRate < (maxHr * 0.61) -> 1  // Rest
+        heartRate < (maxHr * 0.71) -> 2  // Warm-Up
+        heartRate < (maxHr * 0.84) -> 3  // Active
+        heartRate < (maxHr * 0.92) -> 4  // Push
+        else                        -> 5  // Peak
+    }
 
-| Feature | Description |
-|---------|-------------|
-| F2 | BLE HR Monitor pairing |
-| F3 | Real-time HR display |
-| F4 | HR Zone Engine (5 zones) |
-| F5 | Burn Points calculation |
-| F8 | Basic workout history |
-| F119 | Quick Start (ADHD P0) |
-| F140 | Safe Exit Protocol (ASD P0) |
-| Basic UI | Home, workout, summary screens |
+    fun pointsPerMinute(zone: Int): Int = when (zone) {
+        3    -> 1
+        4    -> 2
+        5    -> 3
+        else -> 0
+    }
 
-**ND in Phase 1:** Quick Start and Safe Exit are P0 features that benefit all users, not just ND users. They ship in MVP as core UX.
+    /**
+     * Given a list of (timestamp, heartRate) samples for a finished workout,
+     * calculate total Burn Points.
+     * Samples are expected roughly every 1 second.
+     */
+    fun calculate(samples: List<HrSample>): BurnResult {
+        val zoneDurations = IntArray(6) // index 0-5, seconds per zone
 
-### Phase 2 — ADHD Core + Gamification (Weeks 5-8)
+        samples.zipWithNext { a, b ->
+            val zone = zoneFor(a.heartRate)
+            val durationSec = (b.timestamp - a.timestamp).inWholeSeconds.toInt()
+            zoneDurations[zone] += durationSec
+        }
 
-**Goal:** ADHD Focus Mode operational. Core gamification live.
+        val totalPoints = (3..5).sumOf { zone ->
+            (zoneDurations[zone] / 60) * pointsPerMinute(zone)
+        }
 
-| Feature | Description |
-|---------|-------------|
-| F1 | Onboarding with ND profile selection |
-| F7 | Streak system |
-| F10 | Settings (including ND settings) |
-| F111 | Micro-Reward Engine (P0) |
-| F112 | "Just 5 Min" Mode (P0) |
-| F114 | Streak Multiplier (P1) |
-| F115 | Time Blindness Timer (P1) |
-| F119 | Quick Start refinement |
-| F120 | XP & Leveling (P1) |
-| F121 | Daily Quests (P1) |
-| F125 | Task Chunking (P1) |
-| F130 | Celebration Overkill (P1) |
-| ND infra | NdProfileManager, NdSettingsApplier |
-
-### Phase 3 — ASD Core + Voice Coach (Weeks 9-12)
-
-**Goal:** ASD Comfort Mode operational. Voice coach with all styles.
-
-| Feature | Description |
-|---------|-------------|
-| F6 | Voice Coach (Standard + Hype + Literal) |
-| F9 | Haptic Feedback system |
-| F131 | Sensory Control Panel (P0) |
-| F132 | Routine Builder & Scheduler (P1) |
-| F133 | Literal Voice Coach Mode (P1) |
-| F134 | Predictable UI Lock (P0) |
-| F135 | Social Pressure Shield (P1) |
-| F137 | Transition Warnings (P1) |
-| F138 | Calm Celebration Mode (P1) |
-| F139 | Predictable Reward Schedule (P1) |
-| F142 | Minimal Mode (P1) |
-| AuDHD | AuDhdConflictResolver, combined defaults |
-
-### Phase 4 — Social & Polish (Weeks 13-16)
-
-**Goal:** Social features, leaderboards, full settings.
-
-| Feature | Description |
-|---------|-------------|
-| F11 | Workout Timer (advanced) |
-| F13 | Post-Workout Summary |
-| F14 | Achievement Badges |
-| F15 | Weekly Goals |
-| F20 | Leaderboards (respects F135 shield) |
-| F21 | Activity Feed (respects F135 shield) |
-| F22 | Friend System |
-| F113 | Variable Reward Drops (P1) |
-| F127 | Anti-Burnout System (P2) |
-
-### Phase 5 — Advanced ND + Data (Weeks 17-20)
-
-**Goal:** Deep ND features, data analytics, polish.
-
-| Feature | Description |
-|---------|-------------|
-| F116 | Novelty Engine (P2) |
-| F117 | Body Double Mode (P2) |
-| F122 | Progress Visualisation (P2) |
-| F126 | Reward Shop (P2) |
-| F129 | Parallel Stimulation (P2) |
-| F136 | Deep Data Dashboard (P2) |
-| F141 | Texture & Pattern Zones (P2) |
-| F143 | Pre-Workout Visual Schedule (P2) |
-| F144 | Consistent Audio Palette (P2) |
-| F145 | Shutdown Routine (P2) |
-
-### Phase 6 — Advanced & Niche (Weeks 21+)
-
-**Goal:** Remaining P3 features, optimisation, accessibility audit.
-
-| Feature | Description |
-|---------|-------------|
-| F118 | Hyperfocus Badge (P3) |
-| F123 | Fidget Haptics (P3) |
-| F124 | Accountability Alarm (P3) |
-| F128 | Social Contracts (P3) |
-| F12 | Cool-Down Detection |
-| F16 | Calorie Estimation |
-| F17 | Workout Types / Templates |
-| F18 | Rest Timer |
-| F19 | Progress Dashboard (general) |
-| | Accessibility audit, performance optimisation |
+        return BurnResult(
+            totalPoints = totalPoints,
+            zoneDurations = zoneDurations.toList()
+        )
+    }
+}
+```
 
 ---
 
-## 6. Summary
+## 8. IP & Legal Safeguards
 
-PulseFit is a **heart-rate zone fitness app** that combines real-time physiological data with gamification to motivate users across all neurotypes.
-
-**What makes PulseFit different:**
-
-- **Zone-based Burn Points** tie rewards to real effort, not vanity metrics
-- **ADHD Focus Mode** (F111-F130) provides the dopamine, novelty, and low friction that ADHD brains need to initiate and sustain exercise
-- **ASD Comfort Mode** (F131-F145) provides the predictability, sensory control, and literal communication that autistic users need to feel safe and in control
-- **AuDHD Combined Mode** carefully resolves conflicts between ADHD and ASD needs with thoughtful defaults
-- **Every ND setting is individually tuneable** — profiles set defaults, users set preferences
-
-PulseFit is positioned as the **first neurodivergent-aware fitness app** — not as a niche product, but as a better product for everyone. Sensory controls, predictable rewards, low-friction starts, and honest communication benefit all users. The ND modes simply make these benefits the default for users who need them most.
+| Risk Area              | Mitigation                                                                               |
+|------------------------|------------------------------------------------------------------------------------------|
+| **App Name**           | "PulseFit" — run trademark search via USPTO TESS before launch                           |
+| **Points System Name** | "Burn Points" — generic fitness terminology, not derived from any brand name              |
+| **Zone Names**         | Rest / Warm-Up / Active / Push / Peak — common fitness vocabulary                        |
+| **Zone Colours**       | Grey / Blue / Green / Orange / Red — standard HR zone palette used industry-wide          |
+| **Scoring Formula**    | Original points-per-minute-per-zone model, not copied from any proprietary algorithm      |
+| **UI/UX**              | Original screen layouts; do not replicate any specific brand's dashboard design           |
+| **Marketing**          | Never reference competitors by name; position as "heart-rate-zone training" generically   |
 
 ---
 
-*See also:*
-- [FEATURES.md](FEATURES.md) — Complete feature list with priorities and ND annotations
-- [NEURODIVERGENT_DESIGN.md](NEURODIVERGENT_DESIGN.md) — Full ND design philosophy, all features F111-F145, data model
+## 9. Monetisation Options
+
+| Model              | Detail                                                          |
+|--------------------|-----------------------------------------------------------------|
+| **Free Tier**      | Full solo workout tracking, basic history, Health Connect sync  |
+| **Premium ($4.99/mo)** | Group mode, advanced analytics, AI coach, custom templates  |
+| **Gym/Studio License** | White-label instructor dashboard, bulk accounts             |
+
+---
+
+## 10. Project Structure
+
+```
+app/
+├── src/main/kotlin/com/pulsefit/
+│   ├── di/                     # Hilt modules
+│   ├── data/
+│   │   ├── local/              # Room DB, DAOs, DataStore
+│   │   ├── health/             # Health Connect data source
+│   │   ├── ble/                # Bluetooth LE heart rate service
+│   │   └── repository/         # Repository implementations
+│   ├── domain/
+│   │   ├── model/              # Domain models (Workout, Zone, BurnResult)
+│   │   ├── calculator/         # BurnPointsCalculator, AfterBurnEstimator
+│   │   └── usecase/            # Use cases (StartWorkout, GetHistory, etc.)
+│   └── ui/
+│       ├── theme/              # Material 3 theme, colours, typography
+│       ├── onboarding/         # Onboarding screens
+│       ├── home/               # Home tab
+│       ├── workout/            # Live workout, pre/post screens
+│       ├── history/            # History & trends
+│       ├── profile/            # Profile & settings
+│       └── components/         # Shared composables (ZoneBar, HrGauge, etc.)
+├── src/main/res/
+│   ├── values/                 # Strings, colours, dimensions
+│   └── drawable/               # Icons, illustrations
+└── build.gradle.kts
+```
+
+---
+
+## 11. Development Phases
+
+### Phase 1 — Foundation
+- Project scaffolding (Compose, Hilt, Room, Navigation)
+- User profile entity + onboarding flow
+- Zone calculation engine + unit tests
+
+### Phase 2 — Core Workout Loop
+- BLE heart rate connection service
+- Live workout screen with real-time zone display
+- Burn Points accumulator
+- Workout summary screen + Room persistence
+
+### Phase 3 — Health Connect & History
+- Health Connect read/write integration
+- Workout history list + calendar view
+- Weekly/monthly trend charts
+
+### Phase 4 — Polish & Launch
+- Notifications (reminders, streaks)
+- Settings & zone customisation
+- UI polish, animations, accessibility
+- Play Store listing, privacy policy, beta test
+
+### Phase 5 — Post-Launch (v1.x)
+- Group workout mode + instructor dashboard
+- Workout templates & custom builder
+- Social features, leaderboards, badges
+- Wear OS companion
+- AI coach suggestions
+
+---
+
+## 12. Testing Strategy
+
+| Layer      | Approach                                           |
+|-----------|---------------------------------------------------|
+| Unit       | JUnit 5 + Turbine (Flow testing) — domain logic   |
+| Integration| Room in-memory DB tests, Health Connect test shims |
+| UI         | Compose UI tests (createComposeRule)               |
+| E2E        | Manual + Firebase Test Lab on real devices          |
+
+---
+
+## 13. Summary
+
+PulseFit delivers the same motivating, heart-rate-zone-driven workout experience that has proven popular in boutique fitness — but as a standalone, brand-neutral Android app. By using standard HR zone science, an original "Burn Points" scoring system, and deep integration with Health Connect and Bluetooth LE wearables, PulseFit can serve both individual users and gym/studio operators without infringing on any existing brand's intellectual property.
