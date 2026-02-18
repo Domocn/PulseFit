@@ -2,30 +2,41 @@
 
 ## What It Is
 
-PulseFit is a heart-rate zone fitness app that connects to Bluetooth heart rate monitors and turns workouts into a real-time points game. Users earn **Burn Points** by exercising in their target heart rate zones. The app stands apart by offering dedicated **ADHD** and **ASD** experience modes — making it the first neurodivergent-aware fitness app on the market.
+PulseFit is a heart-rate-zone training app with an original points system called **Burn Points**. Users earn 1-3 points per minute spent in elevated HR zones (Active / Push / Peak), with a default daily target of 12 points and streak bonuses for consistency. The app stands apart by offering dedicated **ADHD** and **ASD** experience modes — making it the first neurodivergent-aware fitness app on the market.
 
 ## The Problem
 
 Fitness apps assume everyone is motivated the same way. ADHD users (10% of adults) abandon apps because of friction, boredom, and time blindness. Autistic users (2-3% of adults) abandon apps because of sensory overload, unpredictable UI changes, and social pressure. Neither group is served by existing products.
 
-## Core Screens & Logic
+## Zones & Scoring
+
+| Zone | % Max HR | Burn Points / Min |
+|------|----------|-------------------|
+| Rest | < 50% | 0 |
+| Warm-Up | 50-59% | 0 |
+| Active | 60-69% | 1 |
+| Push | 70-84% | 2 |
+| Peak | 85-100% | 3 |
+
+Daily target: **12 Burn Points** (default, adjustable). Streak bonuses for consecutive days.
+
+## IP-Safe Naming
+
+- **App:** PulseFit (working name — trademark search recommended before launch)
+- **Points:** Burn Points — generic fitness vocabulary
+- **Zones:** Rest / Warm-Up / Active / Push / Peak — standard HR terminology
+- None of the naming, zone labels, colours, or scoring formulas are derived from any existing brand
+
+## Core Screens
 
 | Screen | Function |
 |--------|----------|
 | **Onboarding** | Name, age, HR monitor pairing, optional ND profile selection (Standard / ADHD / ASD / Both) |
-| **Home** | One-tap "GO" button, today's workout (from routine or quick start), streak counter, daily quests |
+| **Home** | One-tap "GO" button, today's workout, streak counter, daily target progress, daily quests |
 | **Live Workout** | Real-time heart rate, current zone (colour + pattern), Burn Points counter, elapsed time, voice coach |
 | **Summary** | Duration, points earned, zone breakdown, XP progress bar |
-| **History** | List of past workouts with stats, filterable by date |
-| **Settings** | Profile, HR zones, ND mode toggles, Sensory Control Panel (animation/sound/haptic intensity sliders) |
-
-## Key Data
-
-- **UserProfile**: name, age, max HR, ND profile, XP level, streak count, sensory preferences
-- **Workout**: start/end time, duration, Burn Points, avg/max HR, zone time breakdown
-- **HR Readings**: per-second heart rate with zone and points (from BLE sensor)
-- **Weekly Routine** (ASD): fixed schedule — day, time, workout structure, target zone
-- **Daily Quests** (ADHD): 3 daily goals with XP rewards, auto-generated each morning
+| **History** | Past workouts with stats, filterable by date |
+| **Settings** | Profile, HR zones, ND mode toggles, Sensory Control Panel (animation/sound/haptic sliders) |
 
 ## What Makes It Different
 
@@ -35,24 +46,25 @@ Fitness apps assume everyone is motivated the same way. ADHD users (10% of adult
 
 **Combined Mode** — for users with both ADHD and ASD. Defaults to calm UI (ASD) with structured micro-rewards (ADHD). Every setting individually tuneable.
 
-## Technical Needs
+## Tech Stack
 
-| Capability | Required For |
-|------------|-------------|
-| **Bluetooth LE** | Heart rate monitor connection (Heart Rate Service UUID 0x180D) |
-| **Real-time data** | 1Hz heart rate updates driving zone calculation and point accumulation |
-| **Text-to-speech** | Voice coach with 3 styles (standard, hype, literal) |
-| **Haptic engine** | Zone changes, point feedback, fidget/calming patterns |
-| **Local database** | Workout history, HR readings, user preferences, routines |
-| **Scheduled notifications** | Daily workout reminders, quest generation |
-| **Background processing** | HR tracking continues when screen off or app backgrounded |
+Kotlin, Jetpack Compose, Material 3, MVVM + Clean Architecture, Room, Hilt, Coroutines/Flow
+
+## Integrations
+
+| Integration | Scope |
+|-------------|-------|
+| **Health Connect (Google)** | Read HR data from any connected wearable; write workout summaries back |
+| **Bluetooth LE** | Direct pairing with chest straps and wrist monitors (standard HR profile 0x180D) |
+| **Post-MVP:** Fitbit, Garmin, Samsung | Direct APIs for deeper wearable integration |
+| **Post-MVP:** Wear OS | Companion app for on-wrist workout display |
 
 ## Build Priority
 
-**Phase 1 (MVP):** BLE pairing, live HR + zones, Burn Points, quick start, safe exit, sensory control panel
-**Phase 2:** ADHD mode (micro-rewards, Just 5 Min, XP, streaks, quests, celebrations)
-**Phase 3:** ASD mode (routine builder, literal voice coach, UI lock, social shield, minimal mode, transition warnings)
-**Phase 4:** Social features, leaderboards, deep data dashboard, reward shop
+**Phase 1 — Foundation:** Scaffolding, onboarding, zone engine, BLE + Health Connect pairing, Burn Points, quick start, safe exit, sensory control panel
+**Phase 2 — ADHD Core:** Micro-rewards, Just 5 Min, XP/leveling, streaks, daily quests, celebrations
+**Phase 3 — ASD Core:** Routine builder, literal voice coach, UI lock, social shield, minimal mode, transition warnings
+**Phase 4 — Social & Data:** Leaderboards, deep data dashboard, reward shop, Fitbit/Garmin/Samsung/Wear OS integrations
 
 ## Target
 
