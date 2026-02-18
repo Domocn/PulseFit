@@ -59,12 +59,23 @@ Kotlin, Jetpack Compose, Material 3, MVVM + Clean Architecture, Room, Hilt, Coro
 | **Post-MVP:** Fitbit, Garmin, Samsung | Direct APIs for deeper wearable integration |
 | **Post-MVP:** Wear OS | Companion app for on-wrist workout display |
 
-## Build Priority
+## Development Phases
 
-**Phase 1 — Foundation:** Scaffolding, onboarding, zone engine, BLE + Health Connect pairing, Burn Points, quick start, safe exit, sensory control panel
-**Phase 2 — ADHD Core:** Micro-rewards, Just 5 Min, XP/leveling, streaks, daily quests, celebrations
-**Phase 3 — ASD Core:** Routine builder, literal voice coach, UI lock, social shield, minimal mode, transition warnings
-**Phase 4 — Social & Data:** Leaderboards, deep data dashboard, reward shop, Fitbit/Garmin/Samsung/Wear OS integrations
+1. **Foundation** — Scaffolding, onboarding, zone engine
+2. **Core Workout Loop** — BLE pairing, live workout screen, Burn Points accumulator, safe exit, sensory control panel
+3. **Health Connect & History** — Health Connect integration, workout history, trends
+4. **Polish & Play Store Launch** — UI polish, accessibility audit, Play Store submission
+5. **Post-Launch** — Group mode, workout templates, social features, AI coach, Fitbit/Garmin/Samsung/Wear OS
+
+ND features woven throughout: ADHD core (micro-rewards, Just 5 Min, XP, streaks) in Phases 2-3; ASD core (routine builder, literal voice coach, UI lock, social shield) in Phases 3-4.
+
+## Monetisation
+
+| Tier | Price | Includes |
+|------|-------|----------|
+| **Free** | $0 | Full solo tracking, all zones, Burn Points, streaks, ND modes |
+| **Premium** | $4.99/mo | Group mode, advanced analytics, AI coaching |
+| **White-Label** | Custom | Gym/studio licensing with custom branding |
 
 ## Target
 
