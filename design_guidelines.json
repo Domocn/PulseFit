@@ -1,0 +1,121 @@
+{
+  "identity": {
+    "name": "PulseFit",
+    "mission": "The first neurodivergent-aware fitness app that adapts to your brain.",
+    "personas": {
+      "standard": "Cyber-Sport athlete. High contrast, data-rich.",
+      "adhd": "Dopamine chaser. Gamified, kinetic, surprising.",
+      "asd": "Zen master. Predictable, calm, low-sensory."
+    }
+  },
+  "typography": {
+    "font_family": {
+      "headings": "\"Chivo\", sans-serif",
+      "body": "\"Manrope\", sans-serif",
+      "mono": "\"JetBrains Mono\", monospace"
+    },
+    "installation_command": "yarn add @fontsource/chivo @fontsource/manrope @fontsource/jetbrains-mono",
+    "scale": {
+      "display": "text-5xl md:text-7xl font-black tracking-tighter uppercase",
+      "h1": "text-4xl md:text-5xl font-extrabold tracking-tight",
+      "h2": "text-3xl md:text-4xl font-bold tracking-tight",
+      "h3": "text-2xl font-bold",
+      "body_lg": "text-lg leading-relaxed",
+      "body": "text-base leading-relaxed text-muted-foreground",
+      "caption": "text-sm font-medium tracking-wide uppercase text-muted-foreground"
+    }
+  },
+  "colors": {
+    "palettes": {
+      "theme_mode": "dark",
+      "background": {
+        "default": "#09090b",
+        "card": "#18181b",
+        "subtle": "#27272a"
+      },
+      "zones": {
+        "rest": { "standard": "#71717a", "asd": "#a1a1aa" },
+        "warmup": { "standard": "#3b82f6", "asd": "#93c5fd" },
+        "active": { "standard": "#22c55e", "asd": "#86efac" },
+        "push": { "standard": "#f97316", "asd": "#fdba74" },
+        "peak": { "standard": "#ef4444", "asd": "#fca5a5" }
+      },
+      "brand": {
+        "primary": "#8b5cf6",
+        "secondary": "#10b981",
+        "accent": "#f43f5e"
+      }
+    },
+    "gradients": {
+      "active_zone": "bg-gradient-to-r from-emerald-500 to-green-500",
+      "push_zone": "bg-gradient-to-r from-orange-500 to-amber-500",
+      "peak_zone": "bg-gradient-to-r from-red-600 to-rose-500",
+      "glass": "bg-white/5 backdrop-blur-xl border-white/10"
+    }
+  },
+  "layout_strategy": {
+    "containers": "max-w-md mx-auto md:max-w-2xl min-h-screen relative overflow-hidden",
+    "spacing": {
+      "section_gap": "gap-8",
+      "card_padding": "p-6 md:p-8",
+      "touch_target": "min-h-[48px] min-w-[48px]"
+    },
+    "grids": {
+      "dashboard": "grid grid-cols-2 gap-4",
+      "stats": "grid grid-cols-1 md:grid-cols-3 gap-6"
+    }
+  },
+  "component_styles": {
+    "buttons": {
+      "primary": "h-12 px-8 rounded-full bg-primary text-primary-foreground font-bold hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(139,92,246,0.5)]",
+      "ghost": "h-12 px-6 rounded-full hover:bg-white/10 text-white font-medium transition-colors",
+      "destructive": "h-12 px-8 rounded-full bg-red-600 text-white font-bold hover:bg-red-700"
+    },
+    "cards": {
+      "default": "rounded-3xl border border-white/10 bg-zinc-900/50 backdrop-blur-md shadow-xl",
+      "highlight": "rounded-3xl border border-primary/50 bg-primary/10 backdrop-blur-md shadow-[0_0_30px_rgba(139,92,246,0.2)]",
+      "asd_comfort": "rounded-xl border-2 border-zinc-700 bg-zinc-900 shadow-none"
+    }
+  },
+  "visual_enhancers": {
+    "textures": {
+      "noise": "bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay fixed inset-0 pointer-events-none z-50",
+      "scanlines": "bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-40 bg-[length:100%_4px,3px_100%] pointer-events-none fixed inset-0 opacity-20"
+    },
+    "motion": {
+      "default": "animate-in fade-in zoom-in-95 duration-300",
+      "hover": "hover:-translate-y-1 hover:shadow-lg transition-transform duration-200",
+      "reduced": "transition-none animate-none"
+    }
+  },
+  "images": {
+    "hero_runner": "https://images.unsplash.com/photo-1557994758-44f384fed71e?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "zen_mode_bg": "https://images.unsplash.com/photo-1769671926606-fef1e790185d?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "texture_overlay": "https://images.unsplash.com/photo-1764109799223-d9deddd939e8?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "runner_action": "https://images.unsplash.com/photo-1668047669102-7fa502515058?crop=entropy&cs=srgb&fm=jpg&q=85"
+  },
+  "accessibility": {
+    "contrast_check": "Ensure all text has 4.5:1 contrast against background.",
+    "touch_targets": "All interactive elements must be at least 44x44px.",
+    "asd_mode_rules": [
+      "No flashing animations",
+      "Muted colors only",
+      "Literal labels (e.g., 'Start Workout' instead of 'GO')",
+      "No background music auto-play"
+    ]
+  },
+  "instructions_to_main_agent": [
+    "1. Setup Shadcn UI with 'zinc' base color.",
+    "2. Install 'framer-motion' for ADHD micro-interactions and 'lucide-react' for icons.",
+    "3. Create a global 'ThemeContext' that manages 'mode' (standard | adhd | asd).",
+    "4. When 'asd' mode is active, override all 'framer-motion' components to have { duration: 0 }.",
+    "5. Use the 'zones' color object for all heart rate displays. Do not hardcode colors in components.",
+    "6. Build the 'Sensory Control Panel' as a priority feature in Settings."
+  ],
+  "universal_guidelines": [
+    "Do not use gradients for text.",
+    "Avoid centered layouts for heavy text.",
+    "Use pill-shaped buttons for primary actions.",
+    "Add data-testid to all interactive elements."
+  ]
+}
