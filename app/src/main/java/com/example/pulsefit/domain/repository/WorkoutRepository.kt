@@ -1,0 +1,17 @@
+package com.example.pulsefit.domain.repository
+
+import com.example.pulsefit.domain.model.HeartRateReading
+import com.example.pulsefit.domain.model.Workout
+import kotlinx.coroutines.flow.Flow
+
+interface WorkoutRepository {
+    suspend fun createWorkout(workout: Workout): Long
+    suspend fun updateWorkout(workout: Workout)
+    suspend fun getWorkoutById(id: Long): Workout?
+    fun getWorkoutByIdFlow(id: Long): Flow<Workout?>
+    fun getAllWorkouts(): Flow<List<Workout>>
+    fun getTodayBurnPoints(): Flow<Int>
+    suspend fun saveHeartRateReading(reading: HeartRateReading)
+    fun getReadingsForWorkout(workoutId: Long): Flow<List<HeartRateReading>>
+    suspend fun getReadingsForWorkoutOnce(workoutId: Long): List<HeartRateReading>
+}
