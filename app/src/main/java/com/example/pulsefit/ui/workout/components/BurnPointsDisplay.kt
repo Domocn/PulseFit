@@ -6,7 +6,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.sp
-import com.example.pulsefit.ui.theme.PulseSecondary
 
 @Composable
 fun BurnPointsDisplay(points: Int) {
@@ -14,7 +13,7 @@ fun BurnPointsDisplay(points: Int) {
         Text(
             text = "$points",
             style = MaterialTheme.typography.displaySmall.copy(fontSize = 48.sp),
-            color = PulseSecondary
+            color = MaterialTheme.colorScheme.secondary
         )
         Text(
             text = "Burn Points",

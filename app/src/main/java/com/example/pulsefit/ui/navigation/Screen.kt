@@ -13,4 +13,11 @@ sealed class Screen(val route: String) {
     }
     data object History : Screen("history")
     data object Settings : Screen("settings")
+    data object SensorySettings : Screen("sensory_settings")
+    data object Achievements : Screen("achievements")
+    data object RoutineBuilder : Screen("routine_builder")
+    data object WorkoutTemplates : Screen("workout_templates")
+    data object DeepData : Screen("deep_data")
+    data object RewardShop : Screen("reward_shop")
+    data object ProgressDashboard : Screen("progress_dashboard")
 }

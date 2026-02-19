@@ -1,18 +1,19 @@
 package com.example.pulsefit.ui.components
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import com.example.pulsefit.ui.theme.PulsePrimary
-import com.example.pulsefit.ui.theme.PulseSurfaceVariant
 
 @Composable
 fun BurnPointsRing(current: Int, target: Int, modifier: Modifier = Modifier) {
     val progress = if (target > 0) (current.toFloat() / target).coerceIn(0f, 1f) else 0f
+    val trackColor = MaterialTheme.colorScheme.surfaceVariant
+    val progressColor = MaterialTheme.colorScheme.primary
 
     Canvas(modifier = modifier) {
         val strokeWidth = 16f
@@ -25,7 +26,7 @@ fun BurnPointsRing(current: Int, target: Int, modifier: Modifier = Modifier) {
 
         // Background ring
         drawArc(
-            color = PulseSurfaceVariant,
+            color = trackColor,
             startAngle = -90f,
             sweepAngle = 360f,
             useCenter = false,
@@ -36,7 +37,7 @@ fun BurnPointsRing(current: Int, target: Int, modifier: Modifier = Modifier) {
 
         // Progress ring
         drawArc(
-            color = PulsePrimary,
+            color = progressColor,
             startAngle = -90f,
             sweepAngle = 360f * progress,
             useCenter = false,

@@ -22,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.pulsefit.ui.theme.PulsePrimary
 
 @Composable
 fun ProfileSetupScreen(
@@ -35,9 +34,9 @@ fun ProfileSetupScreen(
     val height by viewModel.height.collectAsState()
 
     val textFieldColors = OutlinedTextFieldDefaults.colors(
-        focusedBorderColor = PulsePrimary,
-        cursorColor = PulsePrimary,
-        focusedLabelColor = PulsePrimary
+        focusedBorderColor = MaterialTheme.colorScheme.primary,
+        cursorColor = MaterialTheme.colorScheme.primary,
+        focusedLabelColor = MaterialTheme.colorScheme.primary
     )
 
     Column(
@@ -90,7 +89,7 @@ fun ProfileSetupScreen(
             Text(
                 text = "Max Heart Rate: ${viewModel.maxHeartRate} bpm",
                 style = MaterialTheme.typography.bodyMedium,
-                color = PulsePrimary
+                color = MaterialTheme.colorScheme.primary
             )
         }
 
@@ -126,7 +125,7 @@ fun ProfileSetupScreen(
                 .fillMaxWidth()
                 .height(56.dp),
             enabled = viewModel.isProfileValid(),
-            colors = ButtonDefaults.buttonColors(containerColor = PulsePrimary)
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
             Text(
                 text = "Next",

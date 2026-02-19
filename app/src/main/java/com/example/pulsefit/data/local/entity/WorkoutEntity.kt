@@ -14,5 +14,9 @@ data class WorkoutEntity(
     val burnPoints: Int = 0,
     val averageHeartRate: Int = 0,
     val maxHeartRate: Int = 0,
-    val zoneTimeJson: String = "{}"
+    val zoneTimeJson: String = "{}",
+    val xpEarned: Int = 0,
+    val isQuickStart: Boolean = false,
+    val isJustFiveMin: Boolean = false,
+    val estimatedCalories: Int? = null
 )

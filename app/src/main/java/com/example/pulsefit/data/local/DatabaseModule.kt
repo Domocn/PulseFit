@@ -33,4 +33,16 @@ object DatabaseModule {
 
     @Provides
     fun provideHeartRateReadingDao(db: PulseFitDatabase) = db.heartRateReadingDao()
+
+    @Provides
+    fun provideSensoryPreferencesDao(db: PulseFitDatabase) = db.sensoryPreferencesDao()
+
+    @Provides
+    fun provideWeeklyRoutineDao(db: PulseFitDatabase) = db.weeklyRoutineDao()
+
+    @Provides
+    fun provideDailyQuestDao(db: PulseFitDatabase) = db.dailyQuestDao()
+
+    @Provides
+    fun provideAchievementDao(db: PulseFitDatabase) = db.achievementDao()
 }

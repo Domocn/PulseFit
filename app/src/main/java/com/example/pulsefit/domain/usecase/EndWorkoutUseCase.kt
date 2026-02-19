@@ -1,13 +1,14 @@
 package com.example.pulsefit.domain.usecase
 
 import com.example.pulsefit.data.model.HeartRateZone
-import com.example.pulsefit.domain.model.Workout
+import com.example.pulsefit.domain.repository.UserRepository
 import com.example.pulsefit.domain.repository.WorkoutRepository
 import java.time.Instant
 import javax.inject.Inject
 
 class EndWorkoutUseCase @Inject constructor(
-    private val workoutRepository: WorkoutRepository
+    private val workoutRepository: WorkoutRepository,
+    private val userRepository: UserRepository
 ) {
     suspend operator fun invoke(
         workoutId: Long,
@@ -31,5 +32,8 @@ class EndWorkoutUseCase @Inject constructor(
                 zoneTime = zoneTime
             )
         )
+
+        // Update user stats
+        userRepository.incrementWorkoutCount(burnPoints, now.toEpochMilli())
     }
 }

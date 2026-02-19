@@ -1,15 +1,17 @@
 package com.example.pulsefit.ui.workout.components
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
-import com.example.pulsefit.ui.theme.PulsePrimary
 
 @Composable
 fun MiniHeartRateGraph(readings: List<Int>, modifier: Modifier = Modifier) {
+    val lineColor = MaterialTheme.colorScheme.primary
+
     Canvas(modifier = modifier) {
         if (readings.size < 2) return@Canvas
 
@@ -29,7 +31,7 @@ fun MiniHeartRateGraph(readings: List<Int>, modifier: Modifier = Modifier) {
 
         drawPath(
             path = path,
-            color = PulsePrimary,
+            color = lineColor,
             style = Stroke(width = 3f)
         )
 
@@ -38,7 +40,7 @@ fun MiniHeartRateGraph(readings: List<Int>, modifier: Modifier = Modifier) {
             val lastX = (readings.size - 1) * stepX
             val lastY = size.height - ((readings.last() - minHr).toFloat() / range * size.height)
             drawCircle(
-                color = PulsePrimary,
+                color = lineColor,
                 radius = 6f,
                 center = Offset(lastX, lastY)
             )
