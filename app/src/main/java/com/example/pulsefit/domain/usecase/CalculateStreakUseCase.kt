@@ -2,7 +2,6 @@ package com.example.pulsefit.domain.usecase
 
 import com.example.pulsefit.domain.repository.UserRepository
 import com.example.pulsefit.domain.repository.WorkoutRepository
-import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import javax.inject.Inject
@@ -19,7 +18,7 @@ class CalculateStreakUseCase @Inject constructor(
         val today = LocalDate.now(zone)
         val todayEpochDay = today.toEpochDay()
 
-        val workoutDays = days.map { it }.toSet()
+        val workoutDays = days.toSet()
 
         var streak = 0
         var checkDay = todayEpochDay
@@ -28,9 +27,17 @@ class CalculateStreakUseCase @Inject constructor(
         if (checkDay !in workoutDays) {
             checkDay = todayEpochDay - 1
             if (checkDay !in workoutDays) {
-                // Check if shield should save streak
+                // Check if owned streak shield should save streak
                 val profile = userRepository.getUserProfileOnce()
-                return if (profile != null && !profile.streakShieldUsedThisWeek && profile.currentStreak > 0) {
+                return if (profile != null && profile.streakShieldsOwned > 0 && profile.currentStreak > 0) {
+                    // Consume one streak shield
+                    userRepository.saveUserProfile(
+                        profile.copy(streakShieldsOwned = profile.streakShieldsOwned - 1)
+                    )
+                    userRepository.updateStreak(profile.currentStreak, shieldUsed = true)
+                    profile.currentStreak
+                } else if (profile != null && !profile.streakShieldUsedThisWeek && profile.currentStreak > 0) {
+                    // Legacy fallback: weekly shield
                     userRepository.updateStreak(profile.currentStreak, shieldUsed = true)
                     profile.currentStreak
                 } else {

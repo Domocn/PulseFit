@@ -1,6 +1,8 @@
 package com.example.pulsefit.ui.workout
 
+import android.view.WindowManager
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -19,16 +21,23 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -37,10 +46,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.pulsefit.data.model.HeartRateZone
+import com.example.pulsefit.ui.theme.ZoneActive
+import com.example.pulsefit.ui.theme.ZonePeak
+import com.example.pulsefit.ui.theme.ZonePush
+import com.example.pulsefit.ui.theme.ZoneRest
+import com.example.pulsefit.ui.theme.ZoneWarmUp
 import com.example.pulsefit.ui.workout.components.BurnPointsDisplay
 import com.example.pulsefit.ui.workout.components.HeartRateDisplay
 import com.example.pulsefit.ui.workout.components.MiniHeartRateGraph
@@ -64,46 +81,128 @@ fun WorkoutScreen(
     val justFiveMinPromptShown by viewModel.justFiveMinPromptShown.collectAsState()
     val justFiveMinExtended by viewModel.justFiveMinExtended.collectAsState()
     val currentChunk by viewModel.currentChunk.collectAsState()
+    val isPaused by viewModel.isPaused.collectAsState()
+    val isMinimalMode by viewModel.isMinimalMode.collectAsState()
+    val unlockedAchievements by viewModel.unlockedAchievements.collectAsState()
+    val estimatedCalories by viewModel.estimatedCalories.collectAsState()
 
-    // Micro-reward animation state
-    var rewardText by remember { mutableStateOf<String?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Overlay text for rewards/drops/warnings
+    var overlayText by remember { mutableStateOf<String?>(null) }
+    var warningText by remember { mutableStateOf<String?>(null) }
+
+    // Keep screen on via FLAG_KEEP_SCREEN_ON
+    val context = LocalContext.current
+    DisposableEffect(Unit) {
+        val window = (context as? android.app.Activity)?.window
+        window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        onDispose {
+            window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.start(workoutId)
     }
 
     LaunchedEffect(isFinished) {
-        if (isFinished) {
-            onEnd(workoutId)
-        }
+        if (isFinished) onEnd(workoutId)
     }
 
     // Collect micro-reward events
     LaunchedEffect(Unit) {
         viewModel.rewardEvents.collect { event ->
-            rewardText = event.message
+            overlayText = event.message
             delay(1500)
-            rewardText = null
+            overlayText = null
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    // Collect drop events
+    LaunchedEffect(Unit) {
+        viewModel.dropEvents.collect { event ->
+            overlayText = event.message
+            delay(2000)
+            overlayText = null
+        }
+    }
+
+    // Collect transition warnings
+    LaunchedEffect(Unit) {
+        viewModel.transitionWarnings.collect { warning ->
+            warningText = warning.message
+            delay(3000)
+            warningText = null
+        }
+    }
+
+    // Show achievement unlock snackbar
+    LaunchedEffect(unlockedAchievements) {
+        if (unlockedAchievements.isNotEmpty()) {
+            val message = if (unlockedAchievements.size == 1) {
+                "Achievement unlocked: ${unlockedAchievements.first()}"
+            } else {
+                "${unlockedAchievements.size} achievements unlocked!"
+            }
+            snackbarHostState.showSnackbar(message)
+        }
+    }
+
+    // If minimal mode, render minimal screen
+    if (isMinimalMode) {
+        MinimalWorkoutScreen(
+            heartRate = heartRate,
+            zone = zone,
+            elapsedSeconds = elapsed,
+            burnPoints = burnPoints,
+            onEnd = viewModel::endWorkout
+        )
+        return
+    }
+
+    // Zone-based background tint
+    val zoneColor = when (zone) {
+        HeartRateZone.REST -> ZoneRest
+        HeartRateZone.WARM_UP -> ZoneWarmUp
+        HeartRateZone.ACTIVE -> ZoneActive
+        HeartRateZone.PUSH -> ZonePush
+        HeartRateZone.PEAK -> ZonePeak
+    }
+    val animatedBgColor by animateColorAsState(
+        targetValue = zoneColor.copy(alpha = 0.08f),
+        label = "zoneBg"
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(animatedBgColor)
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Elapsed time + chunk indicator
+            // Elapsed time + chunk indicator + pause
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
                 modifier = Modifier.fillMaxWidth()
             ) {
+                IconButton(onClick = viewModel::togglePause) {
+                    Icon(
+                        if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
+                        contentDescription = if (isPaused) "Resume" else "Pause",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
                 Text(
                     text = TimeFormatter.formatDuration(elapsed),
                     style = MaterialTheme.typography.displayMedium,
-                    color = MaterialTheme.colorScheme.onBackground
+                    color = if (isPaused) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onBackground
                 )
                 if (isJustFiveMin && !justFiveMinExtended) {
                     Spacer(modifier = Modifier.width(8.dp))
@@ -116,16 +215,39 @@ fun WorkoutScreen(
                 }
             }
 
-            // Time chunk indicator (5-min blocks)
-            Text(
-                text = "Block $currentChunk",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            if (isPaused) {
+                Text(
+                    text = "PAUSED",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            } else {
+                Text(
+                    text = "Block $currentChunk",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Zone bar
+            // Transition warning banner
+            AnimatedVisibility(visible = warningText != null) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+                ) {
+                    Text(
+                        text = warningText ?: "",
+                        modifier = Modifier.padding(12.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             ZoneBar(
                 currentZone = zone,
                 modifier = Modifier
@@ -135,15 +257,10 @@ fun WorkoutScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Heart rate display
-            HeartRateDisplay(
-                heartRate = heartRate,
-                zone = zone
-            )
+            HeartRateDisplay(heartRate = heartRate, zone = zone)
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Mini graph
             MiniHeartRateGraph(
                 readings = recentReadings,
                 modifier = Modifier
@@ -153,12 +270,27 @@ fun WorkoutScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Burn points
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 BurnPointsDisplay(points = burnPoints)
+                if (estimatedCalories > 0) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "$estimatedCalories",
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "kcal",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.weight(1f))
@@ -175,16 +307,8 @@ fun WorkoutScreen(
                         modifier = Modifier.padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(
-                            text = "5 minutes done!",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.secondary
-                        )
-                        Text(
-                            text = "You made it. Keep going?",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Text("5 minutes done!", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.secondary)
+                        Text("You made it. Keep going?", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(modifier = Modifier.height(12.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -204,31 +328,26 @@ fun WorkoutScreen(
                 }
             }
 
-            // End button - always visible, no confirmation (F140 Safe Exit)
+            // End button - no confirmation (F140 Safe Exit)
             Button(
                 onClick = viewModel::endWorkout,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error
-                )
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
             ) {
-                Text(
-                    text = "End Workout",
-                    style = MaterialTheme.typography.titleMedium
-                )
+                Text("End Workout", style = MaterialTheme.typography.titleMedium)
             }
         }
 
-        // Micro-reward pop animation overlay
+        // Reward/drop pop animation overlay
         AnimatedVisibility(
-            visible = rewardText != null,
+            visible = overlayText != null,
             enter = scaleIn() + fadeIn(),
             exit = scaleOut() + fadeOut(),
             modifier = Modifier.align(Alignment.Center)
         ) {
-            rewardText?.let { text ->
+            overlayText?.let { text ->
                 Text(
                     text = text,
                     fontSize = 48.sp,
@@ -243,5 +362,10 @@ fun WorkoutScreen(
                 )
             }
         }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
 }

@@ -6,6 +6,7 @@ import com.example.pulsefit.data.model.NdProfile
 import com.example.pulsefit.domain.model.UserProfile
 import com.example.pulsefit.domain.usecase.GetUserProfileUseCase
 import com.example.pulsefit.domain.usecase.SaveUserProfileUseCase
+import com.example.pulsefit.nd.NdProfileManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,7 +16,8 @@ import javax.inject.Inject
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
     private val saveUserProfile: SaveUserProfileUseCase,
-    private val getUserProfile: GetUserProfileUseCase
+    private val getUserProfile: GetUserProfileUseCase,
+    private val ndProfileManager: NdProfileManager
 ) : ViewModel() {
 
     private val _name = MutableStateFlow("")
@@ -30,11 +32,25 @@ class OnboardingViewModel @Inject constructor(
     private val _height = MutableStateFlow("")
     val height: StateFlow<String> = _height
 
+    private val _restingHr = MutableStateFlow("")
+    val restingHr: StateFlow<String> = _restingHr
+
     private val _ndProfile = MutableStateFlow(NdProfile.STANDARD)
     val ndProfile: StateFlow<NdProfile> = _ndProfile
 
+    private val _biologicalSex = MutableStateFlow("male")
+    val biologicalSex: StateFlow<String> = _biologicalSex
+
+    private val _dailyTarget = MutableStateFlow(12)
+    val dailyTarget: StateFlow<Int> = _dailyTarget
+
+    private val _maxHrOverride = MutableStateFlow("")
+    val maxHrOverride: StateFlow<String> = _maxHrOverride
+
     val maxHeartRate: Int
         get() {
+            val override = _maxHrOverride.value.toIntOrNull()
+            if (override != null && override in 120..220) return override
             val ageValue = _age.value.toIntOrNull() ?: 25
             return 220 - ageValue
         }
@@ -43,7 +59,11 @@ class OnboardingViewModel @Inject constructor(
     fun updateAge(value: String) { _age.value = value }
     fun updateWeight(value: String) { _weight.value = value }
     fun updateHeight(value: String) { _height.value = value }
+    fun updateRestingHr(value: String) { _restingHr.value = value }
     fun updateNdProfile(profile: NdProfile) { _ndProfile.value = profile }
+    fun updateBiologicalSex(sex: String) { _biologicalSex.value = sex }
+    fun updateDailyTarget(target: Int) { _dailyTarget.value = target.coerceIn(8, 30) }
+    fun updateMaxHrOverride(value: String) { _maxHrOverride.value = value }
 
     fun isProfileValid(): Boolean {
         return _name.value.isNotBlank() &&
@@ -59,10 +79,14 @@ class OnboardingViewModel @Inject constructor(
                 maxHeartRate = maxHeartRate,
                 weight = _weight.value.toFloatOrNull(),
                 height = _height.value.toFloatOrNull(),
+                restingHeartRate = _restingHr.value.toIntOrNull(),
                 ndProfile = _ndProfile.value,
+                dailyTarget = _dailyTarget.value,
+                biologicalSex = _biologicalSex.value,
                 onboardingComplete = true
             )
             saveUserProfile(profile)
+            ndProfileManager.applyProfileDefaults(profile.ndProfile)
             onComplete()
         }
     }

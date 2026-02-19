@@ -45,4 +45,7 @@ object DatabaseModule {
 
     @Provides
     fun provideAchievementDao(db: PulseFitDatabase) = db.achievementDao()
+
+    @Provides
+    fun provideNotificationPreferencesDao(db: PulseFitDatabase) = db.notificationPreferencesDao()
 }

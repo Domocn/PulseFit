@@ -9,6 +9,8 @@ import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +25,8 @@ class BleHeartRateSource @Inject constructor(
 
     companion object {
         private const val TAG = "BleHeartRateSource"
+        private const val MAX_RECONNECT_ATTEMPTS = 3
+        private const val RECONNECT_DELAY_MS = 2000L
         val HR_SERVICE_UUID: UUID = UUID.fromString("0000180d-0000-1000-8000-00805f9b34fb")
         val HR_MEASUREMENT_UUID: UUID = UUID.fromString("00002a37-0000-1000-8000-00805f9b34fb")
         val CLIENT_CONFIG_UUID: UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
@@ -31,6 +35,10 @@ class BleHeartRateSource @Inject constructor(
     private val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
     private val bluetoothAdapter: BluetoothAdapter? = bluetoothManager?.adapter
     private var gatt: BluetoothGatt? = null
+    private var lastDeviceAddress: String? = null
+    private var reconnectAttempts = 0
+    private var intentionalDisconnect = false
+    private val handler = Handler(Looper.getMainLooper())
 
     private val _heartRate = MutableStateFlow<Int?>(null)
     override val heartRate: StateFlow<Int?> = _heartRate
@@ -48,13 +56,25 @@ class BleHeartRateSource @Inject constructor(
                     Log.d(TAG, "Connected to GATT server")
                     _connectionStatus.value = ConnectionStatus.CONNECTED
                     _isConnected.value = true
+                    reconnectAttempts = 0
                     gatt.discoverServices()
                 }
                 BluetoothProfile.STATE_DISCONNECTED -> {
                     Log.d(TAG, "Disconnected from GATT server")
-                    _connectionStatus.value = ConnectionStatus.DISCONNECTED
                     _isConnected.value = false
                     _heartRate.value = null
+                    gatt?.close()
+                    // Auto-reconnect if not intentional
+                    if (!intentionalDisconnect && lastDeviceAddress != null && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+                        reconnectAttempts++
+                        _connectionStatus.value = ConnectionStatus.CONNECTING
+                        Log.d(TAG, "Auto-reconnect attempt $reconnectAttempts/$MAX_RECONNECT_ATTEMPTS")
+                        handler.postDelayed({
+                            attemptReconnect()
+                        }, RECONNECT_DELAY_MS)
+                    } else {
+                        _connectionStatus.value = ConnectionStatus.DISCONNECTED
+                    }
                 }
             }
         }
@@ -96,17 +116,28 @@ class BleHeartRateSource @Inject constructor(
 
     override fun connect(deviceAddress: String?) {
         if (deviceAddress == null) return
+        lastDeviceAddress = deviceAddress
+        reconnectAttempts = 0
+        intentionalDisconnect = false
         val device = bluetoothAdapter?.getRemoteDevice(deviceAddress) ?: return
         _connectionStatus.value = ConnectionStatus.CONNECTING
         gatt = device.connectGatt(context, true, gattCallback)
     }
 
     override fun disconnect() {
+        intentionalDisconnect = true
+        handler.removeCallbacksAndMessages(null)
         gatt?.disconnect()
         gatt?.close()
         gatt = null
         _connectionStatus.value = ConnectionStatus.DISCONNECTED
         _isConnected.value = false
         _heartRate.value = null
+    }
+
+    private fun attemptReconnect() {
+        val address = lastDeviceAddress ?: return
+        val device = bluetoothAdapter?.getRemoteDevice(address) ?: return
+        gatt = device.connectGatt(context, true, gattCallback)
     }
 }

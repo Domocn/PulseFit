@@ -1,5 +1,7 @@
 package com.example.pulsefit.util
 
+import com.example.pulsefit.data.model.HeartRateZone
+
 object CalorieCalculator {
     /**
      * Estimates calories burned using the Keytel formula.
@@ -22,5 +24,22 @@ object CalorieCalculator {
         }
 
         return calories.toInt().coerceAtLeast(0)
+    }
+
+    /**
+     * Estimates excess post-exercise oxygen consumption (EPOC) in kcal.
+     * Based on time spent in high-intensity zones.
+     */
+    fun estimateEpoc(
+        zoneTime: Map<HeartRateZone, Long>,
+        avgHeartRate: Int,
+        durationMinutes: Int
+    ): Int {
+        if (durationMinutes <= 0) return 0
+        val pushMinutes = (zoneTime[HeartRateZone.PUSH] ?: 0L) / 60.0
+        val peakMinutes = (zoneTime[HeartRateZone.PEAK] ?: 0L) / 60.0
+        // EPOC roughly 6-15% of total energy expenditure, higher for intense work
+        val intensityFactor = (pushMinutes * 1.5 + peakMinutes * 3.0)
+        return intensityFactor.toInt().coerceAtLeast(0)
     }
 }

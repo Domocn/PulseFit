@@ -35,6 +35,9 @@ data class ShopItem(
 @Composable
 fun RewardShopScreen(viewModel: RewardShopViewModel = hiltViewModel()) {
     val totalXp by viewModel.totalXp.collectAsState()
+    val ownedItems by viewModel.ownedItems.collectAsState()
+    val streakShields by viewModel.streakShieldsOwned.collectAsState()
+
     val items = listOf(
         ShopItem("theme_ocean", "Ocean Theme", "Cool blue color palette", 500, "theme"),
         ShopItem("theme_forest", "Forest Theme", "Natural green tones", 500, "theme"),
@@ -63,6 +66,14 @@ fun RewardShopScreen(viewModel: RewardShopViewModel = hiltViewModel()) {
             color = MaterialTheme.colorScheme.primary
         )
 
+        if (streakShields > 0) {
+            Text(
+                text = "Streak Shields: $streakShields",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.secondary
+            )
+        }
+
         Spacer(modifier = Modifier.height(16.dp))
 
         LazyVerticalGrid(
@@ -71,6 +82,7 @@ fun RewardShopScreen(viewModel: RewardShopViewModel = hiltViewModel()) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(items) { item ->
+                val isOwned = item.id in ownedItems && item.id != "streak_shield"
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -90,12 +102,20 @@ fun RewardShopScreen(viewModel: RewardShopViewModel = hiltViewModel()) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        Button(
-                            onClick = { },
-                            enabled = totalXp >= item.xpCost,
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                        ) {
-                            Text("${item.xpCost} XP")
+                        if (isOwned) {
+                            Text(
+                                text = "Owned",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                        } else {
+                            Button(
+                                onClick = { viewModel.purchase(item) },
+                                enabled = totalXp >= item.xpCost,
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                            ) {
+                                Text("${item.xpCost} XP")
+                            }
                         }
                     }
                 }

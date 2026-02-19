@@ -20,4 +20,13 @@ sealed class Screen(val route: String) {
     data object DeepData : Screen("deep_data")
     data object RewardShop : Screen("reward_shop")
     data object ProgressDashboard : Screen("progress_dashboard")
+    data object ShutdownRoutine : Screen("shutdown_routine/{workoutId}") {
+        fun createRoute(workoutId: Long) = "shutdown_routine/$workoutId"
+    }
+    data object PreWorkoutSchedule : Screen("pre_workout_schedule/{workoutId}") {
+        fun createRoute(workoutId: Long) = "pre_workout_schedule/$workoutId"
+    }
+    data object BleOnboarding : Screen("ble_onboarding")
+    data object RestingHr : Screen("resting_hr")
+    data object OnboardingSummary : Screen("onboarding_summary")
 }

@@ -56,7 +56,12 @@ class UserRepositoryImpl @Inject constructor(
         totalWorkouts = totalWorkouts,
         createdAt = createdAt,
         lastWorkoutAt = lastWorkoutAt,
-        streakShieldUsedThisWeek = streakShieldUsedThisWeek
+        streakShieldUsedThisWeek = streakShieldUsedThisWeek,
+        customZoneThresholds = customZoneThresholds,
+        units = units,
+        streakShieldsOwned = streakShieldsOwned,
+        ownedItems = ownedItems,
+        biologicalSex = biologicalSex
     )
 
     private fun UserProfile.toEntity() = UserProfileEntity(
@@ -77,6 +82,11 @@ class UserRepositoryImpl @Inject constructor(
         totalWorkouts = totalWorkouts,
         createdAt = createdAt,
         lastWorkoutAt = lastWorkoutAt,
-        streakShieldUsedThisWeek = streakShieldUsedThisWeek
+        streakShieldUsedThisWeek = streakShieldUsedThisWeek,
+        customZoneThresholds = customZoneThresholds,
+        units = units,
+        streakShieldsOwned = streakShieldsOwned,
+        ownedItems = ownedItems,
+        biologicalSex = biologicalSex
     )
 }
