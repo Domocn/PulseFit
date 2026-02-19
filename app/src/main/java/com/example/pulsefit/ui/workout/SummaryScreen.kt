@@ -22,8 +22,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.pulsefit.ui.components.StatCard
 import com.example.pulsefit.ui.components.ZoneTimeBar
-import com.example.pulsefit.ui.theme.PulsePrimary
-import com.example.pulsefit.ui.theme.PulseSecondary
 import com.example.pulsefit.util.TimeFormatter
 
 @Composable
@@ -50,7 +48,7 @@ fun SummaryScreen(
         Text(
             text = "Workout saved. Well done.",
             style = MaterialTheme.typography.headlineMedium,
-            color = PulseSecondary
+            color = MaterialTheme.colorScheme.secondary
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -86,6 +84,26 @@ fun SummaryScreen(
                 )
             }
 
+            // XP earned
+            if (w.xpEarned > 0) {
+                Spacer(modifier = Modifier.height(24.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    StatCard(
+                        label = "XP Earned",
+                        value = "+${w.xpEarned}"
+                    )
+                    w.estimatedCalories?.let { cal ->
+                        StatCard(
+                            label = "Est. Calories",
+                            value = "$cal kcal"
+                        )
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(32.dp))
 
             Text(
@@ -111,7 +129,7 @@ fun SummaryScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = PulsePrimary)
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
             Text(
                 text = "Done",

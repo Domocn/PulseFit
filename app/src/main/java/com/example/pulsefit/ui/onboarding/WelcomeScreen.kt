@@ -16,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.pulsefit.ui.theme.PulsePrimary
 
 @Composable
 fun WelcomeScreen(onGetStarted: () -> Unit) {
@@ -30,7 +29,7 @@ fun WelcomeScreen(onGetStarted: () -> Unit) {
         Text(
             text = "PulseFit",
             style = MaterialTheme.typography.displayMedium,
-            color = PulsePrimary
+            color = MaterialTheme.colorScheme.primary
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -49,7 +48,7 @@ fun WelcomeScreen(onGetStarted: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = PulsePrimary)
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
             Text(
                 text = "Get Started",

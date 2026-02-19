@@ -26,6 +26,18 @@ class UserRepositoryImpl @Inject constructor(
         userProfileDao.insertOrUpdate(profile.toEntity())
     }
 
+    override suspend fun updateXp(xp: Long, newLevel: Int) {
+        userProfileDao.updateXp(xp, newLevel)
+    }
+
+    override suspend fun updateStreak(streak: Int, shieldUsed: Boolean) {
+        userProfileDao.updateStreak(streak, shieldUsed)
+    }
+
+    override suspend fun incrementWorkoutCount(burnPoints: Int, workoutTime: Long) {
+        userProfileDao.incrementWorkoutCount(burnPoints, workoutTime)
+    }
+
     private fun UserProfileEntity.toDomain() = UserProfile(
         name = name,
         age = age,
@@ -34,7 +46,17 @@ class UserRepositoryImpl @Inject constructor(
         height = height,
         ndProfile = ndProfile,
         dailyTarget = dailyTarget,
-        onboardingComplete = onboardingComplete
+        onboardingComplete = onboardingComplete,
+        restingHeartRate = restingHeartRate,
+        xpLevel = xpLevel,
+        totalXp = totalXp,
+        currentStreak = currentStreak,
+        longestStreak = longestStreak,
+        totalBurnPoints = totalBurnPoints,
+        totalWorkouts = totalWorkouts,
+        createdAt = createdAt,
+        lastWorkoutAt = lastWorkoutAt,
+        streakShieldUsedThisWeek = streakShieldUsedThisWeek
     )
 
     private fun UserProfile.toEntity() = UserProfileEntity(
@@ -45,6 +67,16 @@ class UserRepositoryImpl @Inject constructor(
         height = height,
         ndProfile = ndProfile,
         dailyTarget = dailyTarget,
-        onboardingComplete = onboardingComplete
+        onboardingComplete = onboardingComplete,
+        restingHeartRate = restingHeartRate,
+        xpLevel = xpLevel,
+        totalXp = totalXp,
+        currentStreak = currentStreak,
+        longestStreak = longestStreak,
+        totalBurnPoints = totalBurnPoints,
+        totalWorkouts = totalWorkouts,
+        createdAt = createdAt,
+        lastWorkoutAt = lastWorkoutAt,
+        streakShieldUsedThisWeek = streakShieldUsedThisWeek
     )
 }

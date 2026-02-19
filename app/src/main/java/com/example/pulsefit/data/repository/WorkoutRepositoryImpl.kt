@@ -53,6 +53,22 @@ class WorkoutRepositoryImpl @Inject constructor(
         return workoutDao.getTodayBurnPoints(startOfDay, endOfDay)
     }
 
+    override suspend fun getWorkoutsInDateRange(startTime: Long, endTime: Long): List<Workout> {
+        return workoutDao.getWorkoutsInDateRange(startTime, endTime).map { it.toDomain() }
+    }
+
+    override suspend fun getCompletedWorkouts(): List<Workout> {
+        return workoutDao.getCompletedWorkouts().map { it.toDomain() }
+    }
+
+    override suspend fun deleteWorkout(id: Long) {
+        workoutDao.deleteWorkout(id)
+    }
+
+    override suspend fun getWorkoutDays(): List<Long> {
+        return workoutDao.getWorkoutDays()
+    }
+
     override suspend fun saveHeartRateReading(reading: HeartRateReading) {
         heartRateReadingDao.insert(reading.toEntity())
     }
@@ -75,7 +91,11 @@ class WorkoutRepositoryImpl @Inject constructor(
         burnPoints = burnPoints,
         averageHeartRate = averageHeartRate,
         maxHeartRate = maxHeartRate,
-        zoneTime = parseZoneTimeJson(zoneTimeJson)
+        zoneTime = parseZoneTimeJson(zoneTimeJson),
+        xpEarned = xpEarned,
+        isQuickStart = isQuickStart,
+        isJustFiveMin = isJustFiveMin,
+        estimatedCalories = estimatedCalories
     )
 
     private fun Workout.toEntity() = WorkoutEntity(
@@ -87,7 +107,11 @@ class WorkoutRepositoryImpl @Inject constructor(
         burnPoints = burnPoints,
         averageHeartRate = averageHeartRate,
         maxHeartRate = maxHeartRate,
-        zoneTimeJson = gson.toJson(zoneTime.mapKeys { it.key.name })
+        zoneTimeJson = gson.toJson(zoneTime.mapKeys { it.key.name }),
+        xpEarned = xpEarned,
+        isQuickStart = isQuickStart,
+        isJustFiveMin = isJustFiveMin,
+        estimatedCalories = estimatedCalories
     )
 
     private fun HeartRateReadingEntity.toDomain() = HeartRateReading(

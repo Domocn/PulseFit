@@ -29,4 +29,22 @@ interface WorkoutDao {
 
     @Query("SELECT COALESCE(SUM(burnPoints), 0) FROM workouts WHERE startTime >= :startOfDay AND startTime < :endOfDay")
     fun getTodayBurnPoints(startOfDay: Long, endOfDay: Long): Flow<Int>
+
+    @Query("SELECT COALESCE(SUM(burnPoints), 0) FROM workouts")
+    suspend fun getTotalBurnPoints(): Long
+
+    @Query("SELECT * FROM workouts WHERE startTime >= :startTime AND startTime < :endTime ORDER BY startTime DESC")
+    suspend fun getWorkoutsInDateRange(startTime: Long, endTime: Long): List<WorkoutEntity>
+
+    @Query("SELECT * FROM workouts WHERE endTime IS NOT NULL ORDER BY startTime DESC")
+    suspend fun getCompletedWorkouts(): List<WorkoutEntity>
+
+    @Query("DELETE FROM workouts WHERE id = :id")
+    suspend fun deleteWorkout(id: Long)
+
+    @Query("SELECT COUNT(*) FROM workouts WHERE endTime IS NOT NULL")
+    suspend fun getCompletedWorkoutCount(): Int
+
+    @Query("SELECT DISTINCT startTime / 86400000 as day FROM workouts WHERE endTime IS NOT NULL ORDER BY day DESC")
+    suspend fun getWorkoutDays(): List<Long>
 }

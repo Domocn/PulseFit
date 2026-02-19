@@ -13,5 +13,9 @@ data class Workout(
     val burnPoints: Int = 0,
     val averageHeartRate: Int = 0,
     val maxHeartRate: Int = 0,
-    val zoneTime: Map<HeartRateZone, Long> = emptyMap()
+    val zoneTime: Map<HeartRateZone, Long> = emptyMap(),
+    val xpEarned: Int = 0,
+    val isQuickStart: Boolean = false,
+    val isJustFiveMin: Boolean = false,
+    val estimatedCalories: Int? = null
 )

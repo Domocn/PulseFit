@@ -11,8 +11,6 @@ import androidx.compose.runtime.getValue
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.pulsefit.ui.navigation.BottomNavItem
-import com.example.pulsefit.ui.theme.PulseBackground
-import com.example.pulsefit.ui.theme.PulsePrimary
 
 @Composable
 fun PulseFitBottomBar(navController: NavController) {
@@ -20,7 +18,7 @@ fun PulseFitBottomBar(navController: NavController) {
     val currentRoute = navBackStackEntry?.destination?.route
 
     NavigationBar(
-        containerColor = PulseBackground,
+        containerColor = MaterialTheme.colorScheme.background,
         contentColor = MaterialTheme.colorScheme.onSurface
     ) {
         BottomNavItem.items.forEach { item ->
@@ -40,9 +38,9 @@ fun PulseFitBottomBar(navController: NavController) {
                 icon = { Icon(item.icon, contentDescription = item.label) },
                 label = { Text(item.label) },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = PulsePrimary,
-                    selectedTextColor = PulsePrimary,
-                    indicatorColor = PulsePrimary.copy(alpha = 0.1f)
+                    selectedIconColor = MaterialTheme.colorScheme.primary,
+                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                    indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
                 )
             )
         }

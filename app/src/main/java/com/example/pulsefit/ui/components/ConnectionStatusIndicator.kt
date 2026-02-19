@@ -16,7 +16,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.pulsefit.ble.ConnectionStatus
-import com.example.pulsefit.ui.theme.PulseSecondary
 import com.example.pulsefit.ui.theme.ZonePeak
 import com.example.pulsefit.ui.theme.ZoneRest
 import com.example.pulsefit.ui.theme.ZoneWarmUp
@@ -27,7 +26,7 @@ fun ConnectionStatusIndicator(status: ConnectionStatus, modifier: Modifier = Mod
         ConnectionStatus.DISCONNECTED -> ZoneRest to "No HR"
         ConnectionStatus.SCANNING -> ZoneWarmUp to "Scanning"
         ConnectionStatus.CONNECTING -> ZoneWarmUp to "Connecting"
-        ConnectionStatus.CONNECTED -> PulseSecondary to "Connected"
+        ConnectionStatus.CONNECTED -> MaterialTheme.colorScheme.secondary to "Connected"
     }
 
     Row(

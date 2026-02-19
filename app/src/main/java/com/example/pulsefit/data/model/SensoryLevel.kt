@@ -1,5 +1,5 @@
 package com.example.pulsefit.data.model
 
 enum class SensoryLevel {
-    LOW, MEDIUM, HIGH
+    MUTED, STANDARD, VIVID
 }

@@ -24,9 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.pulsefit.data.model.NdProfile
-import com.example.pulsefit.ui.theme.PulsePrimary
-import com.example.pulsefit.ui.theme.PulseSurface
-import com.example.pulsefit.ui.theme.PulseSurfaceVariant
 
 @Composable
 fun NdProfileSelectionScreen(
@@ -75,7 +72,7 @@ fun NdProfileSelectionScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = PulsePrimary)
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
             Text(
                 text = "Let's Go",
@@ -110,15 +107,15 @@ private fun NdProfileCard(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) PulseSurfaceVariant else PulseSurface
+            containerColor = if (isSelected) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface
         ),
-        border = if (isSelected) BorderStroke(2.dp, PulsePrimary) else null
+        border = if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = profile.label,
                 style = MaterialTheme.typography.titleMedium,
-                color = if (isSelected) PulsePrimary else MaterialTheme.colorScheme.onSurface
+                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(

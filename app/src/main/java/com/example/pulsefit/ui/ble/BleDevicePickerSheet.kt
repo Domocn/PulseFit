@@ -28,8 +28,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.pulsefit.ui.theme.PulsePrimary
-import com.example.pulsefit.ui.theme.PulseSurface
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,7 +64,7 @@ fun BleDevicePickerSheet(
                 Button(
                     onClick = { viewModel.startScan() },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = PulsePrimary)
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
                     Text("Scan for Devices")
                 }
@@ -76,7 +74,7 @@ fun BleDevicePickerSheet(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    CircularProgressIndicator(color = PulsePrimary)
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     Text(
                         text = "  Scanning...",
                         style = MaterialTheme.typography.bodyMedium,
@@ -96,7 +94,7 @@ fun BleDevicePickerSheet(
                                 viewModel.connectToDevice(device.address)
                                 onDeviceSelected(device.address)
                             },
-                        colors = CardDefaults.cardColors(containerColor = PulseSurface)
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                     ) {
                         Row(
                             modifier = Modifier

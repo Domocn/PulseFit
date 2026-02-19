@@ -13,7 +13,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.pulsefit.ui.achievements.AchievementsScreen
 import com.example.pulsefit.ui.components.PulseFitBottomBar
+import com.example.pulsefit.ui.data.DeepDataScreen
 import com.example.pulsefit.ui.history.HistoryScreen
 import com.example.pulsefit.ui.home.HomeScreen
 import com.example.pulsefit.ui.navigation.BottomNavItem
@@ -21,9 +23,14 @@ import com.example.pulsefit.ui.navigation.Screen
 import com.example.pulsefit.ui.onboarding.NdProfileSelectionScreen
 import com.example.pulsefit.ui.onboarding.ProfileSetupScreen
 import com.example.pulsefit.ui.onboarding.WelcomeScreen
+import com.example.pulsefit.ui.progress.ProgressDashboardScreen
+import com.example.pulsefit.ui.routine.RoutineBuilderScreen
+import com.example.pulsefit.ui.settings.SensorySettingsScreen
 import com.example.pulsefit.ui.settings.SettingsScreen
+import com.example.pulsefit.ui.shop.RewardShopScreen
 import com.example.pulsefit.ui.workout.SummaryScreen
 import com.example.pulsefit.ui.workout.WorkoutScreen
+import com.example.pulsefit.ui.workout.WorkoutTemplatesScreen
 
 @Composable
 fun PulseFitApp(viewModel: AppViewModel = hiltViewModel()) {
@@ -121,7 +128,38 @@ fun PulseFitApp(viewModel: AppViewModel = hiltViewModel()) {
                         )
                     }
                     composable(Screen.Settings.route) {
-                        SettingsScreen()
+                        SettingsScreen(
+                            onNavigateToSensory = {
+                                navController.navigate(Screen.SensorySettings.route)
+                            },
+                            onNavigateToAchievements = {
+                                navController.navigate(Screen.Achievements.route)
+                            },
+                            onNavigateToRoutineBuilder = {
+                                navController.navigate(Screen.RoutineBuilder.route)
+                            }
+                        )
+                    }
+                    composable(Screen.SensorySettings.route) {
+                        SensorySettingsScreen()
+                    }
+                    composable(Screen.Achievements.route) {
+                        AchievementsScreen()
+                    }
+                    composable(Screen.RoutineBuilder.route) {
+                        RoutineBuilderScreen()
+                    }
+                    composable(Screen.WorkoutTemplates.route) {
+                        WorkoutTemplatesScreen()
+                    }
+                    composable(Screen.DeepData.route) {
+                        DeepDataScreen()
+                    }
+                    composable(Screen.RewardShop.route) {
+                        RewardShopScreen()
+                    }
+                    composable(Screen.ProgressDashboard.route) {
+                        ProgressDashboardScreen()
                     }
                 }
             }

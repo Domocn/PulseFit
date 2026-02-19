@@ -16,8 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.pulsefit.domain.model.Workout
 import com.example.pulsefit.ui.components.ZoneTimeBar
-import com.example.pulsefit.ui.theme.PulseSecondary
-import com.example.pulsefit.ui.theme.PulseSurface
 import com.example.pulsefit.util.TimeFormatter
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -30,7 +28,7 @@ fun WorkoutCard(workout: Workout, onClick: () -> Unit) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = PulseSurface)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -45,7 +43,7 @@ fun WorkoutCard(workout: Workout, onClick: () -> Unit) {
                 Text(
                     text = "${workout.burnPoints} pts",
                     style = MaterialTheme.typography.titleMedium,
-                    color = PulseSecondary
+                    color = MaterialTheme.colorScheme.secondary
                 )
             }
 
