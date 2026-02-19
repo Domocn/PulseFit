@@ -1,5 +1,10 @@
 package com.example.pulsefit.ui.ble
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,9 +29,14 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -39,6 +49,42 @@ fun BleDevicePickerSheet(
 ) {
     val devices by viewModel.devices.collectAsState()
     val isScanning by viewModel.isScanning.collectAsState()
+    val context = LocalContext.current
+    var permissionDenied by remember { mutableStateOf(false) }
+
+    val blePermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        arrayOf(
+            Manifest.permission.BLUETOOTH_SCAN,
+            Manifest.permission.BLUETOOTH_CONNECT
+        )
+    } else {
+        arrayOf(
+            Manifest.permission.ACCESS_FINE_LOCATION
+        )
+    }
+
+    fun hasPermissions(): Boolean = blePermissions.all {
+        ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { results ->
+        if (results.values.all { it }) {
+            permissionDenied = false
+            viewModel.startScan()
+        } else {
+            permissionDenied = true
+        }
+    }
+
+    fun startScanWithPermission() {
+        if (hasPermissions()) {
+            viewModel.startScan()
+        } else {
+            permissionLauncher.launch(blePermissions)
+        }
+    }
 
     ModalBottomSheet(
         onDismissRequest = {
@@ -60,9 +106,18 @@ fun BleDevicePickerSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            if (permissionDenied) {
+                Text(
+                    text = "Bluetooth permissions are required to scan for heart rate monitors. Please grant them in Settings.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
             if (!isScanning) {
                 Button(
-                    onClick = { viewModel.startScan() },
+                    onClick = { startScanWithPermission() },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
