@@ -1,5 +1,6 @@
 package com.example.pulsefit.ui.home
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,10 +11,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.Stars
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -29,6 +35,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -40,6 +47,9 @@ import com.example.pulsefit.ui.components.StatCard
 @Composable
 fun HomeScreen(
     onStartWorkout: (Long) -> Unit,
+    onNavigateToTemplates: (() -> Unit)? = null,
+    onNavigateToProgress: (() -> Unit)? = null,
+    onNavigateToShop: (() -> Unit)? = null,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val profile by viewModel.userProfile.collectAsState()
@@ -49,6 +59,10 @@ fun HomeScreen(
     val currentStreak by viewModel.currentStreak.collectAsState()
     val weeklyWorkouts by viewModel.weeklyWorkouts.collectAsState()
     val weeklyBurnPoints by viewModel.weeklyBurnPoints.collectAsState()
+    val dailyQuests by viewModel.dailyQuests.collectAsState()
+    val shouldRest by viewModel.shouldRest.collectAsState()
+    val avgBurnPoints by viewModel.avgBurnPoints.collectAsState()
+    val weeklyTheme by viewModel.weeklyTheme.collectAsState()
 
     LaunchedEffect(workoutId) {
         workoutId?.let {
@@ -60,6 +74,7 @@ fun HomeScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -134,6 +149,73 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
+        // Rest day suggestion (Anti-Burnout System)
+        if (shouldRest) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Rest Day Suggested",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                    Text(
+                        text = "You've been training hard this week. A rest day helps recovery.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        // Weekly theme card (ADHD novelty feature)
+        weeklyTheme?.let { theme ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "This Week's Vibe",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                    Text(
+                        text = theme,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        // Points estimate (ASD comfort feature)
+        val ndProf = profile?.ndProfile
+        if ((ndProf == NdProfile.ASD || ndProf == NdProfile.AUDHD) && avgBurnPoints > 0) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Expected Points",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "Based on your average, you'll earn ~$avgBurnPoints points per workout",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
         BurnPointsRing(
             current = todayPoints,
             target = profile?.dailyTarget ?: 12,
@@ -153,7 +235,7 @@ fun HomeScreen(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(24.dp))
 
         // GO button
         Button(
@@ -194,8 +276,9 @@ fun HomeScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
+        // Weekly stats row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
@@ -205,5 +288,82 @@ fun HomeScreen(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        // Weekly goal card
+        WeeklyGoalCard(currentWorkouts = weeklyWorkouts)
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Daily quests card
+        DailyQuestsCard(quests = dailyQuests)
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Quick navigation row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            onNavigateToTemplates?.let {
+                QuickNavCard(
+                    icon = Icons.Default.FitnessCenter,
+                    label = "Templates",
+                    onClick = it,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            onNavigateToProgress?.let {
+                QuickNavCard(
+                    icon = Icons.Default.BarChart,
+                    label = "Progress",
+                    onClick = it,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            onNavigateToShop?.let {
+                QuickNavCard(
+                    icon = Icons.Default.Stars,
+                    label = "Rewards",
+                    onClick = it,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun QuickNavCard(
+    icon: ImageVector,
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                icon,
+                contentDescription = label,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
     }
 }

@@ -1,5 +1,6 @@
 package com.example.pulsefit.ui.workout
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -24,16 +25,18 @@ data class WorkoutTemplate(
     val type: String
 )
 
-@Composable
-fun WorkoutTemplatesScreen() {
-    val templates = listOf(
-        WorkoutTemplate("Free Run", "Open-ended workout, end when ready", 0, "FREE"),
-        WorkoutTemplate("Quick 15", "15-minute intensity burst", 15, "GUIDED"),
-        WorkoutTemplate("Steady State", "30 minutes in Active zone", 30, "GUIDED"),
-        WorkoutTemplate("HIIT Intervals", "Alternating Push/Active zones", 20, "GUIDED"),
-        WorkoutTemplate("Endurance", "45-minute sustained effort", 45, "GUIDED")
-    )
+val defaultTemplates = listOf(
+    WorkoutTemplate("Free Run", "Open-ended workout, end when ready", 0, "FREE"),
+    WorkoutTemplate("Quick 15", "15-minute intensity burst", 15, "GUIDED"),
+    WorkoutTemplate("Steady State", "30 minutes in Active zone", 30, "GUIDED"),
+    WorkoutTemplate("HIIT Intervals", "Alternating Push/Active zones", 20, "GUIDED"),
+    WorkoutTemplate("Endurance", "45-minute sustained effort", 45, "GUIDED")
+)
 
+@Composable
+fun WorkoutTemplatesScreen(
+    onSelectTemplate: ((WorkoutTemplate) -> Unit)? = null
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -48,9 +51,14 @@ fun WorkoutTemplatesScreen() {
         Spacer(modifier = Modifier.height(16.dp))
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            items(templates) { template ->
+            items(defaultTemplates) { template ->
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .then(
+                            if (onSelectTemplate != null) Modifier.clickable { onSelectTemplate(template) }
+                            else Modifier
+                        ),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {

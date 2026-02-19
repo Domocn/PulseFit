@@ -18,5 +18,6 @@ data class WorkoutEntity(
     val xpEarned: Int = 0,
     val isQuickStart: Boolean = false,
     val isJustFiveMin: Boolean = false,
-    val estimatedCalories: Int? = null
+    val estimatedCalories: Int? = null,
+    val notes: String? = null
 )

@@ -24,5 +24,10 @@ data class UserProfileEntity(
     val totalWorkouts: Int = 0,
     val createdAt: Long = System.currentTimeMillis(),
     val lastWorkoutAt: Long? = null,
-    val streakShieldUsedThisWeek: Boolean = false
+    val streakShieldUsedThisWeek: Boolean = false,
+    val customZoneThresholds: String? = null,
+    val units: String = "metric",
+    val streakShieldsOwned: Int = 0,
+    val ownedItems: String = "[]",
+    val biologicalSex: String = "male"
 )

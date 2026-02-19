@@ -2,17 +2,26 @@ package com.example.pulsefit.ui.workout
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.pulsefit.adhd.DailyQuestManager
 import com.example.pulsefit.adhd.MicroRewardEngine
 import com.example.pulsefit.adhd.MicroRewardEvent
+import com.example.pulsefit.adhd.DropEvent
+import com.example.pulsefit.adhd.VariableDropEngine
+import com.example.pulsefit.asd.TransitionWarning
+import com.example.pulsefit.asd.TransitionWarningManager
+import com.example.pulsefit.ble.BlePreferences
 import com.example.pulsefit.ble.HeartRateSource
 import com.example.pulsefit.data.model.HeartRateZone
 import com.example.pulsefit.data.model.NdProfile
+import com.example.pulsefit.data.repository.SensoryPreferencesRepository
 import com.example.pulsefit.domain.repository.WorkoutRepository
 import com.example.pulsefit.domain.usecase.AwardXpUseCase
 import com.example.pulsefit.domain.usecase.CalculateStreakUseCase
+import com.example.pulsefit.domain.usecase.CheckAchievementsUseCase
 import com.example.pulsefit.domain.usecase.EndWorkoutUseCase
 import com.example.pulsefit.domain.usecase.GetUserProfileUseCase
 import com.example.pulsefit.domain.usecase.RecordHeartRateUseCase
+import com.example.pulsefit.util.CalorieCalculator
 import com.example.pulsefit.util.ZoneCalculator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -34,7 +43,13 @@ class WorkoutViewModel @Inject constructor(
     private val awardXpUseCase: AwardXpUseCase,
     private val calculateStreakUseCase: CalculateStreakUseCase,
     private val workoutRepository: WorkoutRepository,
-    private val microRewardEngine: MicroRewardEngine
+    private val microRewardEngine: MicroRewardEngine,
+    private val sensoryPreferencesRepository: SensoryPreferencesRepository,
+    private val variableDropEngine: VariableDropEngine,
+    private val transitionWarningManager: TransitionWarningManager,
+    private val dailyQuestManager: DailyQuestManager,
+    private val checkAchievements: CheckAchievementsUseCase,
+    private val blePreferences: BlePreferences
 ) : ViewModel() {
 
     private val _elapsedSeconds = MutableStateFlow(0)
@@ -74,6 +89,14 @@ class WorkoutViewModel @Inject constructor(
     private val _rewardEvents = MutableSharedFlow<MicroRewardEvent>(extraBufferCapacity = 10)
     val rewardEvents: SharedFlow<MicroRewardEvent> = _rewardEvents
 
+    // Drop events (Variable Drop Engine)
+    private val _dropEvents = MutableSharedFlow<DropEvent>(extraBufferCapacity = 10)
+    val dropEvents: SharedFlow<DropEvent> = _dropEvents
+
+    // Transition warnings (ASD)
+    private val _transitionWarnings = MutableSharedFlow<TransitionWarning>(extraBufferCapacity = 10)
+    val transitionWarnings: SharedFlow<TransitionWarning> = _transitionWarnings
+
     // Time blindness - 5-min chunk tracking
     private val _currentChunk = MutableStateFlow(1)
     val currentChunk: StateFlow<Int> = _currentChunk
@@ -82,32 +105,63 @@ class WorkoutViewModel @Inject constructor(
     private val _xpEarned = MutableStateFlow(0)
     val xpEarned: StateFlow<Int> = _xpEarned
 
+    // Pause/Resume
+    private val _isPaused = MutableStateFlow(false)
+    val isPaused: StateFlow<Boolean> = _isPaused
+
+    // Minimal mode
+    private val _isMinimalMode = MutableStateFlow(false)
+    val isMinimalMode: StateFlow<Boolean> = _isMinimalMode
+
+    // Achievement unlocks
+    private val _unlockedAchievements = MutableStateFlow<List<String>>(emptyList())
+    val unlockedAchievements: StateFlow<List<String>> = _unlockedAchievements
+
+    // Live calorie estimate
+    private val _estimatedCalories = MutableStateFlow(0)
+    val estimatedCalories: StateFlow<Int> = _estimatedCalories
+
     private var maxHr = 190
     private var timerJob: Job? = null
     private var workoutId: Long = 0
     private var pointAccumulator = 0.0
     private var ndProfile = NdProfile.STANDARD
     private var streakMultiplier = 1f
+    private var userAge = 25
+    private var userWeightKg: Float? = null
+    private var userIsMale = true
+    private var hrSum = 0L
+    private var hrCount = 0
 
     fun start(workoutId: Long) {
         this.workoutId = workoutId
-        heartRateSource.connect()
+        // Auto-reconnect to last known BLE device
+        heartRateSource.connect(blePreferences.lastDeviceAddress)
         microRewardEngine.reset()
+        variableDropEngine.reset()
+        transitionWarningManager.reset()
 
         viewModelScope.launch {
             val profile = getUserProfile.once()
             maxHr = profile?.maxHeartRate ?: 190
             ndProfile = profile?.ndProfile ?: NdProfile.STANDARD
+            userAge = profile?.age ?: 25
+            userWeightKg = profile?.weight
+            userIsMale = profile?.biologicalSex != "female"
 
-            // Load streak multiplier for ADHD profiles
             if (ndProfile == NdProfile.ADHD || ndProfile == NdProfile.AUDHD) {
                 val streak = profile?.currentStreak ?: 0
                 streakMultiplier = 1f + (streak.coerceAtMost(7) * 0.1f)
             }
 
-            // Check if Just 5 Min workout
             val workout = workoutRepository.getWorkoutById(workoutId)
             _isJustFiveMin.value = workout?.isJustFiveMin ?: false
+        }
+
+        // Load minimal mode preference
+        viewModelScope.launch {
+            val prefs = sensoryPreferencesRepository.getPreferencesOnce()
+            _isMinimalMode.value = prefs.minimalMode
         }
 
         // Collect micro-reward events
@@ -117,10 +171,27 @@ class WorkoutViewModel @Inject constructor(
             }
         }
 
+        // Collect drop events
+        viewModelScope.launch {
+            variableDropEngine.dropEvents.collect { event ->
+                _dropEvents.emit(event)
+            }
+        }
+
+        // Collect transition warnings
+        viewModelScope.launch {
+            transitionWarningManager.warnings.collect { warning ->
+                _transitionWarnings.emit(warning)
+            }
+        }
+
         // Timer tick every second
         timerJob = viewModelScope.launch {
             while (isActive) {
                 delay(1000)
+
+                if (_isPaused.value) continue
+
                 _elapsedSeconds.value++
 
                 val hr = heartRateSource.heartRate.value
@@ -134,7 +205,7 @@ class WorkoutViewModel @Inject constructor(
                     current[zone] = (current[zone] ?: 0L) + 1
                     _zoneTime.value = current
 
-                    // Accumulate points (with streak multiplier for ADHD)
+                    // Accumulate points
                     val multiplier = if (ndProfile == NdProfile.ADHD || ndProfile == NdProfile.AUDHD) {
                         streakMultiplier
                     } else 1f
@@ -152,21 +223,39 @@ class WorkoutViewModel @Inject constructor(
                         recordHeartRate(workoutId, hr, zone)
                     }
 
-                    // Micro-rewards (ADHD feature)
+                    // Update running calorie estimate
+                    hrSum += hr
+                    hrCount++
+                    val avgHr = (hrSum / hrCount).toInt()
+                    val elapsedMin = _elapsedSeconds.value / 60
+                    if (elapsedMin > 0) {
+                        val cal = CalorieCalculator.estimate(avgHr, elapsedMin, userAge, userWeightKg, userIsMale)
+                        _estimatedCalories.value = cal ?: 0
+                    }
+
+                    // Micro-rewards + drops (ADHD feature)
                     if (ndProfile == NdProfile.ADHD || ndProfile == NdProfile.AUDHD) {
                         microRewardEngine.onTick(_elapsedSeconds.value, zone)
+                        variableDropEngine.onTick(_elapsedSeconds.value, zone)
+                    }
+
+                    // Transition warnings (ASD/AUDHD)
+                    if (ndProfile == NdProfile.ASD || ndProfile == NdProfile.AUDHD) {
+                        transitionWarningManager.onTick(zone, _elapsedSeconds.value)
                     }
                 }
 
-                // Track 5-min chunks for time blindness timer
                 _currentChunk.value = (_elapsedSeconds.value / 300) + 1
 
-                // Just 5 Min: show prompt at 5 minutes
                 if (_isJustFiveMin.value && !_justFiveMinPromptShown.value && _elapsedSeconds.value >= 300) {
                     _justFiveMinPromptShown.value = true
                 }
             }
         }
+    }
+
+    fun togglePause() {
+        _isPaused.value = !_isPaused.value
     }
 
     fun continueJustFiveMin() {
@@ -180,22 +269,29 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             endWorkoutUseCase(workoutId, _burnPoints.value, _zoneTime.value)
 
-            // Award XP
             val xp = awardXpUseCase(_burnPoints.value, streakMultiplier)
             _xpEarned.value = xp
 
-            // Update workout with XP
             val workout = workoutRepository.getWorkoutById(workoutId)
             workout?.let {
                 workoutRepository.updateWorkout(it.copy(xpEarned = xp))
             }
 
-            // Update streak and stats
-            workoutRepository.getWorkoutById(workoutId)?.let { w ->
-                val userRepo = getUserProfile.once()
-                // incrementWorkoutCount is handled via user repository
-            }
             calculateStreakUseCase()
+
+            // Evaluate daily quest completion
+            val pushPeakSeconds = (_zoneTime.value[HeartRateZone.PUSH] ?: 0L) + (_zoneTime.value[HeartRateZone.PEAK] ?: 0L)
+            dailyQuestManager.evaluateCompletion(_elapsedSeconds.value, _burnPoints.value, pushPeakSeconds)
+
+            // Check achievement unlocks
+            val updatedProfile = getUserProfile.once()
+            val finalWorkout = workoutRepository.getWorkoutById(workoutId)
+            if (updatedProfile != null && finalWorkout != null) {
+                val unlocked = checkAchievements(updatedProfile, finalWorkout)
+                if (unlocked.isNotEmpty()) {
+                    _unlockedAchievements.value = unlocked
+                }
+            }
 
             _isFinished.value = true
         }

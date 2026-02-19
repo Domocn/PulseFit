@@ -91,6 +91,11 @@ dependencies {
     // Health Connect
     implementation(libs.health.connect)
 
+    // WorkManager
+    implementation(libs.work.runtime.ktx)
+    implementation(libs.hilt.work)
+    ksp(libs.hilt.work.compiler)
+
     // Desugaring
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 

@@ -3,12 +3,15 @@ package com.example.pulsefit.domain.usecase
 import com.example.pulsefit.data.model.HeartRateZone
 import com.example.pulsefit.domain.repository.UserRepository
 import com.example.pulsefit.domain.repository.WorkoutRepository
+import com.example.pulsefit.health.HealthConnectRepository
+import com.example.pulsefit.util.CalorieCalculator
 import java.time.Instant
 import javax.inject.Inject
 
 class EndWorkoutUseCase @Inject constructor(
     private val workoutRepository: WorkoutRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val healthConnectRepository: HealthConnectRepository
 ) {
     suspend operator fun invoke(
         workoutId: Long,
@@ -22,18 +25,33 @@ class EndWorkoutUseCase @Inject constructor(
         val avgHr = if (readings.isNotEmpty()) readings.map { it.heartRate }.average().toInt() else 0
         val maxHr = readings.maxOfOrNull { it.heartRate } ?: 0
 
-        workoutRepository.updateWorkout(
-            workout.copy(
-                endTime = now,
-                durationSeconds = durationSeconds.toInt(),
-                burnPoints = burnPoints,
-                averageHeartRate = avgHr,
-                maxHeartRate = maxHr,
-                zoneTime = zoneTime
+        // Calculate estimated calories from user profile
+        val profile = userRepository.getUserProfileOnce()
+        val estimatedCalories = if (profile != null) {
+            CalorieCalculator.estimate(
+                avgHeartRate = avgHr,
+                durationMinutes = (durationSeconds / 60).toInt(),
+                age = profile.age,
+                weightKg = profile.weight,
+                isMale = profile.biologicalSex == "male"
             )
+        } else null
+
+        val updatedWorkout = workout.copy(
+            endTime = now,
+            durationSeconds = durationSeconds.toInt(),
+            burnPoints = burnPoints,
+            averageHeartRate = avgHr,
+            maxHeartRate = maxHr,
+            zoneTime = zoneTime,
+            estimatedCalories = estimatedCalories
         )
+        workoutRepository.updateWorkout(updatedWorkout)
 
         // Update user stats
         userRepository.incrementWorkoutCount(burnPoints, now.toEpochMilli())
+
+        // Sync to Health Connect
+        healthConnectRepository.writeWorkout(updatedWorkout, readings)
     }
 }

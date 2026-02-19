@@ -11,6 +11,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -20,14 +21,31 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.pulsefit.data.model.NdProfile
 import kotlinx.coroutines.delay
 
 /**
  * F145: Guided wind-down for ASD profiles.
  * Cool-down text (3s) -> Breathing guide (1 min 4-4-4) -> Stretch prompt (30s) -> Proceed to summary
+ * Non-ASD/AUDHD profiles skip straight to onComplete.
  */
 @Composable
-fun ShutdownRoutineScreen(onComplete: () -> Unit) {
+fun ShutdownRoutineScreen(
+    onComplete: () -> Unit,
+    viewModel: ShutdownRoutineViewModel = hiltViewModel()
+) {
+    val ndProfile by viewModel.ndProfile.collectAsState()
+
+    // Skip for non-ASD profiles
+    if (ndProfile != null && ndProfile != NdProfile.ASD && ndProfile != NdProfile.AUDHD) {
+        LaunchedEffect(Unit) { onComplete() }
+        return
+    }
+
+    // Wait until we know the profile
+    if (ndProfile == null) return
+
     var phase by remember { mutableIntStateOf(0) }
     var timer by remember { mutableIntStateOf(0) }
 
