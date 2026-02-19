@@ -4,6 +4,8 @@
 
 **PulseFit** is a heart-rate-zone-based group and solo fitness app that gamifies workouts through a proprietary points system called **"Burn Points"**. Users earn Burn Points by spending time in elevated heart rate zones during any workout. The app tracks real-time heart rate data from wearables and fitness trackers, displays live zone feedback, and rewards sustained effort with points that accumulate over sessions.
 
+PulseFit is also the first fitness app designed with neurodivergent users in mind. A toggleable **Neurodivergent Profile System** offers three modes — ADHD Focus Mode (dopamine-first, zero-friction, novelty-driven), ASD Comfort Mode (predictable, calm, sensory-controlled), and AuDHD Combined Mode — that reshape the entire UX. See `NEURODIVERGENT_DESIGN.md` for the full design philosophy and feature specifications.
+
 > **Trademark / IP Note:** All naming, branding, scoring mechanics, and zone definitions in this document are original. No trademarked names, proprietary zone labels, or copyrighted visual designs from any existing fitness brand are used. "Burn Points" and "PulseFit" are working names — a trademark search should be conducted before launch.
 
 ---
@@ -126,6 +128,7 @@ This is clearly labeled as an **estimate** (not medical advice).
 | Auth (post-MVP)       | Firebase Auth                                        |
 | Backend (post-MVP)    | Firebase Firestore / Cloud Functions                 |
 | CI/CD                 | GitHub Actions                                       |
+| Voice Coach           | **ElevenLabs API** (pre-generated clips + runtime API) |
 
 ### 4.4 Health Connect Integration
 
@@ -166,7 +169,13 @@ data class UserProfile(
     val restingHr: Int,
     val maxHr: Int,              // calculated or manual
     val dailyBurnTarget: Int,    // default 12
-    val unitSystem: UnitSystem   // METRIC or IMPERIAL
+    val unitSystem: UnitSystem,  // METRIC or IMPERIAL
+    val ndProfile: NdProfile,        // STANDARD, ADHD, ASD, AUDHD
+    val adhdFocusMode: Boolean,      // ADHD Focus Mode enabled
+    val asdComfortMode: Boolean,     // ASD Comfort Mode enabled
+    val xpLevel: Int,                // current XP level (1-50)
+    val totalXp: Long,              // lifetime XP earned
+    val sensoryLevel: SensoryLevel  // MUTED, STANDARD, VIVID
 )
 
 @Entity
@@ -198,6 +207,35 @@ data class ZoneSummary(
     val zone: Int,
     val durationSeconds: Int,
     val burnPointsEarned: Int
+)
+
+@Entity
+data class DailyQuest(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val date: LocalDate,
+    val questType: String,
+    val description: String,
+    val xpReward: Int,
+    val completed: Boolean = false
+)
+
+@Entity
+data class WeeklyRoutine(
+    @PrimaryKey val dayOfWeek: Int,     // 1=Monday, 7=Sunday
+    val workoutTemplateId: Long?,       // null = rest day
+    val scheduledTime: LocalTime?,
+    val isRestDay: Boolean = false
+)
+
+@Entity
+data class SensoryPreferences(
+    @PrimaryKey val id: Long = 1,
+    val animations: SensoryOption,      // OFF, REDUCED, FULL
+    val sounds: SensoryOption,
+    val haptics: SensoryOption,
+    val colourIntensity: SensoryLevel,
+    val confetti: SensoryOption,
+    val screenShake: Boolean
 )
 ```
 
@@ -319,10 +357,13 @@ app/
 │   │   ├── local/              # Room DB, DAOs, DataStore
 │   │   ├── health/             # Health Connect data source
 │   │   ├── ble/                # Bluetooth LE heart rate service
+│   │   ├── voice/              # ElevenLabs API client, voice cache
 │   │   └── repository/         # Repository implementations
 │   ├── domain/
 │   │   ├── model/              # Domain models (Workout, Zone, BurnResult)
 │   │   ├── calculator/         # BurnPointsCalculator, AfterBurnEstimator
+│   │   ├── voice/              # Hybrid voice coach (ElevenLabs + TTS)
+│   │   ├── nd/                 # ND profile logic, sensory preferences
 │   │   └── usecase/            # Use cases (StartWorkout, GetHistory, etc.)
 │   └── ui/
 │       ├── theme/              # Material 3 theme, colours, typography
@@ -331,6 +372,8 @@ app/
 │       ├── workout/            # Live workout, pre/post screens
 │       ├── history/            # History & trends
 │       ├── profile/            # Profile & settings
+│       ├── nd/                 # Neurodivergent profile settings & controls
+│       ├── rewards/            # XP, leveling, reward shop, daily quests
 │       └── components/         # Shared composables (ZoneBar, HrGauge, etc.)
 ├── src/main/res/
 │   ├── values/                 # Strings, colours, dimensions
@@ -352,17 +395,21 @@ app/
 - Live workout screen with real-time zone display
 - Burn Points accumulator
 - Workout summary screen + Room persistence
+- ADHD Focus Mode core: micro-rewards, zero-friction quick start, time blindness timer, task chunking
 
 ### Phase 3 — Health Connect & History
 - Health Connect read/write integration
 - Workout history list + calendar view
 - Weekly/monthly trend charts
+- ASD Comfort Mode core: sensory control panel, predictable UI lock, literal voice coach, safe exit protocol
 
 ### Phase 4 — Polish & Launch
 - Notifications (reminders, streaks)
 - Settings & zone customisation
 - UI polish, animations, accessibility
 - Play Store listing, privacy policy, beta test
+- Hybrid ElevenLabs voice coach (pre-generated clips + runtime API)
+- Neurodivergent profile system in onboarding and settings
 
 ### Phase 5 — Post-Launch (v1.x)
 - Group workout mode + instructor dashboard
@@ -370,6 +417,8 @@ app/
 - Social features, leaderboards, badges
 - Wear OS companion
 - AI coach suggestions
+- Advanced ND features: XP/leveling, reward shop, daily quests, progress visualisation
+- Body double mode, routine builder, social accountability contracts
 
 ---
 
@@ -386,4 +435,4 @@ app/
 
 ## 13. Summary
 
-PulseFit delivers the same motivating, heart-rate-zone-driven workout experience that has proven popular in boutique fitness — but as a standalone, brand-neutral Android app. By using standard HR zone science, an original "Burn Points" scoring system, and deep integration with Health Connect and Bluetooth LE wearables, PulseFit can serve both individual users and gym/studio operators without infringing on any existing brand's intellectual property.
+PulseFit delivers the same motivating, heart-rate-zone-driven workout experience that has proven popular in boutique fitness — but as a standalone, brand-neutral Android app. By using standard HR zone science, an original "Burn Points" scoring system, and deep integration with Health Connect and Bluetooth LE wearables, PulseFit can serve both individual users and gym/studio operators without infringing on any existing brand's intellectual property. Uniquely, PulseFit is the first fitness app designed from the ground up for neurodivergent users — offering ADHD Focus Mode, ASD Comfort Mode, and AuDHD Combined Mode that reshape the entire experience around different cognitive needs. Combined with a hybrid ElevenLabs voice coaching system, PulseFit delivers a truly personalised and inclusive fitness experience.
