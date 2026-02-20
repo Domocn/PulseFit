@@ -7,6 +7,7 @@ import com.example.pulsefit.adhd.MicroRewardEngine
 import com.example.pulsefit.adhd.MicroRewardEvent
 import com.example.pulsefit.adhd.DropEvent
 import com.example.pulsefit.adhd.VariableDropEngine
+import com.example.pulsefit.asd.AudioPalette
 import com.example.pulsefit.asd.TransitionWarning
 import com.example.pulsefit.asd.TransitionWarningManager
 import com.example.pulsefit.ble.BlePreferences
@@ -23,6 +24,7 @@ import com.example.pulsefit.domain.usecase.GetUserProfileUseCase
 import com.example.pulsefit.domain.usecase.RecordHeartRateUseCase
 import com.example.pulsefit.util.CalorieCalculator
 import com.example.pulsefit.util.ZoneCalculator
+import com.example.pulsefit.voice.VoiceCoachEngine
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -49,7 +51,9 @@ class WorkoutViewModel @Inject constructor(
     private val transitionWarningManager: TransitionWarningManager,
     private val dailyQuestManager: DailyQuestManager,
     private val checkAchievements: CheckAchievementsUseCase,
-    private val blePreferences: BlePreferences
+    private val blePreferences: BlePreferences,
+    private val voiceCoachEngine: VoiceCoachEngine,
+    private val audioPalette: AudioPalette
 ) : ViewModel() {
 
     private val _elapsedSeconds = MutableStateFlow(0)
@@ -121,6 +125,10 @@ class WorkoutViewModel @Inject constructor(
     private val _estimatedCalories = MutableStateFlow(0)
     val estimatedCalories: StateFlow<Int> = _estimatedCalories
 
+    // ND profile (exposed for UI conditional rendering)
+    private val _ndProfileState = MutableStateFlow(NdProfile.STANDARD)
+    val ndProfileState: StateFlow<NdProfile> = _ndProfileState
+
     private var maxHr = 190
     private var timerJob: Job? = null
     private var workoutId: Long = 0
@@ -132,6 +140,9 @@ class WorkoutViewModel @Inject constructor(
     private var userIsMale = true
     private var hrSum = 0L
     private var hrCount = 0
+    private var previousZone = HeartRateZone.REST
+    private var previousBurnPoints = 0
+    private var audioPaletteEnabled = false
 
     fun start(workoutId: Long) {
         this.workoutId = workoutId
@@ -140,14 +151,19 @@ class WorkoutViewModel @Inject constructor(
         microRewardEngine.reset()
         variableDropEngine.reset()
         transitionWarningManager.reset()
+        voiceCoachEngine.initialize()
 
         viewModelScope.launch {
+            voiceCoachEngine.updateStyle()
+
             val profile = getUserProfile.once()
             maxHr = profile?.maxHeartRate ?: 190
             ndProfile = profile?.ndProfile ?: NdProfile.STANDARD
+            _ndProfileState.value = ndProfile
             userAge = profile?.age ?: 25
             userWeightKg = profile?.weight
             userIsMale = profile?.biologicalSex != "female"
+            audioPaletteEnabled = ndProfile == NdProfile.ASD || ndProfile == NdProfile.AUDHD
 
             if (ndProfile == NdProfile.ADHD || ndProfile == NdProfile.AUDHD) {
                 val streak = profile?.currentStreak ?: 0
@@ -156,6 +172,10 @@ class WorkoutViewModel @Inject constructor(
 
             val workout = workoutRepository.getWorkoutById(workoutId)
             _isJustFiveMin.value = workout?.isJustFiveMin ?: false
+
+            if (audioPaletteEnabled) {
+                audioPalette.play(AudioPalette.SoundEvent.WORKOUT_START)
+            }
         }
 
         // Load minimal mode preference
@@ -200,6 +220,20 @@ class WorkoutViewModel @Inject constructor(
                     val zone = ZoneCalculator.getZone(hr, maxHr)
                     _currentZone.value = zone
 
+                    // Voice coach + audio palette on zone change
+                    if (zone != previousZone) {
+                        voiceCoachEngine.onZoneChange(zone)
+                        if (audioPaletteEnabled) {
+                            val soundEvent = if (zone.ordinal > previousZone.ordinal)
+                                AudioPalette.SoundEvent.ZONE_UP else AudioPalette.SoundEvent.ZONE_DOWN
+                            audioPalette.play(soundEvent)
+                        }
+                        previousZone = zone
+                    }
+
+                    // Voice coach time updates every 5 minutes
+                    voiceCoachEngine.onTimeUpdate(_elapsedSeconds.value)
+
                     // Update zone time
                     val current = _zoneTime.value.toMutableMap()
                     current[zone] = (current[zone] ?: 0L) + 1
@@ -210,7 +244,14 @@ class WorkoutViewModel @Inject constructor(
                         streakMultiplier
                     } else 1f
                     pointAccumulator += zone.pointsPerMinute / 60.0 * multiplier
-                    _burnPoints.value = pointAccumulator.toInt()
+                    val newBurnPoints = pointAccumulator.toInt()
+
+                    // Audio palette on point earned
+                    if (audioPaletteEnabled && newBurnPoints > previousBurnPoints) {
+                        audioPalette.play(AudioPalette.SoundEvent.POINT_EARNED)
+                    }
+                    previousBurnPoints = newBurnPoints
+                    _burnPoints.value = newBurnPoints
 
                     // Track recent readings (last 60)
                     val readings = _recentReadings.value.toMutableList()
@@ -266,6 +307,10 @@ class WorkoutViewModel @Inject constructor(
     fun endWorkout() {
         timerJob?.cancel()
         heartRateSource.disconnect()
+        if (audioPaletteEnabled) {
+            audioPalette.play(AudioPalette.SoundEvent.WORKOUT_END)
+        }
+        voiceCoachEngine.shutdown()
         viewModelScope.launch {
             endWorkoutUseCase(workoutId, _burnPoints.value, _zoneTime.value)
 
@@ -301,5 +346,6 @@ class WorkoutViewModel @Inject constructor(
         super.onCleared()
         timerJob?.cancel()
         heartRateSource.disconnect()
+        voiceCoachEngine.shutdown()
     }
 }

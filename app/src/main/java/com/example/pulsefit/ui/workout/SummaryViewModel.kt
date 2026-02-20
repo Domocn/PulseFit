@@ -2,10 +2,15 @@ package com.example.pulsefit.ui.workout
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.pulsefit.adhd.CelebrationConfig
+import com.example.pulsefit.adhd.CelebrationEngine
+import com.example.pulsefit.adhd.CelebrationType
 import com.example.pulsefit.data.model.HeartRateZone
+import com.example.pulsefit.data.model.NdProfile
 import com.example.pulsefit.domain.model.HeartRateReading
 import com.example.pulsefit.domain.model.Workout
 import com.example.pulsefit.domain.repository.WorkoutRepository
+import com.example.pulsefit.domain.usecase.GenerateCoachTipUseCase
 import com.example.pulsefit.domain.usecase.GetUserProfileUseCase
 import com.example.pulsefit.util.CalorieCalculator
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,7 +22,9 @@ import javax.inject.Inject
 @HiltViewModel
 class SummaryViewModel @Inject constructor(
     private val workoutRepository: WorkoutRepository,
-    private val getUserProfile: GetUserProfileUseCase
+    private val getUserProfile: GetUserProfileUseCase,
+    private val celebrationEngine: CelebrationEngine,
+    private val generateCoachTip: GenerateCoachTipUseCase
 ) : ViewModel() {
 
     private val _workout = MutableStateFlow<Workout?>(null)
@@ -40,6 +47,12 @@ class SummaryViewModel @Inject constructor(
 
     private val _maxHr = MutableStateFlow(190)
     val maxHr: StateFlow<Int> = _maxHr
+
+    private val _celebrationConfig = MutableStateFlow<CelebrationConfig?>(null)
+    val celebrationConfig: StateFlow<CelebrationConfig?> = _celebrationConfig
+
+    private val _coachTip = MutableStateFlow<String?>(null)
+    val coachTip: StateFlow<String?> = _coachTip
 
     private var currentWorkoutId: Long = 0
 
@@ -67,7 +80,22 @@ class SummaryViewModel @Inject constructor(
                     durationMinutes = it.durationSeconds / 60
                 )
             }
+
+            // Celebration config
+            val ndProfile = profile?.ndProfile ?: NdProfile.STANDARD
+            _celebrationConfig.value = celebrationEngine.getCelebrationConfig(
+                CelebrationType.WORKOUT_COMPLETE, ndProfile
+            )
+
+            // Coach tip
+            w?.let {
+                _coachTip.value = generateCoachTip(it, profile?.dailyTarget ?: 12)
+            }
         }
+    }
+
+    fun dismissCelebration() {
+        _celebrationConfig.value = null
     }
 
     fun updateNotes(text: String) {
