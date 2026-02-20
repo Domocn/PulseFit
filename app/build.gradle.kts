@@ -4,14 +4,15 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.room)
+    alias(libs.plugins.google.services)
 }
 
 android {
-    namespace = "com.example.pulsefit"
+    namespace = "com.pulsefit.app"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.pulsefit"
+        applicationId = "com.pulsefit.app"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
@@ -95,6 +96,15 @@ dependencies {
     implementation(libs.work.runtime.ktx)
     implementation(libs.hilt.work)
     ksp(libs.hilt.work.compiler)
+
+    // Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+    implementation(libs.play.services.auth)
+    implementation(libs.credential.manager)
+    implementation(libs.credential.manager.play)
+    implementation(libs.google.id.identity)
 
     // Desugaring
     coreLibraryDesugaring(libs.desugar.jdk.libs)
