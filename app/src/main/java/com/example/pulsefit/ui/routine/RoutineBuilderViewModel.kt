@@ -37,6 +37,20 @@ class RoutineBuilderViewModel @Inject constructor(
         }
     }
 
+    fun updateRoutine(id: Long, dayOfWeek: Int, timeHour: Int, timeMinute: Int, durationMinutes: Int) {
+        viewModelScope.launch {
+            weeklyRoutineDao.insertOrUpdate(
+                WeeklyRoutineEntity(
+                    id = id,
+                    dayOfWeek = dayOfWeek,
+                    timeHour = timeHour,
+                    timeMinute = timeMinute,
+                    durationMinutes = durationMinutes
+                )
+            )
+        }
+    }
+
     fun deleteRoutine(id: Long) {
         viewModelScope.launch {
             weeklyRoutineDao.deleteById(id)

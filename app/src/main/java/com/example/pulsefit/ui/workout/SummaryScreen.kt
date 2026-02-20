@@ -3,6 +3,7 @@ package com.example.pulsefit.ui.workout
 import android.content.Intent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -42,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.pulsefit.data.model.HeartRateZone
 import com.example.pulsefit.domain.model.HeartRateReading
+import com.example.pulsefit.ui.components.CelebrationOverlay
 import com.example.pulsefit.ui.components.StatCard
 import com.example.pulsefit.ui.components.ZoneTimeBar
 import com.example.pulsefit.ui.theme.ZoneActive
@@ -64,12 +66,16 @@ fun SummaryScreen(
     val targetHit by viewModel.targetHit.collectAsState()
     val dailyTarget by viewModel.dailyTarget.collectAsState()
     val maxHr by viewModel.maxHr.collectAsState()
+    val celebrationConfig by viewModel.celebrationConfig.collectAsState()
+    val coachTip by viewModel.coachTip.collectAsState()
 
     val context = LocalContext.current
 
     LaunchedEffect(workoutId) {
         viewModel.load(workoutId)
     }
+
+    Box(modifier = Modifier.fillMaxSize()) {
 
     Column(
         modifier = Modifier
@@ -254,6 +260,25 @@ fun SummaryScreen(
                 }
             }
 
+            // Coach tip
+            coachTip?.let { tip ->
+                Spacer(modifier = Modifier.height(16.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("Coach Tip", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onTertiaryContainer)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = tip,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
 
             // Notes text field
@@ -288,6 +313,15 @@ fun SummaryScreen(
             Text("Done", style = MaterialTheme.typography.titleMedium)
         }
     }
+
+    // Celebration overlay on top
+    CelebrationOverlay(
+        config = celebrationConfig,
+        message = "Well done!",
+        onDismiss = viewModel::dismissCelebration
+    )
+
+    } // close Box
 }
 
 @Composable

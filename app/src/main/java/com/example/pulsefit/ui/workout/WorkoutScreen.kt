@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.pulsefit.data.model.HeartRateZone
+import com.example.pulsefit.data.model.NdProfile
 import com.example.pulsefit.ui.theme.ZoneActive
 import com.example.pulsefit.ui.theme.ZonePeak
 import com.example.pulsefit.ui.theme.ZonePush
@@ -61,6 +62,7 @@ import com.example.pulsefit.ui.theme.ZoneWarmUp
 import com.example.pulsefit.ui.workout.components.BurnPointsDisplay
 import com.example.pulsefit.ui.workout.components.HeartRateDisplay
 import com.example.pulsefit.ui.workout.components.MiniHeartRateGraph
+import com.example.pulsefit.ui.workout.components.TimeBlindnessCircle
 import com.example.pulsefit.ui.workout.components.ZoneBar
 import com.example.pulsefit.util.TimeFormatter
 import kotlinx.coroutines.delay
@@ -85,6 +87,7 @@ fun WorkoutScreen(
     val isMinimalMode by viewModel.isMinimalMode.collectAsState()
     val unlockedAchievements by viewModel.unlockedAchievements.collectAsState()
     val estimatedCalories by viewModel.estimatedCalories.collectAsState()
+    val ndProfile by viewModel.ndProfileState.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -256,6 +259,15 @@ fun WorkoutScreen(
             )
 
             Spacer(modifier = Modifier.height(24.dp))
+
+            // Time blindness circle for ADHD/AUDHD profiles
+            if (ndProfile == NdProfile.ADHD || ndProfile == NdProfile.AUDHD) {
+                TimeBlindnessCircle(
+                    elapsedSeconds = elapsed,
+                    currentZone = zone
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             HeartRateDisplay(heartRate = heartRate, zone = zone)
 
