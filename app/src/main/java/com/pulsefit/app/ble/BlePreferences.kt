@@ -19,6 +19,10 @@ class BlePreferences @Inject constructor(
         get() = prefs.getString("last_device_name", null)
         set(value) = prefs.edit().putString("last_device_name", value).apply()
 
+    var useSimulatedHr: Boolean
+        get() = prefs.getBoolean("use_simulated_hr", false)
+        set(value) = prefs.edit().putBoolean("use_simulated_hr", value).apply()
+
     fun clear() {
         prefs.edit().clear().apply()
     }

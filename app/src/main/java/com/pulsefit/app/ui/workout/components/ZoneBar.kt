@@ -8,6 +8,8 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import com.pulsefit.app.data.model.HeartRateZone
 import com.pulsefit.app.ui.theme.ZoneActive
 import com.pulsefit.app.ui.theme.ZonePeak
@@ -25,7 +27,10 @@ fun ZoneBar(currentZone: HeartRateZone, modifier: Modifier = Modifier) {
         HeartRateZone.PEAK to ZonePeak
     )
 
-    Canvas(modifier = modifier.fillMaxSize()) {
+    Canvas(modifier = modifier
+        .fillMaxSize()
+        .semantics { contentDescription = "Heart rate zone: ${currentZone.label}" }
+    ) {
         val segmentWidth = size.width / zones.size
         val gap = 4f
         val cornerRadius = 8f

@@ -22,8 +22,8 @@ class VoiceCoachEngine @Inject constructor(
     private val sensoryPreferencesRepository: SensoryPreferencesRepository
 ) {
     private var tts: TextToSpeech? = null
-    private var isInitialized = false
-    private var isTtsReady = false
+    @Volatile private var isInitialized = false
+    @Volatile private var isTtsReady = false
     private var mediaPlayer: MediaPlayer? = null
 
     private val _isSpeaking = MutableStateFlow(false)

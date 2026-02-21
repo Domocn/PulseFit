@@ -26,6 +26,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.pulsefit.app.data.exercise.TemplateRegistry
 import com.pulsefit.app.data.model.ExerciseStation
@@ -141,7 +143,12 @@ fun WorkoutTemplatesScreen(
 
 @Composable
 private fun DifficultyDots(difficulty: Int) {
-    Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        modifier = Modifier.semantics(mergeDescendants = true) {
+            contentDescription = "Difficulty $difficulty out of 5"
+        }
+    ) {
         repeat(5) { index ->
             Icon(
                 imageVector = Icons.Default.Circle,

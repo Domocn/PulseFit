@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.room)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.crashlytics)
 }
 
 android {
@@ -23,7 +24,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -39,6 +41,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     room {
@@ -104,6 +107,8 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
+    implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.analytics)
     implementation(libs.play.services.auth)
     implementation(libs.credential.manager)
     implementation(libs.credential.manager.play)

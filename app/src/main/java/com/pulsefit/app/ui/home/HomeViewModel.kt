@@ -5,8 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.pulsefit.app.adhd.AntiBurnoutSystem
 import com.pulsefit.app.adhd.DailyQuestManager
 import com.pulsefit.app.adhd.NoveltyEngine
+import com.pulsefit.app.ble.BlePreferences
 import com.pulsefit.app.ble.ConnectionStatus
 import com.pulsefit.app.ble.HeartRateSource
+import com.pulsefit.app.ble.RealHeartRate
+import com.pulsefit.app.ble.SimulatedHeartRate
 import com.pulsefit.app.data.local.dao.DailyQuestDao
 import com.pulsefit.app.data.local.entity.DailyQuestEntity
 import com.pulsefit.app.data.model.NdProfile
@@ -31,7 +34,9 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val getUserProfile: GetUserProfileUseCase,
     private val workoutRepository: WorkoutRepository,
-    private val heartRateSource: HeartRateSource,
+    @RealHeartRate private val realHeartRateSource: HeartRateSource,
+    @SimulatedHeartRate private val simulatedHeartRateSource: HeartRateSource,
+    private val blePreferences: BlePreferences,
     private val calculateStreak: CalculateStreakUseCase,
     private val getWorkoutStats: GetWorkoutStatsUseCase,
     private val dailyQuestDao: DailyQuestDao,
@@ -45,6 +50,9 @@ class HomeViewModel @Inject constructor(
 
     val todayBurnPoints: StateFlow<Int> = workoutRepository.getTodayBurnPoints()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
+    private val heartRateSource: HeartRateSource
+        get() = if (blePreferences.useSimulatedHr) simulatedHeartRateSource else realHeartRateSource
 
     val connectionStatus: StateFlow<ConnectionStatus> = heartRateSource.connectionStatus
 
@@ -75,6 +83,9 @@ class HomeViewModel @Inject constructor(
     private val _weeklyTheme = MutableStateFlow<String?>(null)
     val weeklyTheme: StateFlow<String?> = _weeklyTheme
 
+    private val _daysSinceLastWorkout = MutableStateFlow(0)
+    val daysSinceLastWorkout: StateFlow<Int> = _daysSinceLastWorkout
+
     init {
         viewModelScope.launch {
             _currentStreak.value = calculateStreak()
@@ -97,6 +108,15 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             val stats = getWorkoutStats.getWeeklyStats()
             _avgBurnPoints.value = if (stats.totalWorkouts > 0) stats.totalBurnPoints / stats.totalWorkouts else 0
+        }
+        viewModelScope.launch {
+            val profile = getUserProfile.once()
+            val lastWorkout = profile?.lastWorkoutAt
+            if (lastWorkout != null && lastWorkout > 0) {
+                val lastDate = Instant.ofEpochMilli(lastWorkout).atZone(ZoneId.systemDefault()).toLocalDate()
+                val today = LocalDate.now()
+                _daysSinceLastWorkout.value = java.time.temporal.ChronoUnit.DAYS.between(lastDate, today).toInt()
+            }
         }
         viewModelScope.launch {
             dailyQuestManager.generateIfNeeded()

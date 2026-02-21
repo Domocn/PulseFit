@@ -113,6 +113,7 @@ class CloudProfileRepository @Inject constructor(
         for (chunk in chunks) {
             val snapshot = sharedWorkoutsCollection
                 .whereIn("uid", chunk)
+                .whereEqualTo("visibility", "friends")
                 .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
                 .limit(limit.toLong())
                 .get()

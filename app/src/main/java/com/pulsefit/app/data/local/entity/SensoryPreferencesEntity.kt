@@ -22,5 +22,6 @@ data class SensoryPreferencesEntity(
     val minimalMode: Boolean = false,
     val uiLocked: Boolean = false,
     val socialPressureShield: Boolean = false,
-    val appTheme: AppTheme = AppTheme.MIDNIGHT
+    val appTheme: AppTheme = AppTheme.MIDNIGHT,
+    val bodyDoubleEnabled: Boolean = false
 )

@@ -16,6 +16,7 @@ import com.pulsefit.app.ble.RealHeartRate
 import com.pulsefit.app.ble.SimulatedHeartRate
 import com.pulsefit.app.data.exercise.ExerciseRegistry
 import com.pulsefit.app.data.exercise.TemplateRegistry
+import com.pulsefit.app.data.model.AnimationLevel
 import com.pulsefit.app.data.model.HeartRateZone
 import com.pulsefit.app.data.model.NdProfile
 import com.pulsefit.app.data.remote.AccountabilityContractRepository
@@ -135,6 +136,10 @@ class WorkoutViewModel @Inject constructor(
     private val _isMinimalMode = MutableStateFlow(false)
     val isMinimalMode: StateFlow<Boolean> = _isMinimalMode
 
+    // Animation level
+    private val _animationLevel = MutableStateFlow(AnimationLevel.FULL)
+    val animationLevel: StateFlow<AnimationLevel> = _animationLevel
+
     // Achievement unlocks
     private val _unlockedAchievements = MutableStateFlow<List<String>>(emptyList())
     val unlockedAchievements: StateFlow<List<String>> = _unlockedAchievements
@@ -247,20 +252,23 @@ class WorkoutViewModel @Inject constructor(
             }
 
             // Voice coach greeting based on user state
-            if (profile != null) {
-                voiceCoachEngine.onWorkoutStart(profile)
-            }
+            profile?.let { voiceCoachEngine.onWorkoutStart(it) }
         }
 
         // Load minimal mode + body double preference
         viewModelScope.launch {
             val prefs = sensoryPreferencesRepository.getPreferencesOnce()
             _isMinimalMode.value = prefs.minimalMode
+            _animationLevel.value = prefs.animationLevel
             bodyDoubleEnabled = prefs.bodyDoubleEnabled
             if (bodyDoubleEnabled) {
-                bodyDoubleRepository.joinSession()
-                bodyDoubleRepository.getActiveCount().collect { count ->
-                    _bodyDoubleCount.value = count
+                try {
+                    bodyDoubleRepository.joinSession()
+                    bodyDoubleRepository.getActiveCount().collect { count ->
+                        _bodyDoubleCount.value = count
+                    }
+                } catch (_: Exception) {
+                    // Body double is non-critical; don't block workout
                 }
             }
         }
@@ -429,7 +437,7 @@ class WorkoutViewModel @Inject constructor(
 
             // Voice coach: workout complete announcement
             val hitTarget = _burnPoints.value >= dailyTarget
-            val isPersonalBest = _burnPoints.value > previousBestBurnPoints && previousBestBurnPoints > 0
+            val isPersonalBest = _burnPoints.value > previousBestBurnPoints
             voiceCoachEngine.onWorkoutComplete(hitTarget, isPersonalBest)
 
             val streak = calculateStreakUseCase()

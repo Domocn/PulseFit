@@ -48,10 +48,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.pulsefit.app.data.model.AnimationLevel
 import com.pulsefit.app.data.model.HeartRateZone
 import com.pulsefit.app.data.model.NdProfile
 import com.pulsefit.app.ui.theme.ZoneActive
@@ -93,6 +96,7 @@ fun WorkoutScreen(
     val ndProfile by viewModel.ndProfileState.collectAsState()
     val guidedState by viewModel.guidedState.collectAsState()
     val isGuidedMode by viewModel.isGuidedMode.collectAsState()
+    val animationLevel by viewModel.animationLevel.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -177,10 +181,15 @@ fun WorkoutScreen(
         HeartRateZone.PUSH -> ZonePush
         HeartRateZone.PEAK -> ZonePeak
     }
-    val animatedBgColor by animateColorAsState(
-        targetValue = zoneColor.copy(alpha = 0.08f),
-        label = "zoneBg"
-    )
+    val animatedBgColor = if (animationLevel == AnimationLevel.OFF) {
+        zoneColor.copy(alpha = 0.08f)
+    } else {
+        val animated by animateColorAsState(
+            targetValue = zoneColor.copy(alpha = 0.08f),
+            label = "zoneBg"
+        )
+        animated
+    }
 
     Box(
         modifier = Modifier
@@ -207,10 +216,15 @@ fun WorkoutScreen(
                         modifier = Modifier.size(28.dp)
                     )
                 }
+                val minutes = elapsed / 60
+                val secs = elapsed % 60
                 Text(
                     text = TimeFormatter.formatDuration(elapsed),
                     style = MaterialTheme.typography.displayMedium,
-                    color = if (isPaused) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onBackground
+                    color = if (isPaused) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.semantics {
+                        contentDescription = "$minutes minutes $secs seconds elapsed"
+                    }
                 )
                 if (isJustFiveMin && !justFiveMinExtended) {
                     Spacer(modifier = Modifier.width(8.dp))
@@ -264,9 +278,10 @@ fun WorkoutScreen(
             )
 
             // Exercise guide overlay for guided workouts
-            if (isGuidedMode && guidedState != null) {
+            val currentGuidedState = guidedState
+            if (isGuidedMode && currentGuidedState != null) {
                 Spacer(modifier = Modifier.height(12.dp))
-                ExerciseGuideOverlay(guidedState = guidedState!!)
+                ExerciseGuideOverlay(guidedState = currentGuidedState)
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -284,7 +299,7 @@ fun WorkoutScreen(
 
             if (bodyDoubleCount > 0) {
                 Spacer(modifier = Modifier.height(8.dp))
-                BodyDoubleIndicator(activeCount = bodyDoubleCount)
+                BodyDoubleIndicator(activeCount = bodyDoubleCount, animationLevel = animationLevel)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -371,8 +386,8 @@ fun WorkoutScreen(
         // Reward/drop pop animation overlay
         AnimatedVisibility(
             visible = overlayText != null,
-            enter = scaleIn() + fadeIn(),
-            exit = scaleOut() + fadeOut(),
+            enter = if (animationLevel == AnimationLevel.OFF) fadeIn() else scaleIn() + fadeIn(),
+            exit = if (animationLevel == AnimationLevel.OFF) fadeOut() else scaleOut() + fadeOut(),
             modifier = Modifier.align(Alignment.Center)
         ) {
             overlayText?.let { text ->

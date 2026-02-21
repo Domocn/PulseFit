@@ -21,8 +21,17 @@ class HeartRateService : LifecycleService() {
         const val NOTIFICATION_ID = 1
     }
 
+    @Inject @RealHeartRate
+    lateinit var realHeartRateSource: HeartRateSource
+
+    @Inject @SimulatedHeartRate
+    lateinit var simulatedHeartRateSource: HeartRateSource
+
     @Inject
-    lateinit var heartRateSource: HeartRateSource
+    lateinit var blePreferences: BlePreferences
+
+    private val heartRateSource: HeartRateSource
+        get() = if (blePreferences.useSimulatedHr) simulatedHeartRateSource else realHeartRateSource
 
     override fun onCreate() {
         super.onCreate()

@@ -5,6 +5,8 @@ import com.pulsefit.app.ble.BleDevice
 import com.pulsefit.app.ble.BlePreferences
 import com.pulsefit.app.ble.BleScanner
 import com.pulsefit.app.ble.HeartRateSource
+import com.pulsefit.app.ble.RealHeartRate
+import com.pulsefit.app.ble.SimulatedHeartRate
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
@@ -12,7 +14,8 @@ import javax.inject.Inject
 @HiltViewModel
 class BleDevicePickerViewModel @Inject constructor(
     private val bleScanner: BleScanner,
-    private val heartRateSource: HeartRateSource,
+    @RealHeartRate private val realHeartRateSource: HeartRateSource,
+    @SimulatedHeartRate private val simulatedHeartRateSource: HeartRateSource,
     private val blePreferences: BlePreferences
 ) : ViewModel() {
 
@@ -32,14 +35,14 @@ class BleDevicePickerViewModel @Inject constructor(
         blePreferences.lastDeviceAddress = address
         val device = devices.value.find { it.address == address }
         blePreferences.lastDeviceName = device?.name
-        heartRateSource.connect(address)
+        blePreferences.useSimulatedHr = false
+        realHeartRateSource.connect(address)
     }
 
     fun useSimulated() {
         bleScanner.stopScan()
-        blePreferences.lastDeviceAddress = null
-        blePreferences.lastDeviceName = null
-        heartRateSource.connect(null)
+        blePreferences.useSimulatedHr = true
+        simulatedHeartRateSource.connect(null)
     }
 
     override fun onCleared() {

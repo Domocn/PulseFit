@@ -41,7 +41,7 @@ class FriendsRepository @Inject constructor(
         firestore.collection("users").document(uid).collection("friends")
 
     suspend fun searchUsers(query: String): List<PublicProfile> {
-        if (query.length < 2) return emptyList()
+        if (query.length < 4) return emptyList()
         val snapshot = firestore.collection("users")
             .orderBy("displayName")
             .startAt(query)
@@ -71,6 +71,15 @@ class FriendsRepository @Inject constructor(
 
     suspend fun sendFriendRequest(toUid: String) {
         val uid = currentUid ?: return
+        // Check for existing pending request
+        val existing = friendRequestsCollection
+            .whereEqualTo("fromUid", uid)
+            .whereEqualTo("toUid", toUid)
+            .whereEqualTo("status", "pending")
+            .limit(1)
+            .get().await()
+        if (!existing.isEmpty) return // Already sent
+
         val displayName = firebaseAuth.currentUser?.displayName ?: "User"
         val request = FriendRequest(
             fromUid = uid,

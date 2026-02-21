@@ -9,7 +9,8 @@ data class WorkoutGroup(
     val createdAt: Long = 0L,
     val memberCount: Int = 0,
     val maxMembers: Int = 10,
-    val description: String = ""
+    val description: String = "",
+    val memberUids: List<String> = emptyList()
 )
 
 enum class GroupType { FAMILY, CORPORATE }

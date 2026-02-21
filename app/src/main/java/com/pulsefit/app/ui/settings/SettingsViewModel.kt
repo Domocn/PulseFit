@@ -6,12 +6,15 @@ import android.os.Environment
 import android.provider.MediaStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.Data
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.pulsefit.app.data.local.dao.NotificationPreferencesDao
 import com.pulsefit.app.data.local.entity.NotificationPreferencesEntity
 import com.pulsefit.app.data.model.AppTheme
+import com.pulsefit.app.ble.BlePreferences
 import com.pulsefit.app.data.remote.AuthRepository
 import com.pulsefit.app.data.repository.SensoryPreferencesRepository
 import com.pulsefit.app.domain.model.Workout
@@ -20,6 +23,7 @@ import com.pulsefit.app.domain.usecase.GetUserProfileUseCase
 import com.pulsefit.app.domain.usecase.SaveUserProfileUseCase
 import com.pulsefit.app.util.ZoneCalculator
 import com.pulsefit.app.util.ZoneThresholds
+import com.pulsefit.app.worker.AccountabilityAlarmWorker
 import com.pulsefit.app.worker.StreakAtRiskWorker
 import com.pulsefit.app.worker.WeeklySummaryWorker
 import com.pulsefit.app.worker.WorkoutReminderWorker
@@ -47,6 +51,7 @@ class SettingsViewModel @Inject constructor(
     private val workoutRepository: WorkoutRepository,
     private val notificationPreferencesDao: NotificationPreferencesDao,
     private val authRepository: AuthRepository,
+    private val blePreferences: BlePreferences,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -62,7 +67,7 @@ class SettingsViewModel @Inject constructor(
     private val _notifPrefs = MutableStateFlow(NotificationPreferencesEntity())
     val notifPrefs: StateFlow<NotificationPreferencesEntity> = _notifPrefs
 
-    private val _useSimulatedHr = MutableStateFlow(false)
+    private val _useSimulatedHr = MutableStateFlow(blePreferences.useSimulatedHr)
     val useSimulatedHr: StateFlow<Boolean> = _useSimulatedHr
 
     private val _appTheme = MutableStateFlow(AppTheme.MIDNIGHT)
@@ -70,6 +75,9 @@ class SettingsViewModel @Inject constructor(
 
     private val _zoneThresholds = MutableStateFlow(ZoneThresholds())
     val zoneThresholds: StateFlow<ZoneThresholds> = _zoneThresholds
+
+    private val _bodyDoubleEnabled = MutableStateFlow(false)
+    val bodyDoubleEnabled: StateFlow<Boolean> = _bodyDoubleEnabled
 
     private val _snackbar = MutableSharedFlow<String>(extraBufferCapacity = 5)
     val snackbar: SharedFlow<String> = _snackbar
@@ -99,6 +107,10 @@ class SettingsViewModel @Inject constructor(
             notificationPreferencesDao.getPreferences().collect { prefs ->
                 _notifPrefs.value = prefs ?: NotificationPreferencesEntity()
             }
+        }
+        viewModelScope.launch {
+            val prefs = sensoryPreferencesRepository.getPreferencesOnce()
+            _bodyDoubleEnabled.value = prefs.bodyDoubleEnabled
         }
     }
 
@@ -143,7 +155,9 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun toggleSimulatedHr() {
-        _useSimulatedHr.value = !_useSimulatedHr.value
+        val newValue = !_useSimulatedHr.value
+        _useSimulatedHr.value = newValue
+        blePreferences.useSimulatedHr = newValue
     }
 
     fun updateTheme(theme: AppTheme) {
@@ -265,6 +279,57 @@ class SettingsViewModel @Inject constructor(
 
         workManager.enqueueUniquePeriodicWork(
             "weekly_summary",
+            ExistingPeriodicWorkPolicy.UPDATE,
+            request
+        )
+    }
+
+    fun toggleBodyDouble() {
+        viewModelScope.launch {
+            val current = sensoryPreferencesRepository.getPreferencesOnce()
+            val updated = current.copy(bodyDoubleEnabled = !current.bodyDoubleEnabled)
+            sensoryPreferencesRepository.save(updated)
+            _bodyDoubleEnabled.value = updated.bodyDoubleEnabled
+        }
+    }
+
+    fun toggleAccountabilityAlarm() {
+        viewModelScope.launch {
+            val current = _notifPrefs.value
+            val updated = current.copy(accountabilityAlarmEnabled = !current.accountabilityAlarmEnabled)
+            notificationPreferencesDao.insertOrUpdate(updated)
+            if (updated.accountabilityAlarmEnabled) {
+                scheduleAccountabilityAlarm(updated.accountabilityHour, updated.accountabilityMinute)
+            } else {
+                workManager.cancelUniqueWork("accountability_alarm")
+                workManager.cancelAllWorkByTag("accountability_escalation")
+            }
+        }
+    }
+
+    fun updateAccountabilityTime(hour: Int, minute: Int) {
+        viewModelScope.launch {
+            val updated = _notifPrefs.value.copy(accountabilityHour = hour, accountabilityMinute = minute)
+            notificationPreferencesDao.insertOrUpdate(updated)
+            if (updated.accountabilityAlarmEnabled) {
+                scheduleAccountabilityAlarm(hour, minute)
+            }
+        }
+    }
+
+    private fun scheduleAccountabilityAlarm(hour: Int, minute: Int) {
+        val now = ZonedDateTime.now(ZoneId.systemDefault())
+        var target = now.with(LocalTime.of(hour, minute))
+        if (target.isBefore(now)) target = target.plusDays(1)
+        val initialDelay = Duration.between(now, target).toMillis()
+
+        val request = PeriodicWorkRequestBuilder<AccountabilityAlarmWorker>(1, TimeUnit.DAYS)
+            .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
+            .setInputData(Data.Builder().putInt("level", 1).build())
+            .build()
+
+        workManager.enqueueUniquePeriodicWork(
+            "accountability_alarm",
             ExistingPeriodicWorkPolicy.UPDATE,
             request
         )

@@ -1,6 +1,5 @@
 package com.pulsefit.app.ble
 
-import android.bluetooth.BluetoothManager
 import android.content.Context
 import dagger.Module
 import dagger.Provides
@@ -36,14 +35,4 @@ object HeartRateModule {
         return SimulatedHeartRateSource()
     }
 
-    @Provides
-    @Singleton
-    fun provideHeartRateSource(@ApplicationContext context: Context): HeartRateSource {
-        val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
-        return if (bluetoothManager?.adapter != null) {
-            BleHeartRateSource(context)
-        } else {
-            SimulatedHeartRateSource()
-        }
-    }
 }

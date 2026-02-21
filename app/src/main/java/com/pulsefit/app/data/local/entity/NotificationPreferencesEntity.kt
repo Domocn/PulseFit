@@ -10,5 +10,8 @@ data class NotificationPreferencesEntity(
     val reminderMinute: Int = 0,
     val reminderEnabled: Boolean = false,
     val streakAlertEnabled: Boolean = true,
-    val weeklySummaryEnabled: Boolean = true
+    val weeklySummaryEnabled: Boolean = true,
+    val accountabilityAlarmEnabled: Boolean = false,
+    val accountabilityHour: Int = 18,
+    val accountabilityMinute: Int = 0
 )
