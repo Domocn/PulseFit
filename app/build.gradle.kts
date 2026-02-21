@@ -89,6 +89,9 @@ dependencies {
     // Gson
     implementation(libs.gson)
 
+    // Lottie
+    implementation(libs.lottie.compose)
+
     // Health Connect
     implementation(libs.health.connect)
 

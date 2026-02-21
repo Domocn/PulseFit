@@ -14,11 +14,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.pulsefit.app.data.exercise.TemplateRegistry
 import com.pulsefit.app.ui.achievements.AchievementsScreen
 import com.pulsefit.app.ui.auth.LoginScreen
 import com.pulsefit.app.ui.auth.SignUpScreen
 import com.pulsefit.app.ui.components.PulseFitBottomBar
 import com.pulsefit.app.ui.data.DeepDataScreen
+import com.pulsefit.app.ui.group.CreateGroupScreen
+import com.pulsefit.app.ui.group.GroupDetailScreen
+import com.pulsefit.app.ui.group.GroupListScreen
+import com.pulsefit.app.ui.group.JoinGroupScreen
 import com.pulsefit.app.ui.history.HistoryScreen
 import com.pulsefit.app.ui.home.HomeScreen
 import com.pulsefit.app.ui.navigation.BottomNavItem
@@ -34,6 +39,7 @@ import com.pulsefit.app.ui.routine.RoutineBuilderScreen
 import com.pulsefit.app.ui.settings.SensorySettingsScreen
 import com.pulsefit.app.ui.settings.SettingsScreen
 import com.pulsefit.app.ui.shop.RewardShopScreen
+import com.pulsefit.app.ui.social.AccountabilityScreen
 import com.pulsefit.app.ui.social.AddFriendScreen
 import com.pulsefit.app.ui.social.FeedScreen
 import com.pulsefit.app.ui.social.FriendsScreen
@@ -44,7 +50,6 @@ import com.pulsefit.app.ui.workout.ShutdownRoutineScreen
 import com.pulsefit.app.ui.workout.SummaryScreen
 import com.pulsefit.app.ui.workout.WorkoutScreen
 import com.pulsefit.app.ui.workout.WorkoutTemplatesScreen
-import com.pulsefit.app.ui.workout.WorkoutPhase
 
 @Composable
 fun PulseFitApp(viewModel: AppViewModel = hiltViewModel()) {
@@ -174,12 +179,17 @@ fun PulseFitApp(viewModel: AppViewModel = hiltViewModel()) {
                     }
                     composable(
                         Screen.Workout.route,
-                        arguments = listOf(navArgument("workoutId") { type = NavType.LongType })
+                        arguments = listOf(
+                            navArgument("workoutId") { type = NavType.LongType }
+                        )
                     ) { backStackEntry ->
                         val workoutId = backStackEntry.arguments?.getLong("workoutId") ?: return@composable
+                        val templateId by viewModel.selectedTemplateId.collectAsState()
                         WorkoutScreen(
                             workoutId = workoutId,
+                            templateId = templateId,
                             onEnd = { id ->
+                                viewModel.clearSelectedTemplate()
                                 navController.navigate(Screen.ShutdownRoutine.createRoute(id)) {
                                     popUpTo(Screen.Home.route)
                                 }
@@ -257,7 +267,7 @@ fun PulseFitApp(viewModel: AppViewModel = hiltViewModel()) {
                     composable(Screen.WorkoutTemplates.route) {
                         WorkoutTemplatesScreen(
                             onSelectTemplate = { template ->
-                                viewModel.createWorkoutFromTemplate(template.name) { workoutId ->
+                                viewModel.createWorkoutFromTemplate(template) { workoutId ->
                                     if ((ndProfile == NdProfile.ASD || ndProfile == NdProfile.AUDHD)
                                         && template.type == "GUIDED"
                                     ) {
@@ -276,12 +286,12 @@ fun PulseFitApp(viewModel: AppViewModel = hiltViewModel()) {
                     ) { backStackEntry ->
                         val workoutId = backStackEntry.arguments?.getLong("workoutId") ?: return@composable
                         val templateName by viewModel.selectedTemplateName.collectAsState()
-                        val phases = generatePhasesForTemplate(templateName ?: "Workout")
+                        val templateData by viewModel.selectedTemplateData.collectAsState()
+                        val phases = templateData?.phases ?: emptyList()
                         PreWorkoutScheduleScreen(
                             templateName = templateName ?: "Workout",
                             phases = phases,
                             onStart = {
-                                viewModel.clearSelectedTemplate()
                                 navController.navigate(Screen.Workout.createRoute(workoutId)) {
                                     popUpTo(Screen.Home.route)
                                 }
@@ -309,8 +319,17 @@ fun PulseFitApp(viewModel: AppViewModel = hiltViewModel()) {
                             },
                             onNavigateToFeed = {
                                 navController.navigate(Screen.Feed.route)
+                            },
+                            onNavigateToAccountability = {
+                                navController.navigate(Screen.Accountability.route)
+                            },
+                            onNavigateToGroups = {
+                                navController.navigate(Screen.Groups.route)
                             }
                         )
+                    }
+                    composable(Screen.Accountability.route) {
+                        AccountabilityScreen()
                     }
                     composable(Screen.Friends.route) {
                         FriendsScreen(
@@ -328,43 +347,44 @@ fun PulseFitApp(viewModel: AppViewModel = hiltViewModel()) {
                     composable(Screen.Feed.route) {
                         FeedScreen()
                     }
+
+                    // Group screens
+                    composable(Screen.Groups.route) {
+                        GroupListScreen(
+                            onNavigateToCreateGroup = {
+                                navController.navigate(Screen.CreateGroup.route)
+                            },
+                            onNavigateToJoinGroup = {
+                                navController.navigate(Screen.JoinGroup.route)
+                            },
+                            onNavigateToGroupDetail = { groupId ->
+                                navController.navigate(Screen.GroupDetail.createRoute(groupId))
+                            }
+                        )
+                    }
+                    composable(Screen.CreateGroup.route) {
+                        CreateGroupScreen(
+                            onGroupCreated = {
+                                navController.popBackStack()
+                            }
+                        )
+                    }
+                    composable(Screen.JoinGroup.route) {
+                        JoinGroupScreen(
+                            onGroupJoined = {
+                                navController.popBackStack()
+                            }
+                        )
+                    }
+                    composable(
+                        Screen.GroupDetail.route,
+                        arguments = listOf(navArgument("groupId") { type = NavType.StringType })
+                    ) { backStackEntry ->
+                        val groupId = backStackEntry.arguments?.getString("groupId") ?: return@composable
+                        GroupDetailScreen(groupId = groupId)
+                    }
                 }
             }
         }
-    }
-}
-
-private fun generatePhasesForTemplate(templateName: String): List<WorkoutPhase> {
-    return when (templateName) {
-        "Quick 15" -> listOf(
-            WorkoutPhase("Warm-Up", 3, "Warm-Up"),
-            WorkoutPhase("Main Set", 10, "Active"),
-            WorkoutPhase("Cool Down", 2, "Rest")
-        )
-        "Steady State" -> listOf(
-            WorkoutPhase("Warm-Up", 5, "Warm-Up"),
-            WorkoutPhase("Steady Active", 20, "Active"),
-            WorkoutPhase("Cool Down", 5, "Rest")
-        )
-        "HIIT Intervals" -> listOf(
-            WorkoutPhase("Warm-Up", 3, "Warm-Up"),
-            WorkoutPhase("Push Interval", 3, "Push"),
-            WorkoutPhase("Recovery", 2, "Active"),
-            WorkoutPhase("Push Interval", 3, "Push"),
-            WorkoutPhase("Recovery", 2, "Active"),
-            WorkoutPhase("Push Interval", 3, "Push"),
-            WorkoutPhase("Cool Down", 4, "Rest")
-        )
-        "Endurance" -> listOf(
-            WorkoutPhase("Warm-Up", 5, "Warm-Up"),
-            WorkoutPhase("Build", 15, "Active"),
-            WorkoutPhase("Sustain", 20, "Active"),
-            WorkoutPhase("Cool Down", 5, "Rest")
-        )
-        else -> listOf(
-            WorkoutPhase("Warm-Up", 5, "Warm-Up"),
-            WorkoutPhase("Main", 20, "Active"),
-            WorkoutPhase("Cool Down", 5, "Rest")
-        )
     }
 }

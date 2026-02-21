@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.NavigateNext
 import androidx.compose.material.icons.filled.DynamicFeed
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Handshake
 import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Shield
@@ -36,6 +38,8 @@ fun SocialHubScreen(
     onNavigateToFriends: () -> Unit,
     onNavigateToLeaderboard: () -> Unit,
     onNavigateToFeed: () -> Unit,
+    onNavigateToAccountability: () -> Unit = {},
+    onNavigateToGroups: () -> Unit = {},
     viewModel: SocialHubViewModel = hiltViewModel()
 ) {
     val isShielded by viewModel.isShielded.collectAsState()
@@ -113,6 +117,24 @@ fun SocialHubScreen(
             title = "Activity Feed",
             subtitle = "See your friends' workouts",
             onClick = onNavigateToFeed
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        SocialNavCard(
+            icon = Icons.Default.Handshake,
+            title = "Accountability",
+            subtitle = "Partner up for weekly goals",
+            onClick = onNavigateToAccountability
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        SocialNavCard(
+            icon = Icons.Default.Groups,
+            title = "Groups",
+            subtitle = "Family & team workout events",
+            onClick = onNavigateToGroups
         )
     }
 }

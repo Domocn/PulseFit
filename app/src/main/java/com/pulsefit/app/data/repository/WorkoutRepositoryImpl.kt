@@ -96,7 +96,8 @@ class WorkoutRepositoryImpl @Inject constructor(
         isQuickStart = isQuickStart,
         isJustFiveMin = isJustFiveMin,
         estimatedCalories = estimatedCalories,
-        notes = notes
+        notes = notes,
+        templateId = templateId
     )
 
     private fun Workout.toEntity() = WorkoutEntity(
@@ -113,7 +114,8 @@ class WorkoutRepositoryImpl @Inject constructor(
         isQuickStart = isQuickStart,
         isJustFiveMin = isJustFiveMin,
         estimatedCalories = estimatedCalories,
-        notes = notes
+        notes = notes,
+        templateId = templateId
     )
 
     private fun HeartRateReadingEntity.toDomain() = HeartRateReading(

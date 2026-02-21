@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pulsefit.app.data.model.AppTheme
 import com.pulsefit.app.data.model.NdProfile
+import com.pulsefit.app.data.model.WorkoutTemplateData
 import com.pulsefit.app.data.remote.AuthRepository
 import com.pulsefit.app.data.repository.SensoryPreferencesRepository
 import com.pulsefit.app.domain.model.Workout
@@ -41,8 +42,18 @@ class AppViewModel @Inject constructor(
     private val _selectedTemplateName = MutableStateFlow<String?>(null)
     val selectedTemplateName: StateFlow<String?> = _selectedTemplateName
 
+    private val _selectedTemplateData = MutableStateFlow<WorkoutTemplateData?>(null)
+    val selectedTemplateData: StateFlow<WorkoutTemplateData?> = _selectedTemplateData
+
+    private val _selectedTemplateId = MutableStateFlow<String?>(null)
+    val selectedTemplateId: StateFlow<String?> = _selectedTemplateId
+
     fun setSelectedTemplate(name: String) { _selectedTemplateName.value = name }
-    fun clearSelectedTemplate() { _selectedTemplateName.value = null }
+    fun clearSelectedTemplate() {
+        _selectedTemplateName.value = null
+        _selectedTemplateData.value = null
+        _selectedTemplateId.value = null
+    }
 
     init {
         viewModelScope.launch {
@@ -69,10 +80,12 @@ class AppViewModel @Inject constructor(
         }
     }
 
-    fun createWorkoutFromTemplate(templateName: String, onCreated: (Long) -> Unit) {
+    fun createWorkoutFromTemplate(template: WorkoutTemplateData, onCreated: (Long) -> Unit) {
         viewModelScope.launch {
-            val workout = Workout(startTime = Instant.now())
+            val workout = Workout(startTime = Instant.now(), templateId = template.id)
             val id = workoutRepository.createWorkout(workout)
+            _selectedTemplateData.value = template
+            _selectedTemplateId.value = template.id
             onCreated(id)
         }
     }

@@ -224,6 +224,29 @@ class VoiceCoachEngine @Inject constructor(
         startQueueIfNeeded()
     }
 
+    /** Called when the guided workout transitions to a new exercise. */
+    fun onExerciseChange(name: String, durationSeconds: Int, isLast: Boolean) {
+        if (!isInitialized) return
+        val durText = if (durationSeconds >= 60) "${durationSeconds / 60} minutes" else "$durationSeconds seconds"
+        val text = when (currentStyle) {
+            VoiceCoachStyle.LITERAL -> "Next: $name. $durText." + if (isLast) " This is the last exercise." else ""
+            VoiceCoachStyle.STANDARD -> "$name is next. $durText, let's go." + if (isLast) " Last one!" else ""
+            VoiceCoachStyle.HYPE -> "${name.uppercase()}! $durText! LET'S DO THIS!" + if (isLast) " FINAL EXERCISE! GIVE IT EVERYTHING!" else ""
+        }
+        speak(text)
+    }
+
+    /** Called when the guided workout transitions to a new station. */
+    fun onStationChange(stationName: String) {
+        if (!isInitialized) return
+        val text = when (currentStyle) {
+            VoiceCoachStyle.LITERAL -> "Moving to the ${stationName.lowercase()} station."
+            VoiceCoachStyle.STANDARD -> "Time to switch! Heading to the ${stationName.lowercase()}."
+            VoiceCoachStyle.HYPE -> "${stationName.uppercase()} TIME! Let's GET AFTER IT!"
+        }
+        speak(text)
+    }
+
     // ---- Playback queue -----------------------------------------------------
 
     private fun queueClip(key: String, fallbackText: String) {

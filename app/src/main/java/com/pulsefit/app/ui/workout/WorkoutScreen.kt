@@ -60,6 +60,7 @@ import com.pulsefit.app.ui.theme.ZonePush
 import com.pulsefit.app.ui.theme.ZoneRest
 import com.pulsefit.app.ui.theme.ZoneWarmUp
 import com.pulsefit.app.ui.workout.components.BurnPointsDisplay
+import com.pulsefit.app.ui.workout.components.ExerciseGuideOverlay
 import com.pulsefit.app.ui.workout.components.HeartRateDisplay
 import com.pulsefit.app.ui.workout.components.MiniHeartRateGraph
 import com.pulsefit.app.ui.workout.components.TimeBlindnessCircle
@@ -70,6 +71,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun WorkoutScreen(
     workoutId: Long,
+    templateId: String? = null,
     onEnd: (Long) -> Unit,
     viewModel: WorkoutViewModel = hiltViewModel()
 ) {
@@ -87,7 +89,10 @@ fun WorkoutScreen(
     val isMinimalMode by viewModel.isMinimalMode.collectAsState()
     val unlockedAchievements by viewModel.unlockedAchievements.collectAsState()
     val estimatedCalories by viewModel.estimatedCalories.collectAsState()
+    val bodyDoubleCount by viewModel.bodyDoubleCount.collectAsState()
     val ndProfile by viewModel.ndProfileState.collectAsState()
+    val guidedState by viewModel.guidedState.collectAsState()
+    val isGuidedMode by viewModel.isGuidedMode.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -106,7 +111,7 @@ fun WorkoutScreen(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.start(workoutId)
+        viewModel.start(workoutId, templateId)
     }
 
     LaunchedEffect(isFinished) {
@@ -258,6 +263,12 @@ fun WorkoutScreen(
                     .height(40.dp)
             )
 
+            // Exercise guide overlay for guided workouts
+            if (isGuidedMode && guidedState != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                ExerciseGuideOverlay(guidedState = guidedState!!)
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
 
             // Time blindness circle for ADHD/AUDHD profiles
@@ -270,6 +281,11 @@ fun WorkoutScreen(
             }
 
             HeartRateDisplay(heartRate = heartRate, zone = zone)
+
+            if (bodyDoubleCount > 0) {
+                Spacer(modifier = Modifier.height(8.dp))
+                BodyDoubleIndicator(activeCount = bodyDoubleCount)
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
