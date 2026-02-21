@@ -33,9 +33,18 @@ sealed class Screen(val route: String) {
     data object OnboardingSummary : Screen("onboarding_summary")
 
     // Social
+    data object Accountability : Screen("accountability")
     data object SocialHub : Screen("social_hub")
     data object Friends : Screen("friends")
     data object AddFriend : Screen("add_friend")
     data object Leaderboard : Screen("leaderboard")
     data object Feed : Screen("feed")
+
+    // Groups
+    data object Groups : Screen("groups")
+    data object CreateGroup : Screen("create_group")
+    data object GroupDetail : Screen("group_detail/{groupId}") {
+        fun createRoute(groupId: String) = "group_detail/$groupId"
+    }
+    data object JoinGroup : Screen("join_group")
 }

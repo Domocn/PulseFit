@@ -18,5 +18,6 @@ data class Workout(
     val isQuickStart: Boolean = false,
     val isJustFiveMin: Boolean = false,
     val estimatedCalories: Int? = null,
-    val notes: String? = null
+    val notes: String? = null,
+    val templateId: String? = null
 )

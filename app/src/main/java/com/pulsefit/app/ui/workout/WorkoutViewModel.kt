@@ -14,8 +14,13 @@ import com.pulsefit.app.ble.BlePreferences
 import com.pulsefit.app.ble.HeartRateSource
 import com.pulsefit.app.ble.RealHeartRate
 import com.pulsefit.app.ble.SimulatedHeartRate
+import com.pulsefit.app.data.exercise.ExerciseRegistry
+import com.pulsefit.app.data.exercise.TemplateRegistry
 import com.pulsefit.app.data.model.HeartRateZone
 import com.pulsefit.app.data.model.NdProfile
+import com.pulsefit.app.data.remote.AccountabilityContractRepository
+import com.pulsefit.app.data.remote.BodyDoubleRepository
+import com.pulsefit.app.data.remote.GroupChallengeRepository
 import com.pulsefit.app.data.repository.SensoryPreferencesRepository
 import com.pulsefit.app.domain.repository.WorkoutRepository
 import com.pulsefit.app.domain.usecase.AwardXpUseCase
@@ -50,6 +55,8 @@ class WorkoutViewModel @Inject constructor(
     private val calculateStreakUseCase: CalculateStreakUseCase,
     private val workoutRepository: WorkoutRepository,
     private val microRewardEngine: MicroRewardEngine,
+    private val accountabilityContractRepository: AccountabilityContractRepository,
+    private val bodyDoubleRepository: BodyDoubleRepository,
     private val sensoryPreferencesRepository: SensoryPreferencesRepository,
     private val variableDropEngine: VariableDropEngine,
     private val transitionWarningManager: TransitionWarningManager,
@@ -58,7 +65,10 @@ class WorkoutViewModel @Inject constructor(
     private val blePreferences: BlePreferences,
     private val voiceCoachEngine: VoiceCoachEngine,
     private val audioPalette: AudioPalette,
-    private val getWorkoutStats: GetWorkoutStatsUseCase
+    private val getWorkoutStats: GetWorkoutStatsUseCase,
+    private val templateRegistry: TemplateRegistry,
+    private val exerciseRegistry: ExerciseRegistry,
+    private val groupChallengeRepository: GroupChallengeRepository
 ) : ViewModel() {
 
     private val heartRateSource: HeartRateSource
@@ -137,6 +147,18 @@ class WorkoutViewModel @Inject constructor(
     private val _ndProfileState = MutableStateFlow(NdProfile.STANDARD)
     val ndProfileState: StateFlow<NdProfile> = _ndProfileState
 
+    // Guided workout
+    private var guidedWorkoutManager: GuidedWorkoutManager? = null
+    private val _guidedState = MutableStateFlow<GuidedState?>(null)
+    val guidedState: StateFlow<GuidedState?> = _guidedState
+    private val _isGuidedMode = MutableStateFlow(false)
+    val isGuidedMode: StateFlow<Boolean> = _isGuidedMode
+
+    // Body double
+    private val _bodyDoubleCount = MutableStateFlow(0)
+    val bodyDoubleCount: StateFlow<Int> = _bodyDoubleCount
+    private var bodyDoubleEnabled = false
+
     private var maxHr = 190
     private var timerJob: Job? = null
     private var workoutId: Long = 0
@@ -159,7 +181,7 @@ class WorkoutViewModel @Inject constructor(
     private var previousBestBurnPoints = 0
     private var encouragementIntervalSeconds = 180  // ND-adaptive: ASD=300, ADHD=90, default=180
 
-    fun start(workoutId: Long) {
+    fun start(workoutId: Long, templateId: String? = null) {
         this.workoutId = workoutId
         // Auto-reconnect to last known BLE device
         heartRateSource.connect(blePreferences.lastDeviceAddress)
@@ -167,6 +189,25 @@ class WorkoutViewModel @Inject constructor(
         variableDropEngine.reset()
         transitionWarningManager.reset()
         voiceCoachEngine.initialize()
+
+        // Initialize guided workout if template is GUIDED
+        if (templateId != null) {
+            val template = templateRegistry.getById(templateId)
+            if (template != null && template.type == "GUIDED" && template.phases.isNotEmpty()) {
+                val manager = GuidedWorkoutManager(template, exerciseRegistry)
+                manager.onExerciseChange = { exercise, duration, isLast ->
+                    voiceCoachEngine.onExerciseChange(exercise.name, duration, isLast)
+                }
+                manager.onStationChange = { stationName ->
+                    voiceCoachEngine.onStationChange(stationName)
+                }
+                guidedWorkoutManager = manager
+                _isGuidedMode.value = true
+                viewModelScope.launch {
+                    manager.state.collect { _guidedState.value = it }
+                }
+            }
+        }
 
         viewModelScope.launch {
             voiceCoachEngine.updateStyle()
@@ -211,10 +252,17 @@ class WorkoutViewModel @Inject constructor(
             }
         }
 
-        // Load minimal mode preference
+        // Load minimal mode + body double preference
         viewModelScope.launch {
             val prefs = sensoryPreferencesRepository.getPreferencesOnce()
             _isMinimalMode.value = prefs.minimalMode
+            bodyDoubleEnabled = prefs.bodyDoubleEnabled
+            if (bodyDoubleEnabled) {
+                bodyDoubleRepository.joinSession()
+                bodyDoubleRepository.getActiveCount().collect { count ->
+                    _bodyDoubleCount.value = count
+                }
+            }
         }
 
         // Collect micro-reward events
@@ -260,6 +308,9 @@ class WorkoutViewModel @Inject constructor(
                             val soundEvent = if (zone.ordinal > previousZone.ordinal)
                                 AudioPalette.SoundEvent.ZONE_UP else AudioPalette.SoundEvent.ZONE_DOWN
                             audioPalette.play(soundEvent)
+                        }
+                        if (bodyDoubleEnabled) {
+                            try { bodyDoubleRepository.updateZone(zone.name) } catch (_: Exception) {}
                         }
                         previousZone = zone
                     }
@@ -334,6 +385,9 @@ class WorkoutViewModel @Inject constructor(
                     }
                 }
 
+                // Guided workout tick
+                guidedWorkoutManager?.onTick(_elapsedSeconds.value)
+
                 _currentChunk.value = (_elapsedSeconds.value / 300) + 1
 
                 if (_isJustFiveMin.value && !_justFiveMinPromptShown.value && _elapsedSeconds.value >= 300) {
@@ -357,6 +411,9 @@ class WorkoutViewModel @Inject constructor(
         heartRateSource.disconnect()
         if (audioPaletteEnabled) {
             audioPalette.play(AudioPalette.SoundEvent.WORKOUT_END)
+        }
+        if (bodyDoubleEnabled) {
+            viewModelScope.launch { try { bodyDoubleRepository.leaveSession() } catch (_: Exception) {} }
         }
         // Don't shutdown voice engine yet — we need it for completion clips
         viewModelScope.launch {
@@ -404,6 +461,22 @@ class WorkoutViewModel @Inject constructor(
                 }
             }
 
+            // Record workout for active accountability contracts
+            try {
+                val contractIds = accountabilityContractRepository.getActiveContractIds()
+                contractIds.forEach { contractId ->
+                    accountabilityContractRepository.recordWorkout(contractId)
+                }
+            } catch (_: Exception) {}
+
+            // Record workout for active group challenges
+            try {
+                val groupIds = groupChallengeRepository.getActiveGroupIds()
+                groupIds.forEach { groupId ->
+                    groupChallengeRepository.recordWorkoutForGroup(groupId)
+                }
+            } catch (_: Exception) {}
+
             _isFinished.value = true
         }
     }
@@ -413,5 +486,8 @@ class WorkoutViewModel @Inject constructor(
         timerJob?.cancel()
         heartRateSource.disconnect()
         voiceCoachEngine.shutdown()
+        if (bodyDoubleEnabled) {
+            viewModelScope.launch { try { bodyDoubleRepository.leaveSession() } catch (_: Exception) {} }
+        }
     }
 }
