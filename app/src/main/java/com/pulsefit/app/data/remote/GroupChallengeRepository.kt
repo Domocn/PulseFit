@@ -47,29 +47,31 @@ class GroupChallengeRepository @Inject constructor(
     }
 
     suspend fun recordWorkoutForGroup(groupId: String) {
-        // Increment active challenges progress
-        val snapshot = challengesCollection(groupId)
-            .whereEqualTo("status", "active")
-            .get().await()
-        for (doc in snapshot.documents) {
-            val challenge = doc.toObject(GroupChallenge::class.java) ?: continue
-            val newProgress = challenge.currentProgress + 1
-            val updates = mutableMapOf<String, Any>("currentProgress" to newProgress)
-            if (newProgress >= challenge.goalTarget) {
-                updates["status"] = "completed"
-            }
-            doc.reference.update(updates).await()
-        }
-
-        // Update weekly stats
-        val ref = statsDoc(groupId)
         try {
-            ref.update(
-                "totalWorkouts", FieldValue.increment(1)
-            ).await()
+            // Increment active challenges progress
+            val snapshot = challengesCollection(groupId)
+                .whereEqualTo("status", "active")
+                .get().await()
+            for (doc in snapshot.documents) {
+                val challenge = doc.toObject(GroupChallenge::class.java) ?: continue
+                val newProgress = challenge.currentProgress + 1
+                val updates = mutableMapOf<String, Any>("currentProgress" to newProgress)
+                if (newProgress >= challenge.goalTarget) {
+                    updates["status"] = "completed"
+                }
+                doc.reference.update(updates).await()
+            }
+
+            // Update weekly stats
+            val ref = statsDoc(groupId)
+            try {
+                ref.update("totalWorkouts", FieldValue.increment(1)).await()
+            } catch (_: Exception) {
+                // Stats doc may not exist yet -- create it
+                ref.set(GroupWeeklyStats(totalWorkouts = 1)).await()
+            }
         } catch (_: Exception) {
-            // Stats doc may not exist yet — create it
-            ref.set(GroupWeeklyStats(totalWorkouts = 1)).await()
+            // Silently fail - group challenge sync is non-critical
         }
     }
 
@@ -87,15 +89,14 @@ class GroupChallengeRepository @Inject constructor(
     }
 
     suspend fun getActiveGroupIds(): List<String> {
-        val uid = auth.currentUser?.uid ?: return emptyList()
-        val snapshot = firestore.collection("groups").get().await()
-        val ids = mutableListOf<String>()
-        for (doc in snapshot.documents) {
-            val memberDoc = doc.reference.collection("members").document(uid).get().await()
-            if (memberDoc.exists()) {
-                ids.add(doc.id)
-            }
+        val currentUid = auth.currentUser?.uid ?: return emptyList()
+        return try {
+            val snapshot = firestore.collection("groups")
+                .whereArrayContains("memberUids", currentUid)
+                .get().await()
+            snapshot.documents.map { it.id }
+        } catch (_: Exception) {
+            emptyList()
         }
-        return ids
     }
 }

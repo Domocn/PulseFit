@@ -415,6 +415,75 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // ADHD section
+            Text("ADHD Features", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Body Double Mode", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+                    Text("See how many others are training now during workouts", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Switch(
+                    checked = viewModel.bodyDoubleEnabled.collectAsState().value,
+                    onCheckedChange = { viewModel.toggleBodyDouble() },
+                    colors = SwitchDefaults.colors(checkedTrackColor = MaterialTheme.colorScheme.primary)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Accountability Alarm", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+                    Text(
+                        "Escalating reminders at ${String.format("%02d:%02d", notifPrefs.accountabilityHour, notifPrefs.accountabilityMinute)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = notifPrefs.accountabilityAlarmEnabled,
+                    onCheckedChange = { viewModel.toggleAccountabilityAlarm() },
+                    colors = SwitchDefaults.colors(checkedTrackColor = MaterialTheme.colorScheme.primary)
+                )
+            }
+
+            if (notifPrefs.accountabilityAlarmEnabled) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = notifPrefs.accountabilityHour.toString(),
+                        onValueChange = { v ->
+                            val h = v.toIntOrNull()?.coerceIn(0, 23) ?: return@OutlinedTextField
+                            viewModel.updateAccountabilityTime(h, notifPrefs.accountabilityMinute)
+                        },
+                        label = { Text("Hour") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        colors = textFieldColors
+                    )
+                    OutlinedTextField(
+                        value = notifPrefs.accountabilityMinute.toString(),
+                        onValueChange = { v ->
+                            val m = v.toIntOrNull()?.coerceIn(0, 59) ?: return@OutlinedTextField
+                            viewModel.updateAccountabilityTime(notifPrefs.accountabilityHour, m)
+                        },
+                        label = { Text("Minute") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        colors = textFieldColors
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
             // Account section
             Text("Account", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.height(12.dp))

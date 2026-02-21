@@ -21,12 +21,13 @@ class TransitionWarningManager @Inject constructor() {
 
     suspend fun onTick(currentZone: HeartRateZone, elapsedSeconds: Int) {
         if (currentZone != lastZone) {
-            if (lastZone != null) {
+            val previousZone = lastZone
+            if (previousZone != null) {
                 _warnings.emit(
                     TransitionWarning(
                         message = "Zone changed to ${currentZone.label}",
                         secondsUntil = 0,
-                        fromZone = lastZone!!,
+                        fromZone = previousZone,
                         toZone = currentZone
                     )
                 )

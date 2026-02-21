@@ -8,14 +8,19 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 
 @Composable
 fun BurnPointsRing(current: Int, target: Int, modifier: Modifier = Modifier) {
     val progress = if (target > 0) (current.toFloat() / target).coerceIn(0f, 1f) else 0f
+    val percentage = (progress * 100).toInt()
     val trackColor = MaterialTheme.colorScheme.surfaceVariant
     val progressColor = MaterialTheme.colorScheme.primary
 
-    Canvas(modifier = modifier) {
+    Canvas(modifier = modifier.semantics {
+        contentDescription = "Burn points progress: $current of $target, $percentage percent"
+    }) {
         val strokeWidth = 16f
         val radius = (size.minDimension - strokeWidth) / 2
         val topLeft = Offset(

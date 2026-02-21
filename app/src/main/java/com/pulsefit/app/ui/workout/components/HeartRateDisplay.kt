@@ -5,6 +5,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.sp
 import com.pulsefit.app.data.model.HeartRateZone
 import com.pulsefit.app.ui.theme.ZoneActive
@@ -23,7 +28,15 @@ fun HeartRateDisplay(heartRate: Int, zone: HeartRateZone) {
         HeartRateZone.PEAK -> ZonePeak
     }
 
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    val hrText = if (heartRate > 0) "$heartRate" else "No reading"
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.semantics(mergeDescendants = true) {
+            contentDescription = "$hrText BPM, ${zone.label} zone"
+            liveRegion = LiveRegionMode.Polite
+        }
+    ) {
         Text(
             text = if (heartRate > 0) "$heartRate" else "--",
             style = MaterialTheme.typography.displayLarge.copy(fontSize = 72.sp),

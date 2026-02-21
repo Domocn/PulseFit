@@ -36,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -63,6 +64,7 @@ fun HomeScreen(
     val shouldRest by viewModel.shouldRest.collectAsState()
     val avgBurnPoints by viewModel.avgBurnPoints.collectAsState()
     val weeklyTheme by viewModel.weeklyTheme.collectAsState()
+    val daysSinceLastWorkout by viewModel.daysSinceLastWorkout.collectAsState()
 
     LaunchedEffect(workoutId) {
         workoutId?.let {
@@ -117,7 +119,7 @@ fun HomeScreen(
                         ) {
                             Icon(
                                 Icons.Default.LocalFireDepartment,
-                                contentDescription = null,
+                                contentDescription = "$currentStreak day streak",
                                 tint = MaterialTheme.colorScheme.secondary,
                                 modifier = Modifier.size(20.dp)
                             )
@@ -216,6 +218,15 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(12.dp))
         }
 
+        // Growth Garden (ADHD progress visualization)
+        profile?.let { p ->
+            GrowthGardenCard(
+                totalBurnPoints = p.totalBurnPoints,
+                daysSinceLastWorkout = daysSinceLastWorkout
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
         BurnPointsRing(
             current = todayPoints,
             target = profile?.dailyTarget ?: 12,
@@ -263,7 +274,7 @@ fun HomeScreen(
             ) {
                 Icon(
                     Icons.Default.Timer,
-                    contentDescription = null,
+                    contentDescription = "Quick 5 minute workout",
                     modifier = Modifier.size(18.dp),
                     tint = MaterialTheme.colorScheme.primary
                 )
@@ -342,7 +353,7 @@ private fun QuickNavCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier.clickable(onClick = onClick),
+        modifier = modifier.clickable(onClick = onClick, role = Role.Button),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(12.dp)
     ) {

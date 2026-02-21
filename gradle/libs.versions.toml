@@ -21,6 +21,7 @@ healthConnect = "1.1.0-alpha12"
 workManager = "2.10.1"
 hiltWork = "1.2.0"
 firebaseBom = "33.7.0"
+firebaseCrashlyticsPlugin = "3.0.3"
 googleServices = "4.4.2"
 playServicesAuth = "21.3.0"
 credentialManager = "1.5.0-rc01"
@@ -84,6 +85,8 @@ hilt-work-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth-ktx" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore-ktx" }
+firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics-ktx" }
+firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics-ktx" }
 play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
 credential-manager = { group = "androidx.credentials", name = "credentials", version.ref = "credentialManager" }
 credential-manager-play = { group = "androidx.credentials", name = "credentials-play-services-auth", version.ref = "credentialManager" }
@@ -104,3 +107,4 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 room = { id = "androidx.room", version.ref = "room" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebaseCrashlyticsPlugin" }

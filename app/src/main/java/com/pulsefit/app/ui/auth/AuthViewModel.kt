@@ -1,5 +1,6 @@
 package com.pulsefit.app.ui.auth
 
+import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pulsefit.app.data.remote.AuthRepository
@@ -39,9 +40,14 @@ class AuthViewModel @Inject constructor(
 
     fun signIn() {
         viewModelScope.launch {
+            val emailTrimmed = _email.value.trim()
+            if (!isValidEmail(emailTrimmed)) {
+                _error.value = "Please enter a valid email address"
+                return@launch
+            }
             _isLoading.value = true
             _error.value = null
-            val result = authRepository.signInWithEmail(_email.value.trim(), _password.value)
+            val result = authRepository.signInWithEmail(emailTrimmed, _password.value)
             result.fold(
                 onSuccess = { _signInSuccess.value = true },
                 onFailure = { _error.value = it.message ?: "Sign in failed" }
@@ -52,13 +58,26 @@ class AuthViewModel @Inject constructor(
 
     fun signUp() {
         viewModelScope.launch {
+            val emailTrimmed = _email.value.trim()
+            val nameTrimmed = _displayName.value.trim()
+
+            if (!isValidEmail(emailTrimmed)) {
+                _error.value = "Please enter a valid email address"
+                return@launch
+            }
+            val passwordError = validatePassword(_password.value)
+            if (passwordError != null) {
+                _error.value = passwordError
+                return@launch
+            }
+            if (nameTrimmed.length < 2) {
+                _error.value = "Display name must be at least 2 characters"
+                return@launch
+            }
+
             _isLoading.value = true
             _error.value = null
-            val result = authRepository.signUpWithEmail(
-                _email.value.trim(),
-                _password.value,
-                _displayName.value.trim()
-            )
+            val result = authRepository.signUpWithEmail(emailTrimmed, _password.value, nameTrimmed)
             result.fold(
                 onSuccess = { _signInSuccess.value = true },
                 onFailure = { _error.value = it.message ?: "Sign up failed" }
@@ -78,5 +97,15 @@ class AuthViewModel @Inject constructor(
             )
             _isLoading.value = false
         }
+    }
+
+    private fun isValidEmail(email: String): Boolean =
+        Patterns.EMAIL_ADDRESS.matcher(email).matches()
+
+    private fun validatePassword(password: String): String? = when {
+        password.length < 8 -> "Password must be at least 8 characters"
+        !password.any { it.isDigit() } -> "Password must contain at least one number"
+        !password.any { it.isUpperCase() } -> "Password must contain at least one uppercase letter"
+        else -> null
     }
 }

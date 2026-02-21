@@ -22,6 +22,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -73,12 +77,19 @@ fun SignUpScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
+        val isNameError = error != null && error!!.contains("name", ignoreCase = true)
+        val isEmailError = error != null && error!!.contains("email", ignoreCase = true)
+        val isPasswordError = error != null && error!!.contains("password", ignoreCase = true)
+        val isGeneralError = error != null && !isNameError && !isEmailError && !isPasswordError
+
         OutlinedTextField(
             value = displayName,
             onValueChange = viewModel::updateDisplayName,
             label = { Text("Display Name") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
+            isError = isNameError,
+            supportingText = if (isNameError) {{ Text(error!!) }} else null,
             colors = textFieldColors
         )
 
@@ -90,6 +101,8 @@ fun SignUpScreen(
             label = { Text("Email") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
+            isError = isEmailError,
+            supportingText = if (isEmailError) {{ Text(error!!) }} else null,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             colors = textFieldColors
         )
@@ -102,17 +115,20 @@ fun SignUpScreen(
             label = { Text("Password") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
+            isError = isPasswordError,
+            supportingText = if (isPasswordError) {{ Text(error!!) }} else null,
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             colors = textFieldColors
         )
 
-        if (error != null) {
+        if (isGeneralError) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = error!!,
                 color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
             )
         }
 
@@ -125,7 +141,9 @@ fun SignUpScreen(
         ) {
             if (isLoading) {
                 CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier
+                        .size(20.dp)
+                        .semantics { contentDescription = "Creating account" },
                     strokeWidth = 2.dp,
                     color = MaterialTheme.colorScheme.onPrimary
                 )

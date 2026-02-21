@@ -72,30 +72,30 @@ fun GroupDetailScreen(
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onBackground
         )
-        if (group?.description?.isNotEmpty() == true) {
+        group?.description?.takeIf { it.isNotEmpty() }?.let { desc ->
             Text(
-                text = group!!.description,
+                text = desc,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
         // Invite code
-        if (group != null) {
+        group?.let { g ->
             Spacer(modifier = Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "Invite Code: ${group!!.inviteCode}",
+                    text = "Invite Code: ${g.inviteCode}",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
                 IconButton(onClick = {
-                    clipboardManager.setText(AnnotatedString(group!!.inviteCode))
+                    clipboardManager.setText(AnnotatedString(g.inviteCode))
                 }) {
                     Icon(
                         Icons.Default.ContentCopy,
-                        contentDescription = "Copy code",
+                        contentDescription = "Copy invite code",
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -238,7 +238,8 @@ fun GroupDetailScreen(
                     }
                 }
                 "Stats" -> {
-                    if (weeklyStats != null) {
+                    val stats = weeklyStats
+                    if (stats != null) {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -256,7 +257,7 @@ fun GroupDetailScreen(
                                 ) {
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                         Text(
-                                            "${weeklyStats!!.totalWorkouts}",
+                                            "${stats.totalWorkouts}",
                                             style = MaterialTheme.typography.headlineSmall,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.primary
@@ -269,7 +270,7 @@ fun GroupDetailScreen(
                                     }
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                         Text(
-                                            "${weeklyStats!!.totalBurnPoints}",
+                                            "${stats.totalBurnPoints}",
                                             style = MaterialTheme.typography.headlineSmall,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.primary

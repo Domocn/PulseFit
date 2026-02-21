@@ -46,6 +46,12 @@ class GroupEventRepository @Inject constructor(
 
     suspend fun rsvpEvent(groupId: String, eventId: String) {
         val uid = auth.currentUser?.uid ?: return
+        // Verify user is a group member
+        val memberDoc = firestore.collection("groups")
+            .document(groupId).collection("members")
+            .document(uid).get().await()
+        if (!memberDoc.exists()) return
+
         val docRef = eventsCollection(groupId).document(eventId)
         val event = docRef.get().await().toObject(GroupEvent::class.java) ?: return
         if (uid !in event.rsvpList) {

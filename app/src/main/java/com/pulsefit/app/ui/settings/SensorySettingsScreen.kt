@@ -27,6 +27,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pulsefit.app.data.model.AnimationLevel
@@ -191,12 +194,18 @@ private fun SensorySlider(
                 color = MaterialTheme.colorScheme.primary
             )
         }
+        val currentValue = values.getOrElse(selectedIndex) { "" }
         Slider(
             value = selectedIndex.toFloat(),
             onValueChange = { onValueChange(it.toInt()) },
             valueRange = 0f..(values.size - 1).toFloat(),
             steps = values.size - 2,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .semantics {
+                    contentDescription = "$label slider"
+                    stateDescription = "$currentValue, ${selectedIndex + 1} of ${values.size}"
+                },
             colors = SliderDefaults.colors(
                 thumbColor = MaterialTheme.colorScheme.primary,
                 activeTrackColor = MaterialTheme.colorScheme.primary

@@ -80,7 +80,7 @@ fun ExerciseGuideOverlay(
                                 ExerciseStation.FLOOR -> Icons.Default.FitnessCenter
                                 else -> Icons.Default.FitnessCenter
                             },
-                            contentDescription = null,
+                            contentDescription = "${guidedState.stationName} station",
                             modifier = Modifier.size(18.dp)
                         )
                     },

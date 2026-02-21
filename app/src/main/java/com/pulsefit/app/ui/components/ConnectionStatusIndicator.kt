@@ -14,6 +14,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.pulsefit.app.ble.ConnectionStatus
 import com.pulsefit.app.ui.theme.ZonePeak
@@ -30,7 +32,9 @@ fun ConnectionStatusIndicator(status: ConnectionStatus, modifier: Modifier = Mod
     }
 
     Row(
-        modifier = modifier,
+        modifier = modifier.semantics(mergeDescendants = true) {
+            contentDescription = "Heart rate monitor: $label"
+        },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {

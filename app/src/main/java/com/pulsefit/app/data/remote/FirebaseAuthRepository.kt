@@ -33,7 +33,8 @@ class FirebaseAuthRepository @Inject constructor(
     override suspend fun signInWithEmail(email: String, password: String): Result<FirebaseUser> {
         return try {
             val result = firebaseAuth.signInWithEmailAndPassword(email, password).await()
-            Result.success(result.user!!)
+            val user = result.user ?: return Result.failure(Exception("Sign in failed"))
+            Result.success(user)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -46,7 +47,7 @@ class FirebaseAuthRepository @Inject constructor(
     ): Result<FirebaseUser> {
         return try {
             val result = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
-            val user = result.user!!
+            val user = result.user ?: return Result.failure(Exception("Account creation failed"))
             val profileUpdates = userProfileChangeRequest {
                 this.displayName = displayName
             }
@@ -61,7 +62,8 @@ class FirebaseAuthRepository @Inject constructor(
         return try {
             val credential = GoogleAuthProvider.getCredential(idToken, null)
             val result = firebaseAuth.signInWithCredential(credential).await()
-            Result.success(result.user!!)
+            val user = result.user ?: return Result.failure(Exception("Google sign in failed"))
+            Result.success(user)
         } catch (e: Exception) {
             Result.failure(e)
         }

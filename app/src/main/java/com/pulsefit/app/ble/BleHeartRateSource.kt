@@ -12,6 +12,7 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import com.pulsefit.app.BuildConfig
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -53,14 +54,14 @@ class BleHeartRateSource @Inject constructor(
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
-                    Log.d(TAG, "Connected to GATT server")
+                    if (BuildConfig.DEBUG) Log.d(TAG, "Connected to GATT server")
                     _connectionStatus.value = ConnectionStatus.CONNECTED
                     _isConnected.value = true
                     reconnectAttempts = 0
                     gatt.discoverServices()
                 }
                 BluetoothProfile.STATE_DISCONNECTED -> {
-                    Log.d(TAG, "Disconnected from GATT server")
+                    if (BuildConfig.DEBUG) Log.d(TAG, "Disconnected from GATT server")
                     _isConnected.value = false
                     _heartRate.value = null
                     gatt?.close()
@@ -68,7 +69,7 @@ class BleHeartRateSource @Inject constructor(
                     if (!intentionalDisconnect && lastDeviceAddress != null && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
                         reconnectAttempts++
                         _connectionStatus.value = ConnectionStatus.CONNECTING
-                        Log.d(TAG, "Auto-reconnect attempt $reconnectAttempts/$MAX_RECONNECT_ATTEMPTS")
+                        if (BuildConfig.DEBUG) Log.d(TAG, "Auto-reconnect attempt $reconnectAttempts/$MAX_RECONNECT_ATTEMPTS")
                         handler.postDelayed({
                             attemptReconnect()
                         }, RECONNECT_DELAY_MS)
