@@ -222,19 +222,19 @@ STREAK_TEXTS = {
 
 RETURN_TEXTS = {
     "literal": {
-        "return_1day": "You missed yesterday. Welcome back.",
-        "return_few":  "It has been a few days. Welcome back.",
-        "return_long": "Welcome back. No judgement. Let's start again.",
+        "return_1day": "Welcome back. Ready to begin.",
+        "return_few":  "Welcome back. Starting fresh.",
+        "return_long": "Welcome back. Every workout counts.",
     },
     "standard": {
-        "return_1day": "Missed a day? No worries. Let's pick it back up.",
-        "return_few":  "Hey, welcome back! Ready to get going again?",
-        "return_long": "Welcome back! Every comeback starts with one workout.",
+        "return_1day": "Good to see you! Let's get moving.",
+        "return_few":  "Welcome back! Ready when you are.",
+        "return_long": "Great to have you back. Let's do this.",
     },
     "hype": {
-        "return_1day": "Yesterday was rest day! TODAY we GO!",
-        "return_few":  "The COMEBACK starts NOW! Let's DO THIS!",
-        "return_long": "The RETURN of the CHAMPION! Let's GOOO!",
+        "return_1day": "You're BACK! Let's make today count!",
+        "return_few":  "WELCOME BACK! Time to get after it!",
+        "return_long": "The RETURN! Let's show up TODAY!",
     },
 }
 

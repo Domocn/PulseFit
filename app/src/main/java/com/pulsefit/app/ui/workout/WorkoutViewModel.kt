@@ -157,6 +157,7 @@ class WorkoutViewModel @Inject constructor(
     private var targetHitAnnounced = false
     private var lastEncouragementSecond = 0
     private var previousBestBurnPoints = 0
+    private var encouragementIntervalSeconds = 180  // ND-adaptive: ASD=300, ADHD=90, default=180
 
     fun start(workoutId: Long) {
         this.workoutId = workoutId
@@ -179,6 +180,14 @@ class WorkoutViewModel @Inject constructor(
             userIsMale = profile?.biologicalSex != "female"
             audioPaletteEnabled = ndProfile == NdProfile.ASD || ndProfile == NdProfile.AUDHD
             dailyTarget = profile?.dailyTarget ?: 12
+
+            // ND-adaptive encouragement frequency
+            encouragementIntervalSeconds = when (ndProfile) {
+                NdProfile.ASD -> 300      // 5 min — less frequent for sensory comfort
+                NdProfile.ADHD -> 90      // 90s — more frequent for engagement
+                NdProfile.AUDHD -> 180    // 3 min — balanced default
+                else -> 180
+            }
 
             if (ndProfile == NdProfile.ADHD || ndProfile == NdProfile.AUDHD) {
                 val streak = profile?.currentStreak ?: 0
@@ -283,11 +292,11 @@ class WorkoutViewModel @Inject constructor(
                         voiceCoachEngine.onTargetHit()
                     }
 
-                    // Voice coach: encouragement every 180s in active zones
+                    // Voice coach: encouragement in active zones (ND-adaptive interval)
                     val isActiveZone = zone == HeartRateZone.ACTIVE ||
                             zone == HeartRateZone.PUSH ||
                             zone == HeartRateZone.PEAK
-                    if (isActiveZone && _elapsedSeconds.value - lastEncouragementSecond >= 180) {
+                    if (isActiveZone && _elapsedSeconds.value - lastEncouragementSecond >= encouragementIntervalSeconds) {
                         lastEncouragementSecond = _elapsedSeconds.value
                         voiceCoachEngine.onEncouragement()
                     }
@@ -368,25 +377,18 @@ class WorkoutViewModel @Inject constructor(
 
             val streak = calculateStreakUseCase()
 
-            // Voice coach: streak milestone
+            // Voice coach: queue ONE additional celebration clip (prioritized)
+            // to avoid overwhelming users with back-to-back audio at workout end
             val streakMilestones = setOf(3, 5, 7, 10, 14, 21, 30, 100)
-            if (streak in streakMilestones) {
-                voiceCoachEngine.onStreakMilestone(streak)
-            }
-
-            // Voice coach: weekly progress callout
-            val weeklyStats = getWorkoutStats.getWeeklyStats()
-            if (weeklyStats.totalWorkouts >= 5) {
-                voiceCoachEngine.onProgressCallout("progress_week_great")
-            }
-
-            // Voice coach: lifetime workout milestones
             val updatedProfile = getUserProfile.once()
             val totalWorkouts = updatedProfile?.totalWorkouts ?: 0
-            if (totalWorkouts == 10) {
-                voiceCoachEngine.onProgressCallout("progress_total_10")
-            } else if (totalWorkouts == 50) {
-                voiceCoachEngine.onProgressCallout("progress_total_50")
+            val weeklyStats = getWorkoutStats.getWeeklyStats()
+
+            when {
+                streak in streakMilestones -> voiceCoachEngine.onStreakMilestone(streak)
+                totalWorkouts == 50 -> voiceCoachEngine.onProgressCallout("progress_total_50")
+                totalWorkouts == 10 -> voiceCoachEngine.onProgressCallout("progress_total_10")
+                weeklyStats.totalWorkouts >= 5 -> voiceCoachEngine.onProgressCallout("progress_week_great")
             }
 
             // Evaluate daily quest completion
