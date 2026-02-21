@@ -135,14 +135,19 @@ class VoiceCoachEngine @Inject constructor(
         if (!isInitialized) return
         val styleKey = currentStyle.name.lowercase()
 
-        val daysSince = if (profile.lastWorkoutAt != null) {
-            TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - profile.lastWorkoutAt)
+        val totalWorkouts = profile.totalWorkouts.coerceAtLeast(0)
+        val currentStreak = profile.currentStreak.coerceAtLeast(0)
+        val lastWorkoutAt = profile.lastWorkoutAt?.takeIf { it <= System.currentTimeMillis() }
+
+        val daysSince = if (lastWorkoutAt != null) {
+            TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - lastWorkoutAt)
+                .coerceAtLeast(0)
         } else {
             Long.MAX_VALUE
         }
 
         when {
-            profile.totalWorkouts == 0 -> {
+            totalWorkouts == 0 -> {
                 queueClip("voice_${styleKey}_start_first", startFallback("start_first"))
             }
             daysSince > 7 -> {
@@ -157,7 +162,7 @@ class VoiceCoachEngine @Inject constructor(
                 queueClip("voice_${styleKey}_return_1day", returnFallback("return_1day"))
                 queueClip("voice_${styleKey}_start_welcome", startFallback("start_welcome"))
             }
-            profile.currentStreak >= 3 -> {
+            currentStreak >= 3 -> {
                 queueClip("voice_${styleKey}_start_streak", startFallback("start_streak"))
             }
             else -> {
@@ -354,19 +359,19 @@ class VoiceCoachEngine @Inject constructor(
 
     private fun returnFallback(key: String): String = when (currentStyle) {
         VoiceCoachStyle.LITERAL -> when (key) {
-            "return_1day" -> "You missed yesterday. Welcome back."
-            "return_few" -> "It has been a few days. Welcome back."
-            else -> "Welcome back. No judgement. Let's start again."
+            "return_1day" -> "Welcome back. Ready to begin."
+            "return_few" -> "Welcome back. Starting fresh."
+            else -> "Welcome back. Every workout counts."
         }
         VoiceCoachStyle.STANDARD -> when (key) {
-            "return_1day" -> "Missed a day? No worries. Let's pick it back up."
-            "return_few" -> "Hey, welcome back! Ready to get going again?"
-            else -> "Welcome back! Every comeback starts with one workout."
+            "return_1day" -> "Good to see you! Let's get moving."
+            "return_few" -> "Welcome back! Ready when you are."
+            else -> "Great to have you back. Let's do this."
         }
         VoiceCoachStyle.HYPE -> when (key) {
-            "return_1day" -> "Yesterday was rest day! TODAY we GO!"
-            "return_few" -> "The COMEBACK starts NOW! Let's DO THIS!"
-            else -> "The RETURN of the CHAMPION! Let's GOOO!"
+            "return_1day" -> "You're BACK! Let's make today count!"
+            "return_few" -> "WELCOME BACK! Time to get after it!"
+            else -> "The RETURN! Let's show up TODAY!"
         }
     }
 
