@@ -7,8 +7,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -104,6 +111,27 @@ fun SensorySettingsScreen(viewModel: SensorySettingsViewModel = hiltViewModel())
             selectedIndex = prefs?.voiceCoachStyle?.ordinal ?: 1,
             onValueChange = { viewModel.updateVoiceCoachStyle(VoiceCoachStyle.entries[it]) }
         )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(
+                onClick = { viewModel.previewVoiceStyle() },
+                colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            ) {
+                Icon(
+                    Icons.Default.VolumeUp,
+                    contentDescription = "Preview voice",
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Preview",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
 
