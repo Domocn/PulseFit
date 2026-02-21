@@ -12,6 +12,8 @@ import com.pulsefit.app.asd.TransitionWarning
 import com.pulsefit.app.asd.TransitionWarningManager
 import com.pulsefit.app.ble.BlePreferences
 import com.pulsefit.app.ble.HeartRateSource
+import com.pulsefit.app.ble.RealHeartRate
+import com.pulsefit.app.ble.SimulatedHeartRate
 import com.pulsefit.app.data.model.HeartRateZone
 import com.pulsefit.app.data.model.NdProfile
 import com.pulsefit.app.data.repository.SensoryPreferencesRepository
@@ -21,6 +23,7 @@ import com.pulsefit.app.domain.usecase.CalculateStreakUseCase
 import com.pulsefit.app.domain.usecase.CheckAchievementsUseCase
 import com.pulsefit.app.domain.usecase.EndWorkoutUseCase
 import com.pulsefit.app.domain.usecase.GetUserProfileUseCase
+import com.pulsefit.app.domain.usecase.GetWorkoutStatsUseCase
 import com.pulsefit.app.domain.usecase.RecordHeartRateUseCase
 import com.pulsefit.app.util.CalorieCalculator
 import com.pulsefit.app.util.ZoneCalculator
@@ -38,7 +41,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class WorkoutViewModel @Inject constructor(
-    private val heartRateSource: HeartRateSource,
+    @RealHeartRate private val realHeartRateSource: HeartRateSource,
+    @SimulatedHeartRate private val simulatedHeartRateSource: HeartRateSource,
     private val getUserProfile: GetUserProfileUseCase,
     private val recordHeartRate: RecordHeartRateUseCase,
     private val endWorkoutUseCase: EndWorkoutUseCase,
@@ -53,8 +57,12 @@ class WorkoutViewModel @Inject constructor(
     private val checkAchievements: CheckAchievementsUseCase,
     private val blePreferences: BlePreferences,
     private val voiceCoachEngine: VoiceCoachEngine,
-    private val audioPalette: AudioPalette
+    private val audioPalette: AudioPalette,
+    private val getWorkoutStats: GetWorkoutStatsUseCase
 ) : ViewModel() {
+
+    private val heartRateSource: HeartRateSource
+        get() = if (blePreferences.useSimulatedHr) simulatedHeartRateSource else realHeartRateSource
 
     private val _elapsedSeconds = MutableStateFlow(0)
     val elapsedSeconds: StateFlow<Int> = _elapsedSeconds
@@ -144,6 +152,12 @@ class WorkoutViewModel @Inject constructor(
     private var previousBurnPoints = 0
     private var audioPaletteEnabled = false
 
+    // Voice coach engagement tracking
+    private var dailyTarget = 12
+    private var targetHitAnnounced = false
+    private var lastEncouragementSecond = 0
+    private var previousBestBurnPoints = 0
+
     fun start(workoutId: Long) {
         this.workoutId = workoutId
         // Auto-reconnect to last known BLE device
@@ -164,17 +178,27 @@ class WorkoutViewModel @Inject constructor(
             userWeightKg = profile?.weight
             userIsMale = profile?.biologicalSex != "female"
             audioPaletteEnabled = ndProfile == NdProfile.ASD || ndProfile == NdProfile.AUDHD
+            dailyTarget = profile?.dailyTarget ?: 12
 
             if (ndProfile == NdProfile.ADHD || ndProfile == NdProfile.AUDHD) {
                 val streak = profile?.currentStreak ?: 0
                 streakMultiplier = 1f + (streak.coerceAtMost(7) * 0.1f)
             }
 
+            // Load best burn points from completed workouts for PB detection
+            val completedWorkouts = workoutRepository.getCompletedWorkouts()
+            previousBestBurnPoints = completedWorkouts.maxOfOrNull { it.burnPoints } ?: 0
+
             val workout = workoutRepository.getWorkoutById(workoutId)
             _isJustFiveMin.value = workout?.isJustFiveMin ?: false
 
             if (audioPaletteEnabled) {
                 audioPalette.play(AudioPalette.SoundEvent.WORKOUT_START)
+            }
+
+            // Voice coach greeting based on user state
+            if (profile != null) {
+                voiceCoachEngine.onWorkoutStart(profile)
             }
         }
 
@@ -253,6 +277,21 @@ class WorkoutViewModel @Inject constructor(
                     previousBurnPoints = newBurnPoints
                     _burnPoints.value = newBurnPoints
 
+                    // Voice coach: daily target hit announcement
+                    if (!targetHitAnnounced && newBurnPoints >= dailyTarget) {
+                        targetHitAnnounced = true
+                        voiceCoachEngine.onTargetHit()
+                    }
+
+                    // Voice coach: encouragement every 180s in active zones
+                    val isActiveZone = zone == HeartRateZone.ACTIVE ||
+                            zone == HeartRateZone.PUSH ||
+                            zone == HeartRateZone.PEAK
+                    if (isActiveZone && _elapsedSeconds.value - lastEncouragementSecond >= 180) {
+                        lastEncouragementSecond = _elapsedSeconds.value
+                        voiceCoachEngine.onEncouragement()
+                    }
+
                     // Track recent readings (last 60)
                     val readings = _recentReadings.value.toMutableList()
                     readings.add(hr)
@@ -310,7 +349,7 @@ class WorkoutViewModel @Inject constructor(
         if (audioPaletteEnabled) {
             audioPalette.play(AudioPalette.SoundEvent.WORKOUT_END)
         }
-        voiceCoachEngine.shutdown()
+        // Don't shutdown voice engine yet — we need it for completion clips
         viewModelScope.launch {
             endWorkoutUseCase(workoutId, _burnPoints.value, _zoneTime.value)
 
@@ -322,14 +361,39 @@ class WorkoutViewModel @Inject constructor(
                 workoutRepository.updateWorkout(it.copy(xpEarned = xp))
             }
 
-            calculateStreakUseCase()
+            // Voice coach: workout complete announcement
+            val hitTarget = _burnPoints.value >= dailyTarget
+            val isPersonalBest = _burnPoints.value > previousBestBurnPoints && previousBestBurnPoints > 0
+            voiceCoachEngine.onWorkoutComplete(hitTarget, isPersonalBest)
+
+            val streak = calculateStreakUseCase()
+
+            // Voice coach: streak milestone
+            val streakMilestones = setOf(3, 5, 7, 10, 14, 21, 30, 100)
+            if (streak in streakMilestones) {
+                voiceCoachEngine.onStreakMilestone(streak)
+            }
+
+            // Voice coach: weekly progress callout
+            val weeklyStats = getWorkoutStats.getWeeklyStats()
+            if (weeklyStats.totalWorkouts >= 5) {
+                voiceCoachEngine.onProgressCallout("progress_week_great")
+            }
+
+            // Voice coach: lifetime workout milestones
+            val updatedProfile = getUserProfile.once()
+            val totalWorkouts = updatedProfile?.totalWorkouts ?: 0
+            if (totalWorkouts == 10) {
+                voiceCoachEngine.onProgressCallout("progress_total_10")
+            } else if (totalWorkouts == 50) {
+                voiceCoachEngine.onProgressCallout("progress_total_50")
+            }
 
             // Evaluate daily quest completion
             val pushPeakSeconds = (_zoneTime.value[HeartRateZone.PUSH] ?: 0L) + (_zoneTime.value[HeartRateZone.PEAK] ?: 0L)
             dailyQuestManager.evaluateCompletion(_elapsedSeconds.value, _burnPoints.value, pushPeakSeconds)
 
             // Check achievement unlocks
-            val updatedProfile = getUserProfile.once()
             val finalWorkout = workoutRepository.getWorkoutById(workoutId)
             if (updatedProfile != null && finalWorkout != null) {
                 val unlocked = checkAchievements(updatedProfile, finalWorkout)
