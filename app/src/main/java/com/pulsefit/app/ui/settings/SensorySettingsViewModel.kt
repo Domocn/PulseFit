@@ -11,6 +11,7 @@ import com.pulsefit.app.data.model.HapticLevel
 import com.pulsefit.app.data.model.SoundLevel
 import com.pulsefit.app.data.model.VoiceCoachStyle
 import com.pulsefit.app.data.repository.SensoryPreferencesRepository
+import com.pulsefit.app.voice.VoiceCoachEngine
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +20,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SensorySettingsViewModel @Inject constructor(
-    private val sensoryPreferencesRepository: SensoryPreferencesRepository
+    private val sensoryPreferencesRepository: SensoryPreferencesRepository,
+    private val voiceCoachEngine: VoiceCoachEngine
 ) : ViewModel() {
 
     private val _preferences = MutableStateFlow<SensoryPreferencesEntity?>(null)
@@ -53,4 +55,12 @@ class SensorySettingsViewModel @Inject constructor(
     fun updateUiLocked(locked: Boolean) = update { it.copy(uiLocked = locked) }
     fun updateSocialPressureShield(enabled: Boolean) = update { it.copy(socialPressureShield = enabled) }
     fun updateAppTheme(theme: AppTheme) = update { it.copy(appTheme = theme) }
+
+    fun previewVoiceStyle() {
+        voiceCoachEngine.initialize()
+        viewModelScope.launch {
+            voiceCoachEngine.updateStyle()
+            voiceCoachEngine.onEncouragement()
+        }
+    }
 }
