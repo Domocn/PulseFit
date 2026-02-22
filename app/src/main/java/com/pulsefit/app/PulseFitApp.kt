@@ -18,6 +18,7 @@ import com.pulsefit.app.data.exercise.TemplateRegistry
 import com.pulsefit.app.ui.achievements.AchievementsScreen
 import com.pulsefit.app.ui.auth.LoginScreen
 import com.pulsefit.app.ui.auth.SignUpScreen
+import com.pulsefit.app.ui.challenge.ChallengeDetailScreen
 import com.pulsefit.app.ui.challenge.ChallengesScreen
 import com.pulsefit.app.ui.plan.EquipmentSetupScreen
 import com.pulsefit.app.ui.plan.WeeklyPlanScreen
@@ -395,6 +396,16 @@ fun PulseFitApp(viewModel: AppViewModel = hiltViewModel()) {
                             onChallengeDetail = { challengeType ->
                                 navController.navigate(Screen.ChallengeDetail.createRoute(challengeType))
                             }
+                        )
+                    }
+                    composable(
+                        Screen.ChallengeDetail.route,
+                        arguments = listOf(navArgument("challengeType") { type = NavType.StringType })
+                    ) { backStackEntry ->
+                        val challengeType = backStackEntry.arguments?.getString("challengeType") ?: return@composable
+                        ChallengeDetailScreen(
+                            challengeType = challengeType,
+                            onBack = { navController.popBackStack() }
                         )
                     }
 

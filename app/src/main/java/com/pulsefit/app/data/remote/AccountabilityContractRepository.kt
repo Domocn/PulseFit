@@ -58,7 +58,11 @@ class AccountabilityContractRepository @Inject constructor(
         val listener = contractsCollection
             .whereArrayContains("participants", uid)
             .whereEqualTo("status", "active")
-            .addSnapshotListener { snapshot, _ ->
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(emptyList())
+                    return@addSnapshotListener
+                }
                 val contracts = snapshot?.documents?.mapNotNull { doc ->
                     val participants = (doc.get("participants") as? List<*>)?.filterIsInstance<String>() ?: return@mapNotNull null
                     val partnerUid = participants.firstOrNull { it != uid } ?: return@mapNotNull null
@@ -88,7 +92,11 @@ class AccountabilityContractRepository @Inject constructor(
         val progressRef = contractsCollection.document(contractId)
             .collection("weekly").document(weekKey)
 
-        val listener = progressRef.addSnapshotListener { doc, _ ->
+        val listener = progressRef.addSnapshotListener { doc, error ->
+            if (error != null) {
+                trySend(WeeklyProgress(weekStart = currentWeekStartMillis()))
+                return@addSnapshotListener
+            }
             if (doc != null && doc.exists()) {
                 val contractDoc = doc
                 val myCount = (contractDoc.getLong("${uid}_count") ?: 0).toInt()

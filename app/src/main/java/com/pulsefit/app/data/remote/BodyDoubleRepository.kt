@@ -42,7 +42,11 @@ class BodyDoubleRepository @Inject constructor(
 
     fun getActiveCount(): Flow<Int> = callbackFlow {
         val uid = currentUid
-        val listener = collection.addSnapshotListener { snapshot, _ ->
+        val listener = collection.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                trySend(0)
+                return@addSnapshotListener
+            }
             val count = snapshot?.documents?.count { it.id != uid } ?: 0
             trySend(count)
         }
