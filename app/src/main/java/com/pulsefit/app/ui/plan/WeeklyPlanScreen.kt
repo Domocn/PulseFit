@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,11 +21,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.RadioButtonChecked
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SportsScore
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -35,11 +40,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -60,14 +69,19 @@ fun WeeklyPlanScreen(
     val weeklyPlan by viewModel.weeklyPlan.collectAsState()
     val hasEquipmentProfile by viewModel.hasEquipmentProfile.collectAsState()
     val calendarSynced by viewModel.calendarSynced.collectAsState()
+    val syncError by viewModel.syncError.collectAsState()
+    val availableCalendars by viewModel.availableCalendars.collectAsState()
+    val selectedCalendarId by viewModel.selectedCalendarId.collectAsState()
     val context = LocalContext.current
+    var showCalendarPicker by remember { mutableStateOf(false) }
 
     val calendarPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         val granted = permissions.values.all { it }
         if (granted) {
-            viewModel.syncToCalendar(context)
+            viewModel.loadCalendars(context)
+            showCalendarPicker = true
         }
     }
 
@@ -163,7 +177,8 @@ fun WeeklyPlanScreen(
                                 context, Manifest.permission.WRITE_CALENDAR
                             ) == PackageManager.PERMISSION_GRANTED
                             if (hasPermission) {
-                                viewModel.syncToCalendar(context)
+                                viewModel.loadCalendars(context)
+                                showCalendarPicker = true
                             } else {
                                 calendarPermissionLauncher.launch(
                                     arrayOf(
@@ -188,21 +203,119 @@ fun WeeklyPlanScreen(
                             )
                         }
                     }
+
+                    // Sync error message
+                    syncError?.let { error ->
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = error,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
 
                 // Day cards
-                items(plan.days) { day ->
-                    PlannedDayCard(day = day)
+                items(plan.days.size) { index ->
+                    val day = plan.days[index]
+                    val canRemove = day.type == PlannedDayType.WORKOUT || day.type == PlannedDayType.CHALLENGE
+                    PlannedDayCard(
+                        day = day,
+                        onRemove = if (canRemove) {{ viewModel.removeDay(context, index) }} else null
+                    )
                 }
             }
 
             item { Spacer(modifier = Modifier.height(24.dp)) }
         }
     }
+
+    // Calendar picker dialog
+    if (showCalendarPicker) {
+        CalendarPickerDialog(
+            calendars = availableCalendars,
+            selectedId = selectedCalendarId,
+            onSelect = { viewModel.selectCalendar(it) },
+            onConfirm = {
+                showCalendarPicker = false
+                viewModel.syncToCalendar(context)
+            },
+            onDismiss = { showCalendarPicker = false }
+        )
+    }
 }
 
 @Composable
-private fun PlannedDayCard(day: PlannedDay) {
+private fun CalendarPickerDialog(
+    calendars: List<com.pulsefit.app.util.DeviceCalendar>,
+    selectedId: Long?,
+    onSelect: (Long) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Choose Calendar") },
+        text = {
+            if (calendars.isEmpty()) {
+                Text(
+                    "Loading calendars...",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    calendars.forEach { cal ->
+                        val isSelected = cal.id == selectedId
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onSelect(cal.id) }
+                                .padding(vertical = 8.dp, horizontal = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                if (isSelected) Icons.Default.RadioButtonChecked
+                                else Icons.Default.RadioButtonUnchecked,
+                                contentDescription = if (isSelected) "Selected" else "Not selected",
+                                tint = if (isSelected) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = cal.displayName.ifEmpty { "Unnamed calendar" },
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Text(
+                                    text = cal.accountName,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                enabled = selectedId != null || calendars.isEmpty()
+            ) {
+                Text(if (calendars.isEmpty()) "Use Default" else "Sync")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+private fun PlannedDayCard(day: PlannedDay, onRemove: (() -> Unit)? = null) {
     val (containerColor, contentColor) = when (day.type) {
         PlannedDayType.WORKOUT -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurface
         PlannedDayType.REST -> MaterialTheme.colorScheme.surface to MaterialTheme.colorScheme.onSurfaceVariant
@@ -222,7 +335,7 @@ private fun PlannedDayCard(day: PlannedDay) {
         colors = CardDefaults.cardColors(containerColor = containerColor)
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 16.dp, end = if (onRemove != null) 4.dp else 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -283,6 +396,16 @@ private fun PlannedDayCard(day: PlannedDay) {
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
+                }
+            }
+            if (onRemove != null) {
+                IconButton(onClick = onRemove) {
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = "Remove workout",
+                        tint = contentColor.copy(alpha = 0.5f),
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
         }
