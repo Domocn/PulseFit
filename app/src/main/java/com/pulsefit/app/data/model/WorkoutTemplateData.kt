@@ -30,5 +30,6 @@ enum class TemplateCategory(val label: String) {
     STANDARD("Standard"),
     BEGINNER("Beginner"),
     ADVANCED("Advanced"),
-    SPECIALTY("Specialty")
+    SPECIALTY("Specialty"),
+    OTF_STYLE("Class Formats")
 }

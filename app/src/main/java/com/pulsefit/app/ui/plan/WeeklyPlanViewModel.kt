@@ -3,10 +3,12 @@ package com.pulsefit.app.ui.plan
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pulsefit.app.data.exercise.TemplateRegistry
 import com.pulsefit.app.data.exercise.WeeklyPlanGenerator
 import com.pulsefit.app.data.model.PlannedDay
 import com.pulsefit.app.data.model.PlannedDayType
 import com.pulsefit.app.data.model.WeeklyPlan
+import com.pulsefit.app.data.model.WorkoutTemplateData
 import com.pulsefit.app.domain.repository.UserRepository
 import com.pulsefit.app.util.CalendarSync
 import com.pulsefit.app.util.DeviceCalendar
@@ -22,8 +24,11 @@ import javax.inject.Inject
 @HiltViewModel
 class WeeklyPlanViewModel @Inject constructor(
     private val userRepository: UserRepository,
-    private val weeklyPlanGenerator: WeeklyPlanGenerator
+    private val weeklyPlanGenerator: WeeklyPlanGenerator,
+    private val templateRegistry: TemplateRegistry
 ) : ViewModel() {
+
+    val allTemplates: List<WorkoutTemplateData> = templateRegistry.getAll()
 
     private val _weeklyPlan = MutableStateFlow<WeeklyPlan?>(null)
     val weeklyPlan: StateFlow<WeeklyPlan?> = _weeklyPlan
@@ -145,6 +150,33 @@ class WeeklyPlanViewModel @Inject constructor(
                 dayOfWeek = day.dayOfWeek,
                 type = PlannedDayType.REST,
                 focus = "Rest & recover"
+            )
+            _weeklyPlan.value = plan.copy(days = updatedDays)
+        }
+    }
+
+    fun changeTemplate(context: Context, dayIndex: Int, template: WorkoutTemplateData) {
+        val plan = _weeklyPlan.value ?: return
+        if (dayIndex !in plan.days.indices) return
+
+        val day = plan.days[dayIndex]
+        viewModelScope.launch {
+            // Delete old calendar event if one was synced
+            if (day.calendarEventId != null) {
+                withContext(Dispatchers.IO) {
+                    CalendarSync.deleteEvent(context, day.calendarEventId)
+                }
+            }
+
+            val updatedDays = plan.days.toMutableList()
+            updatedDays[dayIndex] = PlannedDay(
+                dayOfWeek = day.dayOfWeek,
+                type = PlannedDayType.WORKOUT,
+                templateId = template.id,
+                templateName = template.name,
+                durationMinutes = template.durationMinutes,
+                focus = template.description,
+                calendarEventId = null
             )
             _weeklyPlan.value = plan.copy(days = updatedDays)
         }

@@ -157,16 +157,28 @@ class WeeklyPlanGenerator @Inject constructor(
         val templates = templateRegistry.getAll()
 
         val match = when {
+            focus.contains("HIIT", ignoreCase = true) && focus.contains("Full Rotation", ignoreCase = true) ->
+                templates.find { it.id == "otf_tornado" }
             focus.contains("HIIT", ignoreCase = true) ->
                 templates.find { it.id == "hiit_intervals" }
             focus.contains("Endurance", ignoreCase = true) && focus.contains("Tread") ->
                 templates.find { it.id == "steady_state" || it.id == "endurance" }
             focus.contains("Endurance", ignoreCase = true) && focus.contains("Row") ->
-                templates.find { it.id == "steady_state" }
+                templates.find { it.id == "otf_3g_endurance" }
+            focus.contains("ESP", ignoreCase = true) || focus.contains("Rotation", ignoreCase = true) ->
+                templates.find { it.id == "otf_esp" }
+            focus.contains("Power", ignoreCase = true) && hasTreadmill && !hasRower ->
+                templates.find { it.id == "otf_2g_power" }
             focus.contains("Power", ignoreCase = true) ->
                 templates.find { it.id == "sprint_intervals" || it.id == "hill_climb" }
+            focus.contains("Upper Body", ignoreCase = true) ->
+                templates.find { it.id == "otf_lift45_upper" }
+            focus.contains("Lower Body", ignoreCase = true) ->
+                templates.find { it.id == "otf_lift45_lower" }
+            focus.contains("Strength", ignoreCase = true) && hasTreadmill && hasRower ->
+                templates.find { it.id == "otf_3g_strength" }
             focus.contains("Strength", ignoreCase = true) ->
-                templates.find { it.id == "endurance" } // Has floor block
+                templates.find { it.id == "endurance" }
             focus.contains("Morning", ignoreCase = true) ->
                 templates.find { it.id == "morning_energizer" }
             focus.contains("Recovery", ignoreCase = true) || focus.contains("Mobility", ignoreCase = true) ->
@@ -178,8 +190,14 @@ class WeeklyPlanGenerator @Inject constructor(
                 templates.find { it.id == "quick_15" }
             preferredDuration <= 20 ->
                 templates.find { it.id == "hiit_intervals" || it.id == "walk_and_jog" }
+            preferredDuration <= 25 ->
+                templates.find { it.id == "otf_23_burn" }
             preferredDuration <= 30 ->
                 templates.find { it.id == "steady_state" }
+            preferredDuration >= 90 ->
+                templates.find { it.id == "otf_90_marathon" }
+            preferredDuration >= 60 && hasTreadmill && hasRower ->
+                templates.find { it.id == "otf_3g_endurance" }
             else ->
                 templates.find { it.id == "endurance" }
         }
