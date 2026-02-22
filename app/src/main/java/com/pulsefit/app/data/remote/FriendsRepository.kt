@@ -129,7 +129,11 @@ class FriendsRepository @Inject constructor(
             .whereEqualTo("toUid", uid)
             .whereEqualTo("status", "pending")
             .orderBy("createdAt", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, _ ->
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(emptyList())
+                    return@addSnapshotListener
+                }
                 val requests = snapshot?.documents?.mapNotNull { doc ->
                     doc.toObject(FriendRequest::class.java)?.copy(id = doc.id)
                 } ?: emptyList()
@@ -145,7 +149,11 @@ class FriendsRepository @Inject constructor(
             return@callbackFlow
         }
         val listener = friendsCollection(uid)
-            .addSnapshotListener { snapshot, _ ->
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(emptyList())
+                    return@addSnapshotListener
+                }
                 val friends = snapshot?.documents?.mapNotNull { doc ->
                     val entry = doc.toObject(FriendEntry::class.java)
                     entry?.let {

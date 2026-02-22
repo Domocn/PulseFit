@@ -70,4 +70,7 @@ class ChallengesViewModel @Inject constructor(
 
     fun getMultiDayChallenges(): List<ChallengeDefinition> =
         challengeRegistry.getMultiDay()
+
+    fun getChallengeByType(type: com.pulsefit.app.data.model.ChallengeType): ChallengeDefinition? =
+        challengeRegistry.getByType(type)
 }
