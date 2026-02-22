@@ -420,9 +420,88 @@ app/
 - Advanced ND features: XP/leveling, reward shop, daily quests, progress visualisation
 - Body double mode, routine builder, social accountability contracts
 
+### Phase 6 — Competitive Edge (v2.0+)
+- Adaptive Max HR Engine (F201) — auto-refine zones from real workout data
+- Burn Point Benchmark Challenges (F202) — monthly timed progress markers
+- Zone Chase Game Mode (F203) — HR-controlled visual mini-game
+- Pulse Encouragement (F204) — one-tap buddy encouragement
+- AI Workout Intelligence (F205) — natural language insights + LLM coach (Premium)
+- Recurring Workout Comparison (F206) — indoor "segments" for progress tracking
+- Pulse Readiness Score (F207) — HRV + sleep + RHR → dynamic target adjustment
+- Sleep-Workout Planner (F208) — bedtime recommendations based on tomorrow's workout
+- Zone Science Micro-Lessons (F209) — daily training science with quiz XP
+- Wellness Radar (F210) — 4-axis holistic progress radar chart
+- Zone Accuracy Training (F211) — RPE vs actual zone body awareness calibration
+- Spoon Theory Integration (F212) — energy-limited day support with auto-adjusted targets
+- Stim-Friendly Haptic Library (F213) — ADHD stimulating + ASD regulating haptic patterns
+- Context-Aware Voice Personality (F214) — voice adapts to time, recovery, streak context
+- Transition Ritual Builder (F215) — customisable pre/post-workout routines
+- Anti-Comparison Mode (F216) — reframes all metrics as personal progress
+- Workout Compatibility Score (F217) — best-fit template suggestion based on current state
+- Flow State Guardian (F218) — detect and protect exercise flow states
+- Heart Rate Story Mode (F219) — narrative workouts controlled by your heart rate
+- Community Template Marketplace (F220) — share, discover, rate, remix workout templates
+
 ---
 
-## 12. Testing Strategy
+## 12. Competitive Positioning
+
+> Based on research of Orangetheory (OTF), Apple Fitness+, Peloton, Strava, Fitbit, WHOOP, Noom, and SuperBetter.
+
+### 12.1 The Unoccupied Intersection
+
+No existing app sits at the intersection of these three capabilities:
+1. **Heart rate zone-based workout gamification** with tiered points (not binary like OTF Splat Points or Fitbit Active Zone Minutes)
+2. **Neurodivergent-first design** (ADHD, ASD, AuDHD modes — zero competitors)
+3. **Standalone app** (no gym membership like OTF, no hardware like Peloton, no Apple-lock like Fitness+)
+
+### 12.2 Competitor Comparison
+
+| Capability | OTF | Apple Fit+ | Peloton | Strava | Fitbit | WHOOP | **PulseFit** |
+|---|---|---|---|---|---|---|---|
+| HR zone scoring | Binary (Orange/Red only) | No | No | No | Binary (AZM) | Continuous (Strain) | **Tiered 1/2/3 BP** |
+| In-workout gamification | Limited | Burn Bar | Leaderboard | Segments | Minimal | None | **Full system** |
+| Streaks + XP + Levels | No | Rings only | Streaks only | No | Steps only | No | **Yes (all three)** |
+| Daily quests | No | No | No | Challenges | No | No | **3 daily** |
+| Variable rewards (ADHD) | No | No | No | No | No | No | **Yes** |
+| Neurodivergent modes | No | No | No | No | No | No | **4 modes** |
+| Sensory control panel | No | No | No | No | No | No | **Full panel** |
+| Voice coaching w/ profiles | Instructor | Trainer video | Instructor | No | No | No | **ElevenLabs 3-profile** |
+| Recovery/readiness | No | No | No | No | Yes | Yes | **Planned (F207)** |
+| Standalone (no hardware) | No ($60+/mo studio) | Apple only | Best w/ hardware | Yes | Best w/ hardware | Requires band | **Yes** |
+| Flow state protection | No | No | No | No | No | No | **Yes (F218)** |
+| Story mode (HR as controller) | No | No | Lanebreak (cadence) | No | No | No | **Yes (F219)** |
+| Spoon theory | No | No | No | No | No | No | **Yes (F212)** |
+
+### 12.3 Head-to-Head: Burn Points vs OTF Splat Points
+
+| Dimension | OTF Splat Points | PulseFit Burn Points |
+|-----------|-----------------|---------------------|
+| Earning zones | Orange + Red only | Green + Orange + Red (tiered) |
+| Points per minute | 1 (flat) | 1 / 2 / 3 (escalating) |
+| Beginner friendliness | Low (hard to reach Orange) | High (Zone 3 earns points) |
+| Daily target | 12–20 (per class) | 12 (configurable 8–30) |
+| Streak system | None | Yes + streak freeze + bonus |
+| XP / leveling | None | Full 1–50 system |
+| Spending points | Cannot spend | Reward Shop (cosmetics) |
+| Requires gym | Yes ($60+/mo) | No (any workout, anywhere) |
+
+### 12.4 Top 10 Gaps Only PulseFit Fills
+
+1. **First ND-first fitness app** — 15–20% of global population is neurodivergent; 68% of ADHD adults abandon fitness trackers in 14 days
+2. **Tiered zone scoring** — rewards effort at every level, not just max intensity
+3. **Sensory control as core feature** — no competitor offers granular sensory customisation
+4. **Social Pressure Shield** — one toggle removes all comparative/social pressure
+5. **Voice coaching with personality modes** — 3 distinct ElevenLabs profiles per ND mode
+6. **Flow State Guardian** — actively protects ADHD hyperfocus by silencing interruptions
+7. **Heart Rate Story Mode** — narrative workouts controlled by your actual heart rate
+8. **Spoon Theory integration** — acknowledges that daily capacity varies; adjusts targets
+9. **Body awareness training** — teaches interoception through RPE vs actual zone comparison
+10. **Context-aware voice** — voice personality adapts to time of day, recovery, streak status
+
+---
+
+## 13. Testing Strategy
 
 | Layer      | Approach                                           |
 |-----------|---------------------------------------------------|
@@ -436,3 +515,5 @@ app/
 ## 13. Summary
 
 PulseFit delivers the same motivating, heart-rate-zone-driven workout experience that has proven popular in boutique fitness — but as a standalone, brand-neutral Android app. By using standard HR zone science, an original "Burn Points" scoring system, and deep integration with Health Connect and Bluetooth LE wearables, PulseFit can serve both individual users and gym/studio operators without infringing on any existing brand's intellectual property. Uniquely, PulseFit is the first fitness app designed from the ground up for neurodivergent users — offering ADHD Focus Mode, ASD Comfort Mode, and AuDHD Combined Mode that reshape the entire experience around different cognitive needs. Combined with a hybrid ElevenLabs voice coaching system, PulseFit delivers a truly personalised and inclusive fitness experience.
+
+PulseFit's competitive edge extends beyond ND-first design. Features like Heart Rate Story Mode (narrative workouts controlled by your actual HR), Flow State Guardian (silencing interruptions during precious hyperfocus), Zone Chase (HR-controlled mini-game), Spoon Theory integration (for energy-limited days), and a full Pulse Readiness system (HRV-driven dynamic targets) represent capabilities that no competitor — not OTF, not Peloton, not WHOOP, not Apple Fitness+ — offers today. PulseFit occupies an uncontested market position at the intersection of HR zone gamification, neurodivergent-first design, and standalone accessibility.
