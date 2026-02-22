@@ -47,4 +47,14 @@ sealed class Screen(val route: String) {
         fun createRoute(groupId: String) = "group_detail/$groupId"
     }
     data object JoinGroup : Screen("join_group")
+
+    // Challenges
+    data object Challenges : Screen("challenges")
+    data object ChallengeDetail : Screen("challenge_detail/{challengeType}") {
+        fun createRoute(challengeType: String) = "challenge_detail/$challengeType"
+    }
+
+    // Weekly Plan
+    data object WeeklyPlan : Screen("weekly_plan")
+    data object EquipmentSetup : Screen("equipment_setup")
 }

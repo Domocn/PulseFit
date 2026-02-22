@@ -1,6 +1,8 @@
 package com.pulsefit.app.domain.model
 
+import com.pulsefit.app.data.model.EquipmentProfile
 import com.pulsefit.app.data.model.NdProfile
+import com.pulsefit.app.data.model.TreadMode
 
 data class UserProfile(
     val name: String,
@@ -29,5 +31,16 @@ data class UserProfile(
     val firebaseUid: String? = null,
     val displayName: String? = null,
     val photoUrl: String? = null,
-    val profileVisibility: String = "friends"
-)
+    val profileVisibility: String = "friends",
+    val treadMode: TreadMode = TreadMode.RUNNER,
+    val equipmentProfileJson: String? = null
+) {
+    fun getEquipmentProfile(): EquipmentProfile {
+        if (equipmentProfileJson == null) return EquipmentProfile()
+        return try {
+            com.google.gson.Gson().fromJson(equipmentProfileJson, EquipmentProfile::class.java)
+        } catch (_: Exception) {
+            EquipmentProfile()
+        }
+    }
+}

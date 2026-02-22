@@ -14,6 +14,7 @@ import androidx.work.WorkManager
 import com.pulsefit.app.data.local.dao.NotificationPreferencesDao
 import com.pulsefit.app.data.local.entity.NotificationPreferencesEntity
 import com.pulsefit.app.data.model.AppTheme
+import com.pulsefit.app.data.model.TreadMode
 import com.pulsefit.app.ble.BlePreferences
 import com.pulsefit.app.data.remote.AuthRepository
 import com.pulsefit.app.data.repository.SensoryPreferencesRepository
@@ -79,6 +80,9 @@ class SettingsViewModel @Inject constructor(
     private val _bodyDoubleEnabled = MutableStateFlow(false)
     val bodyDoubleEnabled: StateFlow<Boolean> = _bodyDoubleEnabled
 
+    private val _treadMode = MutableStateFlow(TreadMode.RUNNER)
+    val treadMode: StateFlow<TreadMode> = _treadMode
+
     private val _snackbar = MutableSharedFlow<String>(extraBufferCapacity = 5)
     val snackbar: SharedFlow<String> = _snackbar
 
@@ -91,6 +95,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             getUserProfile().collect { p ->
                 _profile.value = p
+                p?.let { _treadMode.value = it.treadMode }
                 p?.customZoneThresholds?.let { json ->
                     ZoneCalculator.parseThresholds(json)?.let {
                         _zoneThresholds.value = it
@@ -145,6 +150,11 @@ class SettingsViewModel @Inject constructor(
 
     fun updateDailyTarget(target: Int) {
         _profile.value?.let { p -> _profile.value = p.copy(dailyTarget = target) }
+    }
+
+    fun updateTreadMode(mode: TreadMode) {
+        _treadMode.value = mode
+        _profile.value?.let { p -> _profile.value = p.copy(treadMode = mode) }
     }
 
     fun toggleUnits() {

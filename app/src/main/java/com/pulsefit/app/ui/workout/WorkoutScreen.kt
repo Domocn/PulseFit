@@ -297,7 +297,7 @@ fun WorkoutScreen(
 
             HeartRateDisplay(heartRate = heartRate, zone = zone)
 
-            if (bodyDoubleCount > 0) {
+            if (viewModel.bodyDoubleEnabled.collectAsState().value) {
                 Spacer(modifier = Modifier.height(8.dp))
                 BodyDoubleIndicator(activeCount = bodyDoubleCount, animationLevel = animationLevel)
             }

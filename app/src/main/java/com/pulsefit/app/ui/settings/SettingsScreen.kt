@@ -66,6 +66,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pulsefit.app.data.model.AppTheme
+import com.pulsefit.app.data.model.TreadMode
 import androidx.compose.material.icons.automirrored.filled.Logout
 import com.pulsefit.app.ui.ble.BleDevicePickerSheet
 import com.pulsefit.app.ui.theme.toPalette
@@ -86,6 +87,7 @@ fun SettingsScreen(
     val useSimulatedHr by viewModel.useSimulatedHr.collectAsState()
     val currentTheme by viewModel.appTheme.collectAsState()
     val zoneThresholds by viewModel.zoneThresholds.collectAsState()
+    val treadMode by viewModel.treadMode.collectAsState()
     val notifPrefs by viewModel.notifPrefs.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var showBlePicker by remember { mutableStateOf(false) }
@@ -289,6 +291,35 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
                 colors = SliderDefaults.colors(thumbColor = MaterialTheme.colorScheme.primary, activeTrackColor = MaterialTheme.colorScheme.primary)
             )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Tread Mode
+            Text("Tread Mode", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                "Sets coaching cues: runners get speed targets, power walkers get incline targets",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                TreadMode.entries.forEach { mode ->
+                    val isSelected = mode == treadMode
+                    OutlinedButton(
+                        onClick = { viewModel.updateTreadMode(mode) },
+                        modifier = Modifier.weight(1f),
+                        colors = if (isSelected) ButtonDefaults.buttonColors() else ButtonDefaults.outlinedButtonColors(),
+                        border = if (isSelected) null else ButtonDefaults.outlinedButtonBorder(true)
+                    ) {
+                        Text(mode.label)
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 

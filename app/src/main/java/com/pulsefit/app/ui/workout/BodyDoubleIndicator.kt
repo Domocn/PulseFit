@@ -32,8 +32,6 @@ fun BodyDoubleIndicator(
     animationLevel: AnimationLevel = AnimationLevel.FULL,
     modifier: Modifier = Modifier
 ) {
-    if (activeCount <= 0) return
-
     val pulseAlpha = if (animationLevel == AnimationLevel.OFF) {
         1f
     } else {
@@ -50,8 +48,23 @@ fun BodyDoubleIndicator(
         animated
     }
 
-    val countText = if (activeCount == 1) "1 other person training now"
-        else "$activeCount other people training now"
+    val (displayText, countText, dotColor) = when {
+        activeCount > 1 -> Triple(
+            "$activeCount others training now",
+            "$activeCount other people training now",
+            MaterialTheme.colorScheme.tertiary
+        )
+        activeCount == 1 -> Triple(
+            "1 other training now",
+            "1 other person training now",
+            MaterialTheme.colorScheme.tertiary
+        )
+        else -> Triple(
+            "Solo session — you've got this",
+            "Training solo today",
+            MaterialTheme.colorScheme.primary
+        )
+    }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -69,12 +82,11 @@ fun BodyDoubleIndicator(
             modifier = Modifier
                 .size(8.dp)
                 .alpha(pulseAlpha)
-                .background(MaterialTheme.colorScheme.tertiary, CircleShape)
+                .background(dotColor, CircleShape)
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-            text = if (activeCount == 1) "1 other training now"
-            else "$activeCount others training now",
+            text = displayText,
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

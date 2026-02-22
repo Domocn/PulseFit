@@ -65,7 +65,9 @@ class UserRepositoryImpl @Inject constructor(
         firebaseUid = firebaseUid,
         displayName = displayName,
         photoUrl = photoUrl,
-        profileVisibility = profileVisibility
+        profileVisibility = profileVisibility,
+        treadMode = treadMode,
+        equipmentProfileJson = equipmentProfileJson
     )
 
     private fun UserProfile.toEntity() = UserProfileEntity(
@@ -95,6 +97,8 @@ class UserRepositoryImpl @Inject constructor(
         firebaseUid = firebaseUid,
         displayName = displayName,
         photoUrl = photoUrl,
-        profileVisibility = profileVisibility
+        profileVisibility = profileVisibility,
+        treadMode = treadMode,
+        equipmentProfileJson = equipmentProfileJson
     )
 }

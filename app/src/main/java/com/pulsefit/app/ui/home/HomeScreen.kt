@@ -19,6 +19,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Stars
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Button
@@ -51,6 +53,8 @@ fun HomeScreen(
     onNavigateToTemplates: (() -> Unit)? = null,
     onNavigateToProgress: (() -> Unit)? = null,
     onNavigateToShop: (() -> Unit)? = null,
+    onNavigateToChallenges: (() -> Unit)? = null,
+    onNavigateToWeeklyPlan: (() -> Unit)? = null,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val profile by viewModel.userProfile.collectAsState()
@@ -335,6 +339,31 @@ fun HomeScreen(
                 QuickNavCard(
                     icon = Icons.Default.Stars,
                     label = "Rewards",
+                    onClick = it,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Second nav row: Challenges + Weekly Plan
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            onNavigateToChallenges?.let {
+                QuickNavCard(
+                    icon = Icons.Default.EmojiEvents,
+                    label = "Challenges",
+                    onClick = it,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            onNavigateToWeeklyPlan?.let {
+                QuickNavCard(
+                    icon = Icons.Default.CalendarMonth,
+                    label = "My Plan",
                     onClick = it,
                     modifier = Modifier.weight(1f)
                 )
