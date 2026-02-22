@@ -18,6 +18,15 @@ espressoCore = "3.7.0"
 gson = "2.12.1"
 activityCompose = "1.10.1"
 healthConnect = "1.1.0-alpha12"
+workManager = "2.10.1"
+hiltWork = "1.2.0"
+firebaseBom = "33.7.0"
+firebaseCrashlyticsPlugin = "3.0.3"
+googleServices = "4.4.2"
+playServicesAuth = "21.3.0"
+credentialManager = "1.5.0-rc01"
+googleIdIdentity = "1.1.1"
+lottie = "6.6.6"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -67,6 +76,25 @@ gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 # Health Connect
 health-connect = { group = "androidx.health.connect", name = "connect-client", version.ref = "healthConnect" }
 
+# WorkManager
+work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workManager" }
+hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref = "hiltWork" }
+hilt-work-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "hiltWork" }
+
+# Firebase
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
+firebase-auth = { group = "com.google.firebase", name = "firebase-auth-ktx" }
+firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore-ktx" }
+firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics-ktx" }
+firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics-ktx" }
+play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
+credential-manager = { group = "androidx.credentials", name = "credentials", version.ref = "credentialManager" }
+credential-manager-play = { group = "androidx.credentials", name = "credentials-play-services-auth", version.ref = "credentialManager" }
+google-id-identity = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleIdIdentity" }
+
+# Lottie
+lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottie" }
+
 # Testing
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
@@ -78,3 +106,5 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 room = { id = "androidx.room", version.ref = "room" }
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebaseCrashlyticsPlugin" }
