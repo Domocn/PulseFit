@@ -3,7 +3,10 @@ package com.pulsefit.app.voice
 import android.content.Context
 import android.media.MediaPlayer
 import android.speech.tts.TextToSpeech
+import com.pulsefit.app.data.model.ExerciseStation
 import com.pulsefit.app.data.model.HeartRateZone
+import com.pulsefit.app.data.model.NdProfile
+import com.pulsefit.app.data.model.TreadMode
 import com.pulsefit.app.data.model.VoiceCoachStyle
 import com.pulsefit.app.data.repository.SensoryPreferencesRepository
 import com.pulsefit.app.domain.model.UserProfile
@@ -36,12 +39,16 @@ class VoiceCoachEngine @Inject constructor(
     /** Map of clip key -> raw resource ID, built once at init. */
     private val clipResourceMap = mutableMapOf<String, Int>()
 
-    /** Playback queue for sequential clip playback (e.g. complete + streak + progress). */
+    /** Playback queue for sequential clip playback. */
     private val playbackQueue = ConcurrentLinkedQueue<Pair<String, String>>()
     @Volatile private var isQueuePlaying = false
 
     /** Round-robin index for encouragement clips. */
     private var encouragementIndex = 0
+
+    /** ND-profile verbosity: controls max queue depth and feature flags. */
+    private var ndProfile = NdProfile.STANDARD
+    private var maxQueueDepth = 4
 
     fun initialize() {
         buildResourceMap()
@@ -50,7 +57,6 @@ class VoiceCoachEngine @Inject constructor(
         isQueuePlaying = false
         encouragementIndex = 0
 
-        // TTS initialised in background as fallback
         tts = TextToSpeech(context) { status ->
             if (status == TextToSpeech.SUCCESS && isInitialized) {
                 tts?.language = Locale.getDefault()
@@ -61,6 +67,17 @@ class VoiceCoachEngine @Inject constructor(
 
     suspend fun updateStyle() {
         currentStyle = sensoryPreferencesRepository.getPreferencesOnce().voiceCoachStyle
+    }
+
+    /** Set the ND profile for verbosity control. Call after loading user profile. */
+    fun setNdProfile(profile: NdProfile) {
+        ndProfile = profile
+        maxQueueDepth = when (profile) {
+            NdProfile.ASD -> 2
+            NdProfile.ADHD -> 5
+            NdProfile.AUDHD -> 3
+            NdProfile.STANDARD -> 4
+        }
     }
 
     fun onZoneChange(newZone: HeartRateZone) {
@@ -109,7 +126,6 @@ class VoiceCoachEngine @Inject constructor(
                 VoiceCoachStyle.HYPE -> "$minutes minutes! Keep that energy up!"
             }
 
-            // Pre-generated clips cover 5–60 min; beyond that use TTS
             if (minutes in 5..60) {
                 val styleKey = currentStyle.name.lowercase()
                 val clipKey = "voice_${styleKey}_time_$minutes"
@@ -125,12 +141,132 @@ class VoiceCoachEngine @Inject constructor(
         speak(message)
     }
 
-    // ---- New engagement methods ---------------------------------------------
+    // ---- Composable exercise announcements ----------------------------------
 
     /**
-     * Called at workout start. Selects greeting based on user state:
-     * first workout, comeback after absence, active streak, or normal welcome.
+     * Composes a multi-clip announcement for an exercise change:
+     * 1. Exercise name clip
+     * 2. Target clip (speed/incline/watts) — based on tread mode
+     * 3. Duration clip
+     * 4. Motivation connector (optional, based on ND profile)
+     * 5. Form cue (for floor exercises)
+     *
+     * Each queued clip plays sequentially. TTS fills gaps if clip is missing.
      */
+    fun announceExerciseComposite(
+        exerciseName: String,
+        exerciseId: String,
+        station: ExerciseStation,
+        durationSeconds: Int,
+        isLast: Boolean,
+        treadMode: TreadMode,
+        coachingTargetRegistry: CoachingTargetRegistry
+    ) {
+        if (!isInitialized) return
+        val styleKey = currentStyle.name.lowercase()
+
+        // Enforce queue depth limit
+        if (playbackQueue.size >= maxQueueDepth) return
+
+        // 1. Exercise name
+        val exerciseKey = exerciseName.lowercase().replace(Regex("[^a-z0-9]+"), "_").trim('_')
+        val exerciseClipKey = "voice_${styleKey}_exercise_$exerciseKey"
+        val exerciseFallback = when (currentStyle) {
+            VoiceCoachStyle.LITERAL -> "Next: $exerciseName."
+            VoiceCoachStyle.STANDARD -> "$exerciseName is next."
+            VoiceCoachStyle.HYPE -> "${exerciseName.uppercase()}!"
+        }
+        queueClip(exerciseClipKey, exerciseFallback)
+
+        // 2. Target (speed/incline/watts) — skip for ASD literal (they just get name + duration)
+        val targetClipKey = coachingTargetRegistry.getTargetClipKey(exerciseId, treadMode, station)
+        val targetText = coachingTargetRegistry.getTargetText(exerciseId, treadMode, station)
+        if (targetClipKey != null && targetText != null && playbackQueue.size < maxQueueDepth) {
+            queueClip("voice_${styleKey}_$targetClipKey", targetText)
+        }
+
+        // 3. Duration
+        if (playbackQueue.size < maxQueueDepth) {
+            val durClipKey = getDurationClipKey(durationSeconds)
+            val durText = getDurationText(durationSeconds)
+            if (durClipKey != null) {
+                queueClip("voice_${styleKey}_$durClipKey", durText)
+            }
+        }
+
+        // 4. Motivation connector — only for ADHD/STANDARD/HYPE styles, not ASD
+        if (shouldAddMotivation() && playbackQueue.size < maxQueueDepth) {
+            val motivationKeys = listOf("motivation_lets_go", "motivation_you_got_this", "motivation_strong_finish")
+            val key = motivationKeys[encouragementIndex % motivationKeys.size]
+            val fallback = when (key) {
+                "motivation_lets_go" -> "Let's go!"
+                "motivation_you_got_this" -> "You've got this!"
+                else -> "Strong finish!"
+            }
+            queueClip("voice_${styleKey}_$key", fallback)
+        }
+
+        // 5. Form cue for floor exercises
+        if (station == ExerciseStation.FLOOR && playbackQueue.size < maxQueueDepth) {
+            val formClipKey = coachingTargetRegistry.getFormCueClipKey(exerciseId)
+            val formText = coachingTargetRegistry.getTarget(exerciseId)?.formCue
+            if (formClipKey != null && formText != null) {
+                queueClip("voice_${styleKey}_$formClipKey", formText)
+            }
+        }
+
+        // 6. Last exercise callout
+        if (isLast && playbackQueue.size < maxQueueDepth) {
+            val lastText = when (currentStyle) {
+                VoiceCoachStyle.LITERAL -> "This is the last exercise."
+                VoiceCoachStyle.STANDARD -> "Last one!"
+                VoiceCoachStyle.HYPE -> "FINAL EXERCISE! GIVE IT EVERYTHING!"
+            }
+            queueClip("voice_${styleKey}_motivation_last_one", lastText)
+        }
+
+        startQueueIfNeeded()
+    }
+
+    /**
+     * Mid-exercise push-harder encouragement. Called at exercise midpoint
+     * for push/all-out exercises. Respects ND profile verbosity.
+     */
+    fun encouragePushHarder(
+        treadMode: TreadMode,
+        station: ExerciseStation,
+        exerciseId: String,
+        coachingTargetRegistry: CoachingTargetRegistry
+    ) {
+        if (!isInitialized) return
+        if (!shouldPushHarder(exerciseId)) return
+
+        val styleKey = currentStyle.name.lowercase()
+        val clipKey = coachingTargetRegistry.getPushHarderClipKey(treadMode, station)
+        val fallbackText = coachingTargetRegistry.getPushHarderText(treadMode, station)
+
+        if (clipKey != null && fallbackText != null) {
+            queueClip("voice_${styleKey}_$clipKey", fallbackText)
+            startQueueIfNeeded()
+        }
+    }
+
+    /** Called when the guided workout transitions to a new station. */
+    fun onStationChange(stationName: String) {
+        if (!isInitialized) return
+        val text = when (currentStyle) {
+            VoiceCoachStyle.LITERAL -> "Moving to the ${stationName.lowercase()} station."
+            VoiceCoachStyle.STANDARD -> "Time to switch! Heading to the ${stationName.lowercase()}."
+            VoiceCoachStyle.HYPE -> "${stationName.uppercase()} TIME! Let's GET AFTER IT!"
+        }
+        val stationKey = stationName.lowercase()
+        val styleKey = currentStyle.name.lowercase()
+        val clipKey = "voice_${styleKey}_station_$stationKey"
+        playClip(clipKey, text)
+    }
+
+    // ---- Engagement methods -------------------------------------------------
+
     fun onWorkoutStart(profile: UserProfile) {
         if (!isInitialized) return
         val styleKey = currentStyle.name.lowercase()
@@ -172,10 +308,6 @@ class VoiceCoachEngine @Inject constructor(
         startQueueIfNeeded()
     }
 
-    /**
-     * Called when workout ends. Selects completion clip based on whether user
-     * hit their daily target or achieved a personal best.
-     */
     fun onWorkoutComplete(hitTarget: Boolean, isPersonalBest: Boolean) {
         if (!isInitialized) return
         val styleKey = currentStyle.name.lowercase()
@@ -189,14 +321,12 @@ class VoiceCoachEngine @Inject constructor(
         startQueueIfNeeded()
     }
 
-    /** Called when burn points first reach the daily target mid-workout. */
     fun onTargetHit() {
         if (!isInitialized) return
         val styleKey = currentStyle.name.lowercase()
         playClip("voice_${styleKey}_target_hit", targetHitFallback())
     }
 
-    /** Called when user hits a streak milestone (3, 5, 7, 10, 14, 21, 30, 100). */
     fun onStreakMilestone(streakDays: Int) {
         if (!isInitialized) return
         val validMilestones = setOf(3, 5, 7, 10, 14, 21, 30, 100)
@@ -207,7 +337,6 @@ class VoiceCoachEngine @Inject constructor(
         startQueueIfNeeded()
     }
 
-    /** Round-robin through 5 encouragement clips. */
     fun onEncouragement() {
         if (!isInitialized) return
         val styleKey = currentStyle.name.lowercase()
@@ -216,7 +345,6 @@ class VoiceCoachEngine @Inject constructor(
         playClip("voice_${styleKey}_encourage_$idx", encourageFallback(idx))
     }
 
-    /** Plays a progress callout by key (progress_week_great, progress_total_10, progress_total_50). */
     fun onProgressCallout(key: String) {
         if (!isInitialized) return
         val styleKey = currentStyle.name.lowercase()
@@ -224,33 +352,57 @@ class VoiceCoachEngine @Inject constructor(
         startQueueIfNeeded()
     }
 
-    /** Called when the guided workout transitions to a new exercise. */
-    fun onExerciseChange(name: String, durationSeconds: Int, isLast: Boolean) {
-        if (!isInitialized) return
-        val durText = if (durationSeconds >= 60) "${durationSeconds / 60} minutes" else "$durationSeconds seconds"
-        val text = when (currentStyle) {
-            VoiceCoachStyle.LITERAL -> "Next: $name. $durText." + if (isLast) " This is the last exercise." else ""
-            VoiceCoachStyle.STANDARD -> "$name is next. $durText, let's go." + if (isLast) " Last one!" else ""
-            VoiceCoachStyle.HYPE -> "${name.uppercase()}! $durText! LET'S DO THIS!" + if (isLast) " FINAL EXERCISE! GIVE IT EVERYTHING!" else ""
-        }
-        speak(text)
+    // ---- ND-profile verbosity helpers ---------------------------------------
+
+    private fun shouldAddMotivation(): Boolean = when (ndProfile) {
+        NdProfile.ASD -> false
+        NdProfile.AUDHD -> false
+        NdProfile.ADHD -> true
+        NdProfile.STANDARD -> true
     }
 
-    /** Called when the guided workout transitions to a new station. */
-    fun onStationChange(stationName: String) {
-        if (!isInitialized) return
-        val text = when (currentStyle) {
-            VoiceCoachStyle.LITERAL -> "Moving to the ${stationName.lowercase()} station."
-            VoiceCoachStyle.STANDARD -> "Time to switch! Heading to the ${stationName.lowercase()}."
-            VoiceCoachStyle.HYPE -> "${stationName.uppercase()} TIME! Let's GET AFTER IT!"
+    private fun shouldPushHarder(exerciseId: String): Boolean = when (ndProfile) {
+        NdProfile.ASD -> false  // No mid-exercise interruptions
+        NdProfile.AUDHD -> exerciseId in setOf("tread_all_out", "row_all_out")  // All-out only
+        NdProfile.ADHD -> true  // All push/all-out exercises
+        NdProfile.STANDARD -> true  // All push/all-out exercises
+    }
+
+    // ---- Duration helpers ---------------------------------------------------
+
+    private fun getDurationClipKey(seconds: Int): String? {
+        return when (seconds) {
+            20 -> "duration_20_seconds"
+            30 -> "duration_30_seconds"
+            45 -> "duration_45_seconds"
+            60 -> "duration_1_minute"
+            120 -> "duration_2_minutes"
+            180 -> "duration_3_minutes"
+            240 -> "duration_4_minutes"
+            300 -> "duration_5_minutes"
+            600 -> "duration_10_minutes"
+            900 -> "duration_15_minutes"
+            else -> null  // TTS will handle non-standard durations
         }
-        speak(text)
+    }
+
+    private fun getDurationText(seconds: Int): String {
+        return if (seconds >= 60) {
+            val min = seconds / 60
+            val sec = seconds % 60
+            if (sec == 0) "$min minute${if (min > 1) "s" else ""}"
+            else "$min minute${if (min > 1) "s" else ""} $sec seconds"
+        } else {
+            "$seconds seconds"
+        }
     }
 
     // ---- Playback queue -----------------------------------------------------
 
     private fun queueClip(key: String, fallbackText: String) {
-        playbackQueue.offer(key to fallbackText)
+        if (playbackQueue.size < maxQueueDepth) {
+            playbackQueue.offer(key to fallbackText)
+        }
     }
 
     private fun startQueueIfNeeded() {
@@ -270,10 +422,6 @@ class VoiceCoachEngine @Inject constructor(
         playClipQueued(key, fallback)
     }
 
-    /**
-     * Like [playClip] but hooks into the queue: on completion, plays the next
-     * queued clip instead of just clearing state.
-     */
     private fun playClipQueued(key: String, fallbackText: String) {
         val resId = clipResourceMap[key]
         if (resId != null && resId != 0) {
@@ -285,7 +433,6 @@ class VoiceCoachEngine @Inject constructor(
             }
         }
         speak(fallbackText)
-        // TTS is fire-and-forget via QUEUE_ADD, so advance queue after a short delay
         playNext()
     }
 
@@ -317,12 +464,8 @@ class VoiceCoachEngine @Inject constructor(
         }
     }
 
-    // ---- Playback helpers ------------------------------------------------
+    // ---- Playback helpers ---------------------------------------------------
 
-    /**
-     * Try to play a pre-generated clip. Fall back to TTS if the resource is
-     * missing or playback fails.
-     */
     private fun playClip(key: String, fallbackText: String) {
         val resId = clipResourceMap[key]
         if (resId != null && resId != 0) {
@@ -503,13 +646,8 @@ class VoiceCoachEngine @Inject constructor(
         }
     }
 
-    // ---- Resource map ----------------------------------------------------
+    // ---- Resource map -------------------------------------------------------
 
-    /**
-     * Builds a lookup of clip key -> R.raw.* resource ID at runtime.
-     * Uses [Context.getResources().getIdentifier] so the build succeeds even
-     * when no MP3 files have been generated yet.
-     */
     private fun buildResourceMap() {
         clipResourceMap.clear()
         val packageName = context.packageName
@@ -519,7 +657,6 @@ class VoiceCoachEngine @Inject constructor(
         val zones = listOf("rest", "warm_up", "active", "push", "peak")
         val timeIntervals = (5..60 step 5).toList()
 
-        // Keyed clip names for new categories
         val keyedClips = listOf(
             "start_first", "start_welcome", "start_streak",
             "complete_good", "complete_target", "complete_pb",
@@ -528,6 +665,50 @@ class VoiceCoachEngine @Inject constructor(
             "streak_3", "streak_5", "streak_7", "streak_10", "streak_14", "streak_21", "streak_30", "streak_100",
             "return_1day", "return_few", "return_long",
             "progress_week_great", "progress_total_10", "progress_total_50"
+        )
+
+        val exercises = listOf(
+            "base_pace", "push_pace", "all_out", "power_walk", "incline",
+            "steady_row", "power_row", "all_out_row",
+            "squats", "lunges", "deadlifts", "chest_press", "shoulder_press",
+            "bicep_curls", "tricep_extensions", "push_ups", "plank",
+            "trx_rows", "bench_hop_overs", "pop_squats"
+        )
+
+        val stations = listOf("tread", "row", "floor")
+
+        // New composable coaching clips
+        val targetClips = listOf(
+            "target_5_mph", "target_6_mph", "target_7_mph", "target_8_mph", "target_9_mph",
+            "target_incline_4", "target_incline_8", "target_incline_10", "target_incline_12",
+            "target_100_watts", "target_150_watts", "target_200_watts"
+        )
+
+        val durationClips = listOf(
+            "duration_20_seconds", "duration_30_seconds", "duration_45_seconds",
+            "duration_1_minute", "duration_2_minutes", "duration_3_minutes",
+            "duration_4_minutes", "duration_5_minutes",
+            "duration_10_minutes", "duration_15_minutes"
+        )
+
+        val motivationClips = listOf(
+            "motivation_lets_go", "motivation_you_got_this", "motivation_strong_finish",
+            "motivation_almost_there", "motivation_keep_pushing", "motivation_last_one"
+        )
+
+        val pushHarderClips = listOf(
+            "push_harder_add_1_mph", "push_harder_add_half_mph",
+            "push_harder_raise_incline_2", "push_harder_raise_incline_4",
+            "push_harder_add_20_watts", "push_harder_add_50_watts"
+        )
+
+        val formCueClips = listOf(
+            "form_chest_up", "form_drive_heels", "form_full_range",
+            "form_control_tempo", "form_squeeze_top", "form_breathe"
+        )
+
+        val prefixClips = listOf(
+            "prefix_minimum", "prefix_next_up", "prefix_moving_to", "prefix_for"
         )
 
         for (style in styles) {
@@ -546,10 +727,32 @@ class VoiceCoachEngine @Inject constructor(
                 val id = res.getIdentifier(key, "raw", packageName)
                 if (id != 0) clipResourceMap[key] = id
             }
+            for (exercise in exercises) {
+                val key = "voice_${style}_exercise_$exercise"
+                val id = res.getIdentifier(key, "raw", packageName)
+                if (id != 0) clipResourceMap[key] = id
+            }
+            for (station in stations) {
+                val key = "voice_${style}_station_$station"
+                val id = res.getIdentifier(key, "raw", packageName)
+                if (id != 0) clipResourceMap[key] = id
+            }
+            // New composable clip categories
+            val newClipLists = listOf(
+                targetClips, durationClips, motivationClips,
+                pushHarderClips, formCueClips, prefixClips
+            )
+            for (clipList in newClipLists) {
+                for (clip in clipList) {
+                    val key = "voice_${style}_$clip"
+                    val id = res.getIdentifier(key, "raw", packageName)
+                    if (id != 0) clipResourceMap[key] = id
+                }
+            }
         }
     }
 
-    // ---- Lifecycle -------------------------------------------------------
+    // ---- Lifecycle ----------------------------------------------------------
 
     fun shutdown() {
         mediaPlayer?.release()

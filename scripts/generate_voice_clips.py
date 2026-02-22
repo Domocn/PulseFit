@@ -2,7 +2,7 @@
 """
 Pre-generate ElevenLabs voice coach clips for PulseFit offline playback.
 
-Generates 129 MP3 files:
+Generates ~324 MP3 files:
   - 15 zone-change clips (3 styles x 5 zones)
   - 36 time-update clips (3 styles x 12 intervals: 5..60 min)
   - 9 workout start greetings (3 styles x 3 types)
@@ -12,6 +12,15 @@ Generates 129 MP3 files:
   - 24 streak celebration clips (3 styles x 8 milestones)
   - 9 comeback/return clips (3 styles x 3 types)
   - 9 progress callout clips (3 styles x 3 types)
+  - 9 station change clips (3 styles x 3 stations)
+  - 60 exercise announcement clips (3 styles x 20 exercises)
+  --- NEW composable coaching clips ---
+  - 33 target clips (3 styles x 11 targets)
+  - 30 duration clips (3 styles x 10 durations)
+  - 18 motivation clips (3 styles x 6 connectors)
+  - 18 push-harder clips (3 styles x 6 variants)
+  - 18 form cue clips (3 styles x 6 cues)
+  - 12 prefix clips (3 styles x 4 prefixes)
 
 Usage:
     pip install -r requirements.txt
@@ -260,6 +269,315 @@ PROGRESS_TEXTS = {
     },
 }
 
+# ---------------------------------------------------------------------------
+# Station change (3 stations)
+# ---------------------------------------------------------------------------
+
+STATION_TEXTS = {
+    "literal": {
+        "station_tread": "Moving to the tread station.",
+        "station_row":   "Moving to the row station.",
+        "station_floor": "Moving to the floor station.",
+    },
+    "standard": {
+        "station_tread": "Time to switch! Heading to the tread.",
+        "station_row":   "Time to switch! Heading to the row.",
+        "station_floor": "Time to switch! Heading to the floor.",
+    },
+    "hype": {
+        "station_tread": "TREAD TIME! Let's GET AFTER IT!",
+        "station_row":   "ROW TIME! Let's GET AFTER IT!",
+        "station_floor": "FLOOR TIME! Let's GET AFTER IT!",
+    },
+}
+
+# ---------------------------------------------------------------------------
+# Exercise announcements (20 exercises)
+# ---------------------------------------------------------------------------
+
+EXERCISE_TEXTS = {
+    "literal": {
+        "exercise_base_pace":        "Next: Base Pace.",
+        "exercise_push_pace":        "Next: Push Pace.",
+        "exercise_all_out":          "Next: All-Out Sprint.",
+        "exercise_power_walk":       "Next: Power Walk.",
+        "exercise_incline":          "Next: Incline Walk.",
+        "exercise_steady_row":       "Next: Steady Row.",
+        "exercise_power_row":        "Next: Power Row.",
+        "exercise_all_out_row":      "Next: All-Out Row.",
+        "exercise_squats":           "Next: Squats.",
+        "exercise_lunges":           "Next: Lunges.",
+        "exercise_deadlifts":        "Next: Deadlifts.",
+        "exercise_chest_press":      "Next: Chest Press.",
+        "exercise_shoulder_press":   "Next: Shoulder Press.",
+        "exercise_bicep_curls":      "Next: Bicep Curls.",
+        "exercise_tricep_extensions":"Next: Tricep Extensions.",
+        "exercise_push_ups":         "Next: Push-Ups.",
+        "exercise_plank":            "Next: Plank.",
+        "exercise_trx_rows":         "Next: TRX Rows.",
+        "exercise_bench_hop_overs":  "Next: Bench Hop-Overs.",
+        "exercise_pop_squats":       "Next: Pop Squats.",
+    },
+    "standard": {
+        "exercise_base_pace":        "Base Pace is next. Let's go.",
+        "exercise_push_pace":        "Push Pace is next. Let's go.",
+        "exercise_all_out":          "All-Out Sprint is next. Let's go.",
+        "exercise_power_walk":       "Power Walk is next. Let's go.",
+        "exercise_incline":          "Incline Walk is next. Let's go.",
+        "exercise_steady_row":       "Steady Row is next. Let's go.",
+        "exercise_power_row":        "Power Row is next. Let's go.",
+        "exercise_all_out_row":      "All-Out Row is next. Let's go.",
+        "exercise_squats":           "Squats are next. Let's go.",
+        "exercise_lunges":           "Lunges are next. Let's go.",
+        "exercise_deadlifts":        "Deadlifts are next. Let's go.",
+        "exercise_chest_press":      "Chest Press is next. Let's go.",
+        "exercise_shoulder_press":   "Shoulder Press is next. Let's go.",
+        "exercise_bicep_curls":      "Bicep Curls are next. Let's go.",
+        "exercise_tricep_extensions":"Tricep Extensions are next. Let's go.",
+        "exercise_push_ups":         "Push-Ups are next. Let's go.",
+        "exercise_plank":            "Plank is next. Let's go.",
+        "exercise_trx_rows":         "TRX Rows are next. Let's go.",
+        "exercise_bench_hop_overs":  "Bench Hop-Overs are next. Let's go.",
+        "exercise_pop_squats":       "Pop Squats are next. Let's go.",
+    },
+    "hype": {
+        "exercise_base_pace":        "BASE PACE! LET'S DO THIS!",
+        "exercise_push_pace":        "PUSH PACE! LET'S DO THIS!",
+        "exercise_all_out":          "ALL-OUT SPRINT! LET'S DO THIS!",
+        "exercise_power_walk":       "POWER WALK! LET'S DO THIS!",
+        "exercise_incline":          "INCLINE WALK! LET'S DO THIS!",
+        "exercise_steady_row":       "STEADY ROW! LET'S DO THIS!",
+        "exercise_power_row":        "POWER ROW! LET'S DO THIS!",
+        "exercise_all_out_row":      "ALL-OUT ROW! LET'S DO THIS!",
+        "exercise_squats":           "SQUATS! LET'S DO THIS!",
+        "exercise_lunges":           "LUNGES! LET'S DO THIS!",
+        "exercise_deadlifts":        "DEADLIFTS! LET'S DO THIS!",
+        "exercise_chest_press":      "CHEST PRESS! LET'S DO THIS!",
+        "exercise_shoulder_press":   "SHOULDER PRESS! LET'S DO THIS!",
+        "exercise_bicep_curls":      "BICEP CURLS! LET'S DO THIS!",
+        "exercise_tricep_extensions":"TRICEP EXTENSIONS! LET'S DO THIS!",
+        "exercise_push_ups":         "PUSH-UPS! LET'S DO THIS!",
+        "exercise_plank":            "PLANK! LET'S DO THIS!",
+        "exercise_trx_rows":         "TRX ROWS! LET'S DO THIS!",
+        "exercise_bench_hop_overs":  "BENCH HOP-OVERS! LET'S DO THIS!",
+        "exercise_pop_squats":       "POP SQUATS! LET'S DO THIS!",
+    },
+}
+
+# ===========================================================================
+# NEW: Composable coaching clips
+# ===========================================================================
+
+# ---------------------------------------------------------------------------
+# Speed/incline/watt target fragments
+# ---------------------------------------------------------------------------
+
+COACHING_TARGET_TEXTS = {
+    "literal": {
+        "target_5_mph":       "Minimum 5 miles per hour.",
+        "target_6_mph":       "Minimum 6 miles per hour.",
+        "target_7_mph":       "Minimum 7 miles per hour.",
+        "target_8_mph":       "Minimum 8 miles per hour.",
+        "target_9_mph":       "Minimum 9 miles per hour.",
+        "target_incline_4":   "Incline to 4 percent.",
+        "target_incline_8":   "Incline to 8 percent.",
+        "target_incline_10":  "Incline to 10 percent.",
+        "target_incline_12":  "Incline to 12 percent.",
+        "target_100_watts":   "100 watts.",
+        "target_150_watts":   "150 watts.",
+        "target_200_watts":   "200 watts.",
+    },
+    "standard": {
+        "target_5_mph":       "Minimum 5 miles per hour.",
+        "target_6_mph":       "Minimum 6 miles per hour.",
+        "target_7_mph":       "At least 7 miles per hour.",
+        "target_8_mph":       "At least 8 miles per hour.",
+        "target_9_mph":       "At least 9 miles per hour.",
+        "target_incline_4":   "Incline to 4 percent.",
+        "target_incline_8":   "Incline to 8 percent.",
+        "target_incline_10":  "Incline to 10 percent.",
+        "target_incline_12":  "Incline to 12 percent.",
+        "target_100_watts":   "100 watts on the rower.",
+        "target_150_watts":   "150 watts on the rower.",
+        "target_200_watts":   "200 watts, push that power.",
+    },
+    "hype": {
+        "target_5_mph":       "FIVE MILES PER HOUR minimum!",
+        "target_6_mph":       "SIX MILES PER HOUR! Let's move!",
+        "target_7_mph":       "SEVEN MPH! PICK IT UP!",
+        "target_8_mph":       "EIGHT MPH! DIG DEEP!",
+        "target_9_mph":       "NINE MPH! LEAVE IT ALL OUT THERE!",
+        "target_incline_4":   "INCLINE TO 4! Let's climb!",
+        "target_incline_8":   "EIGHT PERCENT INCLINE! FEEL THE BURN!",
+        "target_incline_10":  "TEN PERCENT! YOU'VE GOT THIS!",
+        "target_incline_12":  "TWELVE PERCENT INCLINE! BEAST MODE!",
+        "target_100_watts":   "100 WATTS on that rower!",
+        "target_150_watts":   "150 WATTS! POWER!",
+        "target_200_watts":   "200 WATTS! EMPTY THE TANK!",
+    },
+}
+
+# ---------------------------------------------------------------------------
+# Duration fragments
+# ---------------------------------------------------------------------------
+
+DURATION_TEXTS = {
+    "literal": {
+        "duration_20_seconds":  "20 seconds.",
+        "duration_30_seconds":  "30 seconds.",
+        "duration_45_seconds":  "45 seconds.",
+        "duration_1_minute":    "1 minute.",
+        "duration_2_minutes":   "2 minutes.",
+        "duration_3_minutes":   "3 minutes.",
+        "duration_4_minutes":   "4 minutes.",
+        "duration_5_minutes":   "5 minutes.",
+        "duration_10_minutes":  "10 minutes.",
+        "duration_15_minutes":  "15 minutes.",
+    },
+    "standard": {
+        "duration_20_seconds":  "20 seconds.",
+        "duration_30_seconds":  "30 seconds, you can do anything for 30 seconds.",
+        "duration_45_seconds":  "45 seconds.",
+        "duration_1_minute":    "1 minute.",
+        "duration_2_minutes":   "2 minutes.",
+        "duration_3_minutes":   "3 minutes.",
+        "duration_4_minutes":   "4 minutes.",
+        "duration_5_minutes":   "5 minutes.",
+        "duration_10_minutes":  "10 minutes.",
+        "duration_15_minutes":  "15 minutes.",
+    },
+    "hype": {
+        "duration_20_seconds":  "TWENTY SECONDS! That's nothing!",
+        "duration_30_seconds":  "THIRTY SECONDS! You can do ANYTHING for 30 seconds!",
+        "duration_45_seconds":  "45 SECONDS! DIG IN!",
+        "duration_1_minute":    "ONE MINUTE! OWN IT!",
+        "duration_2_minutes":   "TWO MINUTES! STAY STRONG!",
+        "duration_3_minutes":   "THREE MINUTES! LOCK IN!",
+        "duration_4_minutes":   "FOUR MINUTES! HOLD THAT PACE!",
+        "duration_5_minutes":   "FIVE MINUTES! THIS IS YOUR TIME!",
+        "duration_10_minutes":  "TEN MINUTES! SETTLE IN AND GRIND!",
+        "duration_15_minutes":  "FIFTEEN MINUTES! BUILD THAT ENGINE!",
+    },
+}
+
+# ---------------------------------------------------------------------------
+# Motivation connectors
+# ---------------------------------------------------------------------------
+
+MOTIVATION_TEXTS = {
+    "literal": {
+        "motivation_lets_go":       "Let's go.",
+        "motivation_you_got_this":  "You have got this.",
+        "motivation_strong_finish": "Finish strong.",
+        "motivation_almost_there":  "Almost there.",
+        "motivation_keep_pushing":  "Keep pushing.",
+        "motivation_last_one":      "This is the last exercise.",
+    },
+    "standard": {
+        "motivation_lets_go":       "Let's go!",
+        "motivation_you_got_this":  "You've got this!",
+        "motivation_strong_finish": "Strong finish!",
+        "motivation_almost_there":  "Almost there!",
+        "motivation_keep_pushing":  "Keep pushing!",
+        "motivation_last_one":      "Last one! Make it count!",
+    },
+    "hype": {
+        "motivation_lets_go":       "LET'S GOOO!",
+        "motivation_you_got_this":  "YOU'VE GOT THIS!",
+        "motivation_strong_finish": "STRONG FINISH! LEAVE IT ALL OUT THERE!",
+        "motivation_almost_there":  "ALMOST THERE! DON'T YOU DARE QUIT!",
+        "motivation_keep_pushing":  "KEEP PUSHING! THIS IS YOUR MOMENT!",
+        "motivation_last_one":      "LAST ONE! GIVE IT EVERYTHING YOU'VE GOT!",
+    },
+}
+
+# ---------------------------------------------------------------------------
+# Push-harder mid-exercise clips
+# ---------------------------------------------------------------------------
+
+PUSH_HARDER_TEXTS = {
+    "literal": {
+        "push_harder_add_1_mph":       "Add 1 mile per hour.",
+        "push_harder_add_half_mph":    "Add half a mile per hour.",
+        "push_harder_raise_incline_2": "Raise your incline 2 percent.",
+        "push_harder_raise_incline_4": "Raise your incline 4 percent.",
+        "push_harder_add_20_watts":    "Add 20 watts.",
+        "push_harder_add_50_watts":    "Add 50 watts.",
+    },
+    "standard": {
+        "push_harder_add_1_mph":       "Push it, add 1 mile per hour!",
+        "push_harder_add_half_mph":    "Add half a mile per hour, you can do it!",
+        "push_harder_raise_incline_2": "Raise that incline 2 percent!",
+        "push_harder_raise_incline_4": "Raise that incline 4 percent! Dig deep!",
+        "push_harder_add_20_watts":    "Add 20 watts, you've got this!",
+        "push_harder_add_50_watts":    "Add 50 watts, push that power!",
+    },
+    "hype": {
+        "push_harder_add_1_mph":       "ADD ONE MPH! LET'S GO!",
+        "push_harder_add_half_mph":    "HALF A MILE MORE! YOU CAN DO IT!",
+        "push_harder_raise_incline_2": "RAISE THAT INCLINE! TWO MORE PERCENT!",
+        "push_harder_raise_incline_4": "FOUR MORE PERCENT! FEEL THE CLIMB!",
+        "push_harder_add_20_watts":    "TWENTY MORE WATTS! PULL HARDER!",
+        "push_harder_add_50_watts":    "FIFTY MORE WATTS! UNLEASH THE POWER!",
+    },
+}
+
+# ---------------------------------------------------------------------------
+# Form cue clips
+# ---------------------------------------------------------------------------
+
+FORM_CUE_TEXTS = {
+    "literal": {
+        "form_chest_up":       "Chest up, drive through your heels.",
+        "form_drive_heels":    "Front knee over ankle, control the drop.",
+        "form_full_range":     "Core tight, full range of motion.",
+        "form_control_tempo":  "Control the tempo.",
+        "form_squeeze_top":    "Squeeze at the top.",
+        "form_breathe":        "Remember to breathe.",
+    },
+    "standard": {
+        "form_chest_up":       "Chest up, drive through your heels.",
+        "form_drive_heels":    "Keep that front knee over your ankle.",
+        "form_full_range":     "Core tight, full range of motion!",
+        "form_control_tempo":  "Control the tempo, slow and controlled.",
+        "form_squeeze_top":    "Squeeze at the top!",
+        "form_breathe":        "Don't forget to breathe!",
+    },
+    "hype": {
+        "form_chest_up":       "CHEST UP! Drive through those HEELS!",
+        "form_drive_heels":    "KNEE OVER ANKLE! CONTROL IT!",
+        "form_full_range":     "CORE TIGHT! FULL RANGE! EVERY REP COUNTS!",
+        "form_control_tempo":  "CONTROL THAT TEMPO! SLOW AND POWERFUL!",
+        "form_squeeze_top":    "SQUEEZE IT AT THE TOP!",
+        "form_breathe":        "BREATHE! POWER THROUGH!",
+    },
+}
+
+# ---------------------------------------------------------------------------
+# Prefix / connector clips
+# ---------------------------------------------------------------------------
+
+PREFIX_TEXTS = {
+    "literal": {
+        "prefix_minimum":   "Minimum.",
+        "prefix_next_up":   "Next up.",
+        "prefix_moving_to": "Moving to.",
+        "prefix_for":       "For.",
+    },
+    "standard": {
+        "prefix_minimum":   "Minimum.",
+        "prefix_next_up":   "Next up!",
+        "prefix_moving_to": "Moving to.",
+        "prefix_for":       "For.",
+    },
+    "hype": {
+        "prefix_minimum":   "MINIMUM!",
+        "prefix_next_up":   "NEXT UP!",
+        "prefix_moving_to": "MOVING TO!",
+        "prefix_for":       "FOR!",
+    },
+}
+
 # Collect all keyed clip categories for iteration
 KEYED_CATEGORIES = [
     START_TEXTS,
@@ -269,6 +587,15 @@ KEYED_CATEGORIES = [
     STREAK_TEXTS,
     RETURN_TEXTS,
     PROGRESS_TEXTS,
+    STATION_TEXTS,
+    EXERCISE_TEXTS,
+    # New composable coaching categories
+    COACHING_TARGET_TEXTS,
+    DURATION_TEXTS,
+    MOTIVATION_TEXTS,
+    PUSH_HARDER_TEXTS,
+    FORM_CUE_TEXTS,
+    PREFIX_TEXTS,
 ]
 
 
@@ -321,7 +648,7 @@ def main():
             generate_clip(text, voice_id, settings, out_path)
             total += 1
 
-        # Keyed categories (start, complete, target, encourage, streak, return, progress)
+        # Keyed categories (all dictionaries)
         for category in KEYED_CATEGORIES:
             for clip_key, text in category[style].items():
                 fname = f"voice_{style}_{clip_key}.mp3"

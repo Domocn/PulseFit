@@ -18,6 +18,9 @@ import com.pulsefit.app.data.exercise.TemplateRegistry
 import com.pulsefit.app.ui.achievements.AchievementsScreen
 import com.pulsefit.app.ui.auth.LoginScreen
 import com.pulsefit.app.ui.auth.SignUpScreen
+import com.pulsefit.app.ui.challenge.ChallengesScreen
+import com.pulsefit.app.ui.plan.EquipmentSetupScreen
+import com.pulsefit.app.ui.plan.WeeklyPlanScreen
 import com.pulsefit.app.ui.components.PulseFitBottomBar
 import com.pulsefit.app.ui.data.DeepDataScreen
 import com.pulsefit.app.ui.group.CreateGroupScreen
@@ -174,6 +177,12 @@ fun PulseFitApp(viewModel: AppViewModel = hiltViewModel()) {
                             },
                             onNavigateToShop = {
                                 navController.navigate(Screen.RewardShop.route)
+                            },
+                            onNavigateToChallenges = {
+                                navController.navigate(Screen.Challenges.route)
+                            },
+                            onNavigateToWeeklyPlan = {
+                                navController.navigate(Screen.WeeklyPlan.route)
                             }
                         )
                     }
@@ -382,6 +391,31 @@ fun PulseFitApp(viewModel: AppViewModel = hiltViewModel()) {
                     ) { backStackEntry ->
                         val groupId = backStackEntry.arguments?.getString("groupId") ?: return@composable
                         GroupDetailScreen(groupId = groupId)
+                    }
+
+                    // Challenge screens
+                    composable(Screen.Challenges.route) {
+                        ChallengesScreen(
+                            onBack = { navController.popBackStack() },
+                            onChallengeDetail = { challengeType ->
+                                navController.navigate(Screen.ChallengeDetail.createRoute(challengeType))
+                            }
+                        )
+                    }
+
+                    // Weekly plan screens
+                    composable(Screen.WeeklyPlan.route) {
+                        WeeklyPlanScreen(
+                            onBack = { navController.popBackStack() },
+                            onNavigateToEquipmentSetup = {
+                                navController.navigate(Screen.EquipmentSetup.route)
+                            }
+                        )
+                    }
+                    composable(Screen.EquipmentSetup.route) {
+                        EquipmentSetupScreen(
+                            onBack = { navController.popBackStack() }
+                        )
                     }
                 }
             }

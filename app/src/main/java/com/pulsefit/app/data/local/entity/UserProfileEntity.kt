@@ -3,6 +3,7 @@ package com.pulsefit.app.data.local.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.pulsefit.app.data.model.NdProfile
+import com.pulsefit.app.data.model.TreadMode
 
 @Entity(tableName = "user_profile")
 data class UserProfileEntity(
@@ -33,5 +34,7 @@ data class UserProfileEntity(
     val firebaseUid: String? = null,
     val displayName: String? = null,
     val photoUrl: String? = null,
-    val profileVisibility: String = "friends"
+    val profileVisibility: String = "friends",
+    val treadMode: TreadMode = TreadMode.RUNNER,
+    val equipmentProfileJson: String? = null
 )

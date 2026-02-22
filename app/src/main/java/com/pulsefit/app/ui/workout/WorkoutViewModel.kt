@@ -31,8 +31,10 @@ import com.pulsefit.app.domain.usecase.EndWorkoutUseCase
 import com.pulsefit.app.domain.usecase.GetUserProfileUseCase
 import com.pulsefit.app.domain.usecase.GetWorkoutStatsUseCase
 import com.pulsefit.app.domain.usecase.RecordHeartRateUseCase
+import com.pulsefit.app.data.model.TreadMode
 import com.pulsefit.app.util.CalorieCalculator
 import com.pulsefit.app.util.ZoneCalculator
+import com.pulsefit.app.voice.CoachingTargetRegistry
 import com.pulsefit.app.voice.VoiceCoachEngine
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -69,7 +71,8 @@ class WorkoutViewModel @Inject constructor(
     private val getWorkoutStats: GetWorkoutStatsUseCase,
     private val templateRegistry: TemplateRegistry,
     private val exerciseRegistry: ExerciseRegistry,
-    private val groupChallengeRepository: GroupChallengeRepository
+    private val groupChallengeRepository: GroupChallengeRepository,
+    private val coachingTargetRegistry: CoachingTargetRegistry
 ) : ViewModel() {
 
     private val heartRateSource: HeartRateSource
@@ -162,7 +165,9 @@ class WorkoutViewModel @Inject constructor(
     // Body double
     private val _bodyDoubleCount = MutableStateFlow(0)
     val bodyDoubleCount: StateFlow<Int> = _bodyDoubleCount
-    private var bodyDoubleEnabled = false
+    private val _bodyDoubleEnabled = MutableStateFlow(false)
+    val bodyDoubleEnabled: StateFlow<Boolean> = _bodyDoubleEnabled
+    private var bodyDoubleActive = false
 
     private var maxHr = 190
     private var timerJob: Job? = null
@@ -185,6 +190,7 @@ class WorkoutViewModel @Inject constructor(
     private var lastEncouragementSecond = 0
     private var previousBestBurnPoints = 0
     private var encouragementIntervalSeconds = 180  // ND-adaptive: ASD=300, ADHD=90, default=180
+    private var treadMode = TreadMode.RUNNER
 
     fun start(workoutId: Long, templateId: String? = null) {
         this.workoutId = workoutId
@@ -201,10 +207,29 @@ class WorkoutViewModel @Inject constructor(
             if (template != null && template.type == "GUIDED" && template.phases.isNotEmpty()) {
                 val manager = GuidedWorkoutManager(template, exerciseRegistry)
                 manager.onExerciseChange = { exercise, duration, isLast ->
-                    voiceCoachEngine.onExerciseChange(exercise.name, duration, isLast)
+                    voiceCoachEngine.announceExerciseComposite(
+                        exerciseName = exercise.name,
+                        exerciseId = exercise.id,
+                        station = exercise.station,
+                        durationSeconds = duration,
+                        isLast = isLast,
+                        treadMode = treadMode,
+                        coachingTargetRegistry = coachingTargetRegistry
+                    )
                 }
                 manager.onStationChange = { stationName ->
                     voiceCoachEngine.onStationChange(stationName)
+                }
+                manager.onExerciseMidpoint = midpoint@{ flatExercise ->
+                    val ex = flatExercise.exercise ?: return@midpoint
+                    if (coachingTargetRegistry.isPushExercise(ex.id)) {
+                        voiceCoachEngine.encouragePushHarder(
+                            treadMode = treadMode,
+                            station = ex.station,
+                            exerciseId = ex.id,
+                            coachingTargetRegistry = coachingTargetRegistry
+                        )
+                    }
                 }
                 guidedWorkoutManager = manager
                 _isGuidedMode.value = true
@@ -226,6 +251,8 @@ class WorkoutViewModel @Inject constructor(
             userIsMale = profile?.biologicalSex != "female"
             audioPaletteEnabled = ndProfile == NdProfile.ASD || ndProfile == NdProfile.AUDHD
             dailyTarget = profile?.dailyTarget ?: 12
+            treadMode = profile?.treadMode ?: TreadMode.RUNNER
+            voiceCoachEngine.setNdProfile(ndProfile)
 
             // ND-adaptive encouragement frequency
             encouragementIntervalSeconds = when (ndProfile) {
@@ -260,12 +287,25 @@ class WorkoutViewModel @Inject constructor(
             val prefs = sensoryPreferencesRepository.getPreferencesOnce()
             _isMinimalMode.value = prefs.minimalMode
             _animationLevel.value = prefs.animationLevel
-            bodyDoubleEnabled = prefs.bodyDoubleEnabled
-            if (bodyDoubleEnabled) {
+            bodyDoubleActive = prefs.bodyDoubleEnabled
+            _bodyDoubleEnabled.value = prefs.bodyDoubleEnabled
+            if (bodyDoubleActive) {
                 try {
                     bodyDoubleRepository.joinSession()
+                    var bodyDoubleAnnounced = false
                     bodyDoubleRepository.getActiveCount().collect { count ->
                         _bodyDoubleCount.value = count
+                        // Voice announce body double count once at workout start
+                        if (!bodyDoubleAnnounced) {
+                            bodyDoubleAnnounced = true
+                            if (count > 0) {
+                                val msg = if (count == 1) "1 other person is training right now. You're not alone!"
+                                    else "$count others are training right now. Let's go!"
+                                voiceCoachEngine.onMilestone(msg)
+                            } else {
+                                voiceCoachEngine.onMilestone("Solo session today. This one's all yours, own it!")
+                            }
+                        }
                     }
                 } catch (_: Exception) {
                     // Body double is non-critical; don't block workout
@@ -317,7 +357,7 @@ class WorkoutViewModel @Inject constructor(
                                 AudioPalette.SoundEvent.ZONE_UP else AudioPalette.SoundEvent.ZONE_DOWN
                             audioPalette.play(soundEvent)
                         }
-                        if (bodyDoubleEnabled) {
+                        if (bodyDoubleActive) {
                             try { bodyDoubleRepository.updateZone(zone.name) } catch (_: Exception) {}
                         }
                         previousZone = zone
@@ -420,7 +460,7 @@ class WorkoutViewModel @Inject constructor(
         if (audioPaletteEnabled) {
             audioPalette.play(AudioPalette.SoundEvent.WORKOUT_END)
         }
-        if (bodyDoubleEnabled) {
+        if (bodyDoubleActive) {
             viewModelScope.launch { try { bodyDoubleRepository.leaveSession() } catch (_: Exception) {} }
         }
         // Don't shutdown voice engine yet — we need it for completion clips
@@ -494,7 +534,7 @@ class WorkoutViewModel @Inject constructor(
         timerJob?.cancel()
         heartRateSource.disconnect()
         voiceCoachEngine.shutdown()
-        if (bodyDoubleEnabled) {
+        if (bodyDoubleActive) {
             viewModelScope.launch { try { bodyDoubleRepository.leaveSession() } catch (_: Exception) {} }
         }
     }

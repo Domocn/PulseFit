@@ -31,7 +31,7 @@ import com.pulsefit.app.data.local.entity.WorkoutEntity
         AchievementEntity::class,
         NotificationPreferencesEntity::class
     ],
-    version = 8,
+    version = 10,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
