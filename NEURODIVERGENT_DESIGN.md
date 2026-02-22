@@ -1,5 +1,7 @@
 # PulseFit — Neurodivergent Design Philosophy & Features
 
+> **Implementation Status: COMPLETE** — All 35 ND features (F111-F145) are implemented and building. PulseFit is the first fitness app with dedicated neurodivergent experience modes. No competitor offers ADHD, ASD, or AuDHD-specific features.
+
 ## Overview
 
 PulseFit is the first fitness app designed with neurodivergent users in mind. Rather than bolting accessibility onto a neurotypical design, PulseFit embeds ND-friendly principles into its core UX through toggleable profiles.
@@ -14,7 +16,44 @@ Profiles are offered during onboarding and changeable in Settings. Each profile 
 
 ---
 
-## Part 1: ADHD Focus Mode
+## User Personas & Journey Scenarios
+
+### Jamie — ADHD Focus Mode
+
+**Profile:** 28, diagnosed ADHD-C at 22. Personal trainer suggested heart rate training but Jamie abandoned three fitness apps within 2 weeks. Main barriers: forgetting to work out, can't start even when motivated ("initiation paralysis"), gets bored mid-workout, loses track of time.
+
+**Journey with PulseFit:**
+1. **Onboarding:** Selects ADHD Focus Mode. Onboarding reduces to 3 taps — age, target, start. Everything else deferred.
+2. **Day 1:** Gets "Just 5 Minutes" notification at set time. One tap starts workout. At 5:00 mark: "Nice! Keep going?" — Jamie says yes, runs 25 minutes. Gets Celebration Overkill with confetti and XP animation. Unlocks "First Steps" achievement.
+3. **Week 1:** Daily quests provide fresh micro-goals each morning. Variable reward drops keep workouts surprising. Streak multiplier hits 1.5x at day 3. Body double mode makes Jamie feel less alone during evening workouts.
+4. **Month 1:** Level 12, unlocked "Ember" theme. Accountability alarm catches missed days. Task chunking makes 60-min OTF-style templates feel doable ("Block 2 of 6"). Longest streak: 14 days.
+5. **Key insight:** Jamie hasn't abandoned the app because every session feels slightly different (novelty engine) and starting requires zero decisions (Quick Start).
+
+### Alex — ASD Comfort Mode
+
+**Profile:** 34, diagnosed autistic at 30. Loves data and routine. Tried OrangeTheory but the loud music, unpredictable class format, and social pressure caused shutdowns. Wants structured, predictable workouts with full control over sensory output.
+
+**Journey with PulseFit:**
+1. **Onboarding:** Selects ASD Comfort Mode. Sees "Step 2 of 6" with full step map. Reviews all settings before confirming. Sensory Control Panel immediately available.
+2. **Day 1:** Configures sensory panel: animations OFF, sounds QUIET, haptics GENTLE, contrast HIGH. Picks "Steady State" template. Pre-Workout Visual Schedule shows exactly what's coming. Literal voice coach: "Heart rate: 148. Active zone. Push zone requires above 160." Workout ends with calm checkmark and soft tone.
+3. **Week 1:** Routine Builder assigns same templates to same days. "Today's workout: Steady State at 6:00 AM" — one tap starts. Transition warnings give 30-second advance notice. Safe Exit available at any time with zero guilt.
+4. **Month 1:** Deep Data Dashboard shows per-second HR data with mean, median, std dev. Exports CSV for personal spreadsheet. Social Pressure Shield hides all leaderboards and comparison features. Consistent Audio Palette means zone-up chime always sounds the same.
+5. **Key insight:** Alex hasn't had a single shutdown during workouts because every sensory output is controlled, every session is predictable, and there's no social pressure.
+
+### Taylor — AuDHD Combined Mode
+
+**Profile:** 26, diagnosed ADHD at 16 and autistic at 24. Needs the dopamine hits of ADHD mode but the sensory safety of ASD mode. Previous fitness apps were either too stimulating (ADHD features with flashing animations) or too boring (minimal apps with no rewards).
+
+**Journey with PulseFit:**
+1. **Onboarding:** Selects AuDHD Combined Mode. Defaults: calm UI (ASD) with structured rewards (ADHD). Variable drops OFF (unpredictability is more distressing than rewarding). Novelty rotation OFF for UI, ON for quests.
+2. **Day 1:** Micro-rewards ON but with reduced animation (1-second confetti, not 3-second). Literal voice coach with frequent check-ins. Task chunking active. Safe exit always available.
+3. **Week 1:** Routine builder provides structure (ASD need). Daily quests provide novelty (ADHD need). XP/leveling provides long-term progression (both). Body double mode provides presence without social pressure.
+4. **Month 1:** Fine-tunes individual settings — turns fidget haptics ON during rest phases (ADHD stimulation need), keeps transition warnings ON (ASD preparation need). Time blindness timer shows exact numbers (satisfies both: concrete for ADHD, precise for ASD).
+5. **Key insight:** Taylor's AuDHD settings aren't a compromise — they're a synthesis. PulseFit resolves the ADHD-ASD conflict by defaulting to ASD comfort settings and surfacing ADHD features as toggleable options.
+
+---
+
+## Part 1: ADHD Focus Mode — COMPLETE
 
 ### Design Principles
 
@@ -29,23 +68,23 @@ Profiles are offered during onboarding and changeable in Settings. Each profile 
 
 ### Modifications to Existing Features
 
-**F1 Onboarding:** Reduce to 3 taps (age → target → start). Optional steps deferred. ADHD toggle on step 2.
+**F1 Onboarding:** Reduce to 3 taps (age -> target -> start). Optional steps deferred. ADHD toggle on step 2.
 
 **F4 Live Workout:** Micro-reward animation every minute in Zone 3-5. Task chunking overlay ("Block 2 of 6"). Giant time blindness timer. Streak multiplier badge in corner.
 
 **F5 Summary:** Celebration Overkill plays BEFORE stats (confetti, sound, voice). XP bar prominent.
 
-**F6 Burn Points:** Variable reward drops. Visual streak multiplier (1x→3x). XP layer (1 BP = 10 XP).
+**F6 Burn Points:** Variable reward drops. Visual streak multiplier (1x->3x). XP layer (1 BP = 10 XP).
 
 **F7 History:** Simplified win/not-yet view. Progress visualisation (garden/pet/city) default.
 
 **F9 Notifications:** "Just 5 Minutes" nudge with one-tap start. Daily quest notification.
 
-**F21 Voice Coach:** Hybrid ElevenLabs — energetic voice profile, frequent encouragement (every 2-3 min), time blindness callouts.
+**F21 Voice Coach:** HYPE style — energetic, frequent encouragement (every 2-3 min), time blindness callouts. Max queue depth 5. All push-harder cues and motivation connectors enabled.
 
 ---
 
-### F111. Instant Micro-Rewards
+### F111. Instant Micro-Rewards — COMPLETE
 
 **Goal:** Continuous dopamine during workouts.
 
@@ -55,18 +94,18 @@ Profiles are offered during onboarding and changeable in Settings. Each profile 
 
 ---
 
-### F112. "Just 5 Minutes" Start Mode
+### F112. "Just 5 Minutes" Start Mode — COMPLETE
 
 **Goal:** Eliminate task initiation paralysis.
 
-- Notification/widget: "Just 5 minutes. That's it." → one tap starts
-- At 5:00: "Nice! Keep going?" → "Yes!" / "Done" (saves session, full credit)
+- Notification/widget: "Just 5 minutes. That's it." -> one tap starts
+- At 5:00: "Nice! Keep going?" -> "Yes!" / "Done" (saves session, full credit)
 - Next check at 10 min, then no more interruptions
 - All points count — no penalty for short workouts
 
 ---
 
-### F113. Variable Reward Drops
+### F113. Variable Reward Drops — COMPLETE
 
 **Goal:** Variable reinforcement for the ADHD brain.
 
@@ -78,7 +117,7 @@ Profiles are offered during onboarding and changeable in Settings. Each profile 
 
 ---
 
-### F114. Dopamine Streak Multiplier
+### F114. Dopamine Streak Multiplier — COMPLETE
 
 **Goal:** Make streaks feel increasingly rewarding.
 
@@ -94,18 +133,18 @@ Applies to XP display, not actual Burn Points (leaderboard fairness).
 
 ---
 
-### F115. Time Blindness Timer
+### F115. Time Blindness Timer — COMPLETE
 
 **Goal:** Make time concrete and visible.
 
 - **Colour-filling circle:** large arc fills clockwise, bands every 5 min
 - **Haptic pulses:** every 5 min (configurable: 2/5/10)
-- **Voice markers:** ElevenLabs says "10 minutes in" / "Halfway"
+- **Voice markers:** voice says "10 minutes in" / "Halfway"
 - **ASD variant:** exact numbers ("14 minutes 37 seconds")
 
 ---
 
-### F116. Novelty Rotation Engine
+### F116. Novelty Rotation Engine — COMPLETE
 
 **Goal:** Prevent habituation and app abandonment.
 
@@ -115,18 +154,18 @@ Rotates: UI accent colour (weekly), badge art (monthly), voice phrases (per sess
 
 ---
 
-### F117. Body Double Mode
+### F117. Body Double Mode — COMPLETE (Firebase)
 
 **Goal:** "Working alongside someone" presence for task initiation.
 
-- Opt-in match with simultaneous user
+- Opt-in match with simultaneous user (Firebase `activeSessions` collection)
 - Minimal display: avatar, zone colour, "still going" indicator
 - No chat, no comparison, anonymous by default
 - Optional mutual haptic nudge
 
 ---
 
-### F118. Hyperfocus Capture Badge
+### F118. Hyperfocus Capture Badge — COMPLETE
 
 **Goal:** Reward the ADHD superpower.
 
@@ -135,7 +174,7 @@ Rotates: UI accent colour (weekly), badge art (monthly), voice phrases (per sess
 
 ---
 
-### F119. Zero-Friction Quick Start
+### F119. Zero-Friction Quick Start — COMPLETE
 
 **Goal:** Minimum taps from intention to workout.
 
@@ -143,7 +182,7 @@ Entry points: home widget "GO", notification action, lock screen shortcut, Wear 
 
 ---
 
-### F120. XP & Leveling System
+### F120. XP & Leveling System — COMPLETE
 
 **Goal:** Long-term progression for ADHD brains.
 
@@ -164,7 +203,7 @@ Entry points: home widget "GO", notification action, lock screen shortcut, Wear 
 
 ---
 
-### F121. Daily Quests Board
+### F121. Daily Quests Board — COMPLETE
 
 **Goal:** Fresh micro-challenges answering "what should I do?"
 
@@ -172,10 +211,11 @@ Entry points: home widget "GO", notification action, lock screen shortcut, Wear 
 - Examples: "5 min in Peak", "15 BP", "Start before 9 AM"
 - 25-50 XP per quest; all 3 = 100 XP bonus
 - Expire at midnight — fresh tomorrow
+- Stored in `DailyQuestEntity` (Room)
 
 ---
 
-### F122. Progress Visualisation
+### F122. Progress Visualisation — COMPLETE
 
 **Goal:** Turn abstract points into something alive.
 
@@ -183,7 +223,7 @@ Options: **Garden** (flowers bloom), **Virtual Pet** (evolves at milestones), **
 
 ---
 
-### F123. Fidget Haptics
+### F123. Fidget Haptics — COMPLETE
 
 **Goal:** Keep engagement during boring rest phases.
 
@@ -193,15 +233,15 @@ Options: **Garden** (flowers bloom), **Virtual Pet** (evolves at milestones), **
 
 ---
 
-### F124. Accountability Alarm
+### F124. Accountability Alarm — COMPLETE
 
 **Goal:** Opt-in escalating start pressure.
 
-User sets "latest start time". Escalation: T-60 gentle → T-30 persistent + Start Now → T-0 alarm → T+15 "Just 5 min?" → T+30 final then silence. Always snoozable, never punitive.
+User sets "latest start time". Escalation: T-60 gentle -> T-30 persistent + Start Now -> T-0 alarm -> T+15 "Just 5 min?" -> T+30 final then silence. Always snoozable, never punitive.
 
 ---
 
-### F125. Task Chunking Display
+### F125. Task Chunking Display — COMPLETE
 
 **Goal:** Small completable pieces instead of overwhelming duration.
 
@@ -210,15 +250,15 @@ User sets "latest start time". Escalation: T-60 gentle → T-30 persistent + Sta
 
 ---
 
-### F126. Reward Shop
+### F126. Reward Shop — COMPLETE
 
 **Goal:** Give Burn Points a spending purpose.
 
-Separate "spendable" balance (not deducted from stats). Items: themes, animations, celebrations, voice packs, frames, viz skins. 50-500 BP; new items monthly.
+Separate "spendable" balance (not deducted from stats). Items: themes, animations, celebrations, voice packs, frames, viz skins. 50-500 BP; new items monthly. Navigation route: reward_shop.
 
 ---
 
-### F127. Anti-Burnout Detection
+### F127. Anti-Burnout Detection — COMPLETE
 
 **Goal:** Catch overtraining before crash.
 
@@ -226,15 +266,15 @@ Triggers: 7+ days at 150%+ target, rising HR at same effort, declining BP/min. G
 
 ---
 
-### F128. Social Accountability Contracts
+### F128. Social Accountability Contracts — COMPLETE (Firebase)
 
 **Goal:** Structured external accountability.
 
-Pair with friend, set weekly commitment, see completion (not details). Optional consequence. Weekly check-in.
+Pair with friend, set weekly commitment, see completion (not details). Optional consequence. Weekly check-in. Firebase `accountabilityContracts` collection with `weekly` subcollection.
 
 ---
 
-### F129. Parallel Stimulation Mode
+### F129. Parallel Stimulation Mode — COMPLETE
 
 **Goal:** Combine workout with other stimulation.
 
@@ -242,15 +282,15 @@ PiP for video, podcast title on screen, split-screen layout, music BPM sync.
 
 ---
 
-### F130. Celebration Overkill Mode
+### F130. Celebration Overkill Mode — COMPLETE
 
 **Goal:** Maximum dopamine on target hit.
 
-Full-screen confetti (3 sec), vibration, fanfare, screen pulse, ElevenLabs voice, XP animation. Default ON in ADHD mode. Replaced by F138 in ASD mode.
+Full-screen confetti (3 sec), vibration, fanfare, screen pulse, voice, XP animation. Default ON in ADHD mode. Replaced by F138 in ASD mode.
 
 ---
 
-## Part 2: ASD Comfort Mode
+## Part 2: ASD Comfort Mode — COMPLETE
 
 ### Design Principles
 
@@ -283,51 +323,53 @@ Full-screen confetti (3 sec), vibration, fanfare, screen pulse, ElevenLabs voice
 
 **F20 Accessibility:** Texture zones default. High contrast. Reduced motion.
 
-**F21 Voice Coach:** Calm ElevenLabs voice. Literal: "Heart rate: 162. Zone: Push. Burn Points: 8 of 12." No exclamations. Consistent cadence. Consistent audio cues.
+**F21 Voice Coach:** LITERAL style — calm, factual. "Heart rate: 162. Zone: Push. Burn Points: 8 of 12." No exclamations. Consistent cadence. Max queue depth 2. No mid-exercise interruptions. No motivation connectors.
 
 ---
 
-### F131. Sensory Control Panel
+### F131. Sensory Control Panel — COMPLETE
 
 **Goal:** Granular control over every sensory output.
 
-| Channel | Options | ASD Default |
-|---------|---------|-------------|
-| Animations | Off / Reduced / Full | Reduced |
-| Screen transitions | Instant / Fade / Slide | Instant |
-| Sounds | Off / Quiet / Normal | Quiet |
-| Haptics | Off / Gentle / Strong | Gentle |
-| Colour intensity | Muted / Standard / Vivid | Muted |
-| Background zone colour | Off / Subtle / Full | Subtle |
-| Confetti/particles | Off / Reduced / Full | Off |
-| Screen shake | Off / On | Off |
-| Contrast | Standard / High / Maximum | High |
+| Channel | Options | ASD Default | Standard Default | ADHD Default | AuDHD Default |
+|---------|---------|-------------|-----------------|-------------|--------------|
+| Animations | Off / Reduced / Full | Reduced | Full | Full | Reduced |
+| Screen transitions | Instant / Fade / Slide | Instant | Fade | Slide | Instant |
+| Sounds | Off / Quiet / Normal | Quiet | Normal | Normal | Quiet |
+| Haptics | Off / Gentle / Strong | Gentle | Strong | Strong | Gentle |
+| Colour intensity | Muted / Standard / Vivid | Muted | Standard | Vivid | Muted |
+| Background zone colour | Off / Subtle / Full | Subtle | Full | Full | Subtle |
+| Confetti/particles | Off / Reduced / Full | Off | Reduced | Full | Off |
+| Screen shake | Off / On | Off | On | On | Off |
+| Contrast | Standard / High / Maximum | High | Standard | Standard | High |
 
-Accessible from Settings top and quick-settings during workout.
+Stored in `SensoryPreferencesEntity` (Room). Accessible from Settings top (sensory_settings route) and quick-settings during workout.
 
 ---
 
-### F132. Routine Builder & Scheduler
+### F132. Routine Builder & Scheduler — COMPLETE
 
 **Goal:** Fixed, repeating weekly schedule.
 
 - Assign templates to days with exact times
 - "Today's workout: [name] at [time]" — one tap starts
 - No judgement on deviation; repeats weekly
+- Stored in `WeeklyRoutineEntity` (Room)
+- Navigation route: routine_builder
 
 ---
 
-### F133. Literal Voice Coach Mode
+### F133. Literal Voice Coach Mode — COMPLETE
 
 **Goal:** Factual, calm, unambiguous feedback.
 
-Standard: "You're crushing it!" → Literal: "Heart rate: 148. Active zone. Push zone requires above 160."
+Standard: "You're crushing it!" -> Literal: "Heart rate: 148. Active zone. Push zone requires above 160."
 
-No exclamation marks, metaphors, slang, assumed emotions. Calm ElevenLabs voice (Stability: 0.8, Style: 0.2).
+No exclamation marks, metaphors, slang, assumed emotions. Implemented as LITERAL style in `VoiceCoachEngine`.
 
 ---
 
-### F134. Predictable UI Lock
+### F134. Predictable UI Lock — COMPLETE
 
 **Goal:** UI never changes unexpectedly.
 
@@ -335,7 +377,7 @@ Locks: nav position, layouts, colours, fonts, buttons, card order. No A/B testin
 
 ---
 
-### F135. Social Pressure Shield
+### F135. Social Pressure Shield — COMPLETE
 
 **Goal:** Remove all social comparison.
 
@@ -343,26 +385,28 @@ One toggle hides: leaderboards, activity feeds, comparative stats, sharing promp
 
 ---
 
-### F136. Deep Data Dashboard
+### F136. Deep Data Dashboard — COMPLETE
 
 **Goal:** Detailed analytics for data-focused users.
 
 Per-second HR data, zone time to the second, mean/median/std dev, session comparison, CSV/JSON export, custom date filtering, correlation analysis.
 
+Navigation route: deep_data
+
 ---
 
-### F137. Transition Warnings
+### F137. Transition Warnings — COMPLETE
 
 **Goal:** Advance notice before any change.
 
-- Segments: 30s → 10s → 3-2-1
-- Workout end: 2 min → 1 min → complete
+- Segments: 30s -> 10s -> 3-2-1
+- Workout end: 2 min -> 1 min -> complete
 - Screen changes: text before transition
 - Each channel (visual/audio/haptic) independently toggleable
 
 ---
 
-### F138. Calm Celebration Mode
+### F138. Calm Celebration Mode — COMPLETE
 
 **Goal:** Acknowledge achievement without sensory overload.
 
@@ -370,7 +414,7 @@ On target hit: subtle checkmark + soft chime + "Daily target reached." No confet
 
 ---
 
-### F139. Predictable Reward Schedule
+### F139. Predictable Reward Schedule — COMPLETE
 
 **Goal:** Eliminate randomness.
 
@@ -378,15 +422,15 @@ Fixed visible formula. No variable drops. Transparent XP. Fixed quest rewards. F
 
 ---
 
-### F140. Safe Exit Protocol
+### F140. Safe Exit Protocol — COMPLETE
 
 **Goal:** Zero-guilt workout exit.
 
-One tap, no confirmation, "Workout saved. Well done." No streak warnings, no guilt. Silent streak freeze.
+One tap, no confirmation, "Workout saved. Well done." No streak warnings, no guilt. Silent streak freeze. No confirmation dialogs anywhere in the app (ASD-friendly design decision).
 
 ---
 
-### F141. Texture & Pattern Zones
+### F141. Texture & Pattern Zones — COMPLETE
 
 **Goal:** Zone identification beyond colour.
 
@@ -400,7 +444,7 @@ One tap, no confirmation, "Workout saved. Well done." No streak warnings, no gui
 
 ---
 
-### F142. Minimal Mode
+### F142. Minimal Mode — COMPLETE
 
 **Goal:** Essential-only workout UI.
 
@@ -408,15 +452,17 @@ Shows only: HR number, zone name, points/target, time. No bars, icons, animation
 
 ---
 
-### F143. Pre-Workout Visual Schedule
+### F143. Pre-Workout Visual Schedule — COMPLETE
 
 **Goal:** Complete structure shown before starting.
 
 Template workouts: numbered segments with name, duration, target zone, intensity bar. Free: "Free workout — no set structure. End anytime."
 
+Navigation route: pre_workout_schedule/{workoutId}
+
 ---
 
-### F144. Consistent Audio Palette
+### F144. Consistent Audio Palette — COMPLETE
 
 **Goal:** Learnable, predictable audio cues.
 
@@ -434,15 +480,17 @@ Never randomised. Novelty engine never touches audio in ASD mode.
 
 ---
 
-### F145. Shutdown Routine
+### F145. Shutdown Routine — COMPLETE
 
 **Goal:** Predictable post-workout wind-down.
 
-Same sequence every time: 1) Stats screen → 2) Breathing exercise (optional) → 3) Stretching prompt (optional) → 4) "Workout saved" → 5) Home. Each step skippable, always offered.
+Same sequence every time: 1) Stats screen -> 2) Breathing exercise (optional) -> 3) Stretching prompt (optional) -> 4) "Workout saved" -> 5) Home. Each step skippable, always offered.
+
+Navigation route: shutdown_routine/{workoutId}
 
 ---
 
-## Part 3: AuDHD Combined Mode
+## Part 3: AuDHD Combined Mode — COMPLETE
 
 For users with both ADHD and ASD traits (30-80% overlap):
 
@@ -462,17 +510,110 @@ For users with both ADHD and ASD traits (30-80% overlap):
 | Safe exit | ON | Both benefit |
 | Transitions | ON | Preparation + time awareness |
 
+**AuDHD conflict resolution principle:** Default to ASD comfort settings, surface ADHD features as toggleable options. This reflects the clinical reality that sensory overwhelm (ASD) is typically more distressing than missing dopamine hits (ADHD), so safety takes precedence.
+
 Every setting individually toggleable.
 
 ---
 
-## Part 4: Data Model Additions
+## Part 4: Feature Interaction Matrix
+
+### Conflict Resolution
+
+When ADHD and ASD features conflict, PulseFit resolves them according to these rules:
+
+| ADHD Feature | ASD Feature | Conflict | Resolution |
+|-------------|-------------|----------|------------|
+| F113 Variable Drops | F139 Predictable Rewards | Randomness vs predictability | ASD wins: drops disabled, predictable formula shown |
+| F116 Novelty Rotation | F134 Predictable UI Lock | Change vs stability | ASD wins for UI; ADHD wins for quest content |
+| F130 Celebration Overkill | F138 Calm Celebration | Sensory intensity | ASD wins: calm celebration replaces overkill |
+| F111 Micro-Rewards | F131 Sensory Control | Reward frequency vs overload | Both active: rewards fire but animation/sound respect sensory settings |
+| F123 Fidget Haptics | F131 Sensory Haptics | Stimulating vs calming | User selects per preference; defaults to calming (ASD) |
+| F114 Streak Multiplier | F139 Predictable Rewards | Visual excitement vs consistency | Both: multiplier shown but with consistent visual treatment |
+
+### Complementary Features (Always Compatible)
+
+| Feature A | Feature B | Why they work together |
+|-----------|-----------|----------------------|
+| F112 Just 5 Minutes | F140 Safe Exit | Low-commitment start + zero-guilt exit = zero pressure |
+| F125 Task Chunking | F137 Transition Warnings | Chunks provide structure + warnings prepare for change |
+| F115 Time Blindness Timer | F142 Minimal Mode | Timer replaces clock + minimal mode removes clutter |
+| F120 XP/Leveling | F139 Predictable Rewards | Structured progression with transparent formula |
+| F117 Body Double | F135 Social Shield | Presence without comparison or pressure |
+| F132 Routine Builder | F143 Pre-Workout Schedule | Weekly structure + session preview = full predictability |
+
+---
+
+## Part 5: Composable Voice Coaching System — COMPLETE
+
+### Architecture
+
+The voice coaching system uses a **composable clip queue** architecture. Instead of pre-recording full sentences, atomic audio segments are assembled in real time:
+
+```
+[exercise_name] + [target] + [duration] + [motivation_connector]
+"Push Pace" + "7 miles per hour" + "for 2 minutes" + "lets go"
+```
+
+**Implementation:** `VoiceCoachEngine` manages a `ConcurrentLinkedQueue` of clip segments. Clips play sequentially with TTS fallback for missing audio files. `@Volatile` thread safety on engine state.
+
+### Clip Categories
+
+| Category | Examples | Count |
+|----------|---------|-------|
+| Exercise | "Base Pace", "Power Row", "Squats" | 20 clips |
+| Target (speed) | "5 mph", "6 mph"... "9 mph" | ~10 clips |
+| Target (incline) | "4 percent", "6 percent"... "12 percent" | ~9 clips |
+| Target (watts) | "100 watts", "150 watts", "200 watts" | ~5 clips |
+| Duration | "20 seconds", "30 seconds"... "15 minutes" | 10 clips |
+| Motivation | "lets go", "you got this", "strong finish" | 3 clips |
+| Form cue | "chest up", "drive heels", "full range", "control tempo", "squeeze top", "breathe" | 6 clips |
+| Push harder | "add 1 mph", "raise incline 2", "add 20 watts" | ~6 clips |
+| Station change | "tread", "row", "floor" | 3 clips |
+| Zone change | "rest", "warm up", "active", "push", "peak" | 5 clips |
+| Time interval | "5 minutes", "10 minutes"... "60 minutes" | ~12 clips |
+| Milestone | "start first", "complete target", "complete PB", streak milestones | ~14 clips |
+
+### ND Profile Verbosity Control
+
+| Profile | Max Queue Depth | Mid-Exercise Interrupts | Motivation Connectors | Push Harder Cues |
+|---------|-----------------|------------------------|----------------------|-----------------|
+| **ASD** | 2 | No | No | No |
+| **Standard** | 4 | Yes | Yes | All |
+| **ADHD** | 5 | Yes | Yes | All |
+| **AuDHD** | 3 | No | No | All-out only |
+
+**What "max queue depth" means:** ASD mode caps at 2 clip segments per announcement (e.g., "Push Pace. 2 minutes.") while ADHD mode allows 5 (e.g., "Push Pace. 7 miles per hour. For 2 minutes. Chest up. Lets go!").
+
+### Coaching Target Registry
+
+`CoachingTargetRegistry` provides OTF-accurate targets per exercise and tread mode:
+
+| Exercise | Runner Target | Power Walker Target |
+|----------|--------------|-------------------|
+| Base Pace | 5-6 mph | 3.5-4 mph, 4-6% incline |
+| Push Pace | 7-8 mph | 3.5-4 mph, 8-10% incline |
+| All-Out Sprint | 9+ mph | 4+ mph, 12-15% incline |
+| Steady Row | 150-180 watts | Same |
+| Power Row | 200+ watts | Same |
+
+### Voice Coach Styles
+
+| Style | Voice Character | Stability | Enthusiasm |
+|-------|----------------|-----------|------------|
+| LITERAL | Direct, factual, no hype | 0.8 | 0.2 |
+| STANDARD | Encouraging, balanced | 0.6 | 0.4 |
+| HYPE | High-energy, motivational | 0.5 | 0.7 |
+
+---
+
+## Part 6: Data Model Additions — COMPLETE
 
 ### Updated UserProfile
 
 ```kotlin
 @Entity
-data class UserProfile(
+data class UserProfileEntity(
     @PrimaryKey val id: Long = 1,
     val age: Int,
     val weightKg: Float,
@@ -486,200 +627,53 @@ data class UserProfile(
     val asdComfortMode: Boolean,
     val xpLevel: Int,
     val totalXp: Long,
-    val sensoryLevel: SensoryLevel     // MUTED, STANDARD, VIVID
+    val sensoryLevel: SensoryLevel,    // MUTED, STANDARD, VIVID
+    val treadMode: String?,            // "Runner" or "PowerWalker"
+    val equipmentProfileJson: String?  // JSON EquipmentProfile
 )
 
 enum class NdProfile { STANDARD, ADHD, ASD, AUDHD }
 enum class SensoryLevel { MUTED, STANDARD, VIVID }
 ```
 
-### New Entities
+### Room Entities (DB v10)
 
-```kotlin
-@Entity
-data class DailyQuest(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val date: LocalDate,
-    val questType: String,
-    val description: String,
-    val xpReward: Int,
-    val completed: Boolean = false
-)
+8 entities: `UserProfileEntity`, `WorkoutEntity`, `HeartRateReadingEntity`, `SensoryPreferencesEntity`, `WeeklyRoutineEntity`, `DailyQuestEntity`, `AchievementEntity`, `NotificationPreferencesEntity`
 
-@Entity
-data class RewardShopItem(
-    @PrimaryKey val id: String,
-    val name: String,
-    val category: String,       // THEME, ANIMATION, VOICE_PACK, BADGE
-    val costBurnPoints: Int,
-    val purchased: Boolean = false,
-    val equipped: Boolean = false
-)
-
-@Entity
-data class WeeklyRoutine(
-    @PrimaryKey val dayOfWeek: Int,
-    val workoutTemplateId: Long?,
-    val scheduledTime: LocalTime?,
-    val isRestDay: Boolean = false
-)
-
-@Entity
-data class SensoryPreferences(
-    @PrimaryKey val id: Long = 1,
-    val animations: SensoryOption,
-    val screenTransitions: TransitionStyle,
-    val sounds: SensoryOption,
-    val haptics: SensoryOption,
-    val colourIntensity: SensoryLevel,
-    val backgroundZoneColour: SensoryOption,
-    val confetti: SensoryOption,
-    val screenShake: Boolean,
-    val contrast: ContrastLevel
-)
-
-@Entity
-data class VariableRewardDrop(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val workoutId: Long,
-    val timestamp: Instant,
-    val dropType: String,
-    val value: Int,
-    val claimed: Boolean = true
-)
-
-@Entity
-data class LevelUnlock(
-    @PrimaryKey val level: Int,
-    val rewardType: String,
-    val rewardId: String,
-    val rewardName: String,
-    val unlocked: Boolean = false
-)
-
-enum class SensoryOption { OFF, REDUCED, FULL }
-enum class TransitionStyle { INSTANT, FADE, SLIDE }
-enum class ContrastLevel { STANDARD, HIGH, MAXIMUM }
-```
+Migration strategy: `fallbackToDestructiveMigration(dropAllTables = true)`
 
 ---
 
-## Part 5: Voice Coach — Hybrid ElevenLabs Strategy
+## Part 7: Accessibility Integration
 
-### Why ElevenLabs
+### How TalkBack Works with ND Features
 
-| Aspect | Android TTS | ElevenLabs |
-|--------|------------|------------|
-| Voice quality | Robotic, flat | Natural, human-like |
-| Emotional range | Monotone | Calm (ASD) or energetic (ADHD) |
-| Voice variety | 5-10 system voices | 100+ voices |
-| Consistency | Varies by device | Same everywhere |
-| Languages | Device-dependent | 29+ languages |
-| Latency | Instant | ~200-500ms (API) |
-| Offline | Yes | No (needs caching) |
-| Cost | Free | Per-character |
+PulseFit's accessibility system integrates with ND features at every level:
 
-### Three-Tier Hybrid Approach
+| ND Feature | TalkBack Behaviour |
+|------------|-------------------|
+| Sensory Control Panel | Each slider has semantic description: "Animations: Reduced. Double tap to change." |
+| Zone display (colour + pattern) | Content description: "Zone 4, Push, Orange, Crosshatch pattern" |
+| Micro-rewards | Announced via live region: "Bonus! 2 extra Burn Points" |
+| Task chunking | Announced: "Block 2 of 6. Push zone. 4 minutes remaining." |
+| Transition warnings | Announced: "Next segment in 30 seconds: Active Recovery" |
+| Safe exit | Button labeled: "End workout. Your progress will be saved." |
+| Calm celebration | Announced: "Daily target reached." (no fanfare) |
+| Deep data | All charts have content descriptions with data summaries |
 
-**Tier 1: Pre-generated ElevenLabs clips (bundled with APK)**
-- All fixed phrases generated at build time using ElevenLabs API
-- ~200 phrases x 3 voice profiles (Standard/ADHD/ASD) = ~600 audio clips
-- Bundled as OGG in APK assets folder
-- Zero runtime cost, instant playback, works offline
-- Covers ~90% of voice coach usage (zone transitions, encouragement, countdowns, milestones)
+### Semantic Descriptions
 
-**Tier 2: Runtime ElevenLabs API (Premium only, dynamic text)**
-- Personalised: "You earned 24 Burn Points, Sarah — 3 more than yesterday"
-- AI Coach suggestions (F18), custom user phrases
-- Uses `eleven_turbo_v2_5` model for speed, cached locally for reuse
-- ~$0.01-0.03 per workout session
+All interactive elements have semantic descriptions. Live regions announce dynamic content changes. Form errors are announced immediately. Animation preferences are respected via the system `prefers-reduced-motion` setting.
 
-**Tier 3: Android TTS (offline fallback)**
-- When no cached audio and no network connectivity
-- Dynamic text on free tier
-- Lower quality but functional
+### Colour and Contrast
 
-### Voice Profiles
+- Zone colours have pattern overlays for colour-blind users (F141)
+- High contrast mode available in Sensory Control Panel
+- All text meets WCAG AA contrast ratios
+- Zone information is always communicated through text label + colour + pattern (triple redundancy)
 
-| Profile | Stability | Style | Character |
-|---------|-----------|-------|-----------|
-| Standard | 0.6 | 0.4 | Friendly, balanced |
-| ADHD | 0.5 | 0.7 | Energetic, varied, enthusiastic |
-| ASD | 0.8 | 0.2 | Calm, steady, measured, predictable |
+---
 
-### Implementation
+## Summary
 
-```kotlin
-class HybridVoiceCoach(
-    private val assetPlayer: AssetAudioPlayer,
-    private val elevenLabsApi: ElevenLabsApi,
-    private val androidTts: TextToSpeech,
-    private val cache: VoiceCache,
-    private val settings: VoiceCoachSettings
-) {
-    private var lastCalloutTime: Instant = Instant.MIN
-
-    suspend fun speak(phraseKey: String?, dynamicText: String?, priority: Priority) {
-        if (!canSpeak()) return
-
-        // Tier 1: Pre-generated assets
-        if (phraseKey != null) {
-            val path = "voice/${settings.voiceProfile}/${phraseKey}.ogg"
-            if (assetPlayer.hasAsset(path)) {
-                requestAudioFocus()
-                assetPlayer.play(path, priority)
-                lastCalloutTime = Instant.now()
-                return
-            }
-        }
-
-        val text = dynamicText ?: return
-
-        // Tier 2: ElevenLabs API (Premium)
-        if (settings.isPremium) {
-            val cached = cache.get(text, settings.voiceId)
-            if (cached != null) {
-                requestAudioFocus()
-                audioPlayer.play(cached, priority)
-                lastCalloutTime = Instant.now()
-                return
-            }
-            try {
-                val audio = elevenLabsApi.textToSpeech(
-                    text = text,
-                    voiceId = settings.voiceId,
-                    modelId = "eleven_turbo_v2_5",
-                    voiceSettings = VoiceSettings(
-                        stability = settings.voiceProfile.stability,
-                        similarityBoost = 0.75f,
-                        style = settings.voiceProfile.style
-                    )
-                )
-                cache.store(text, settings.voiceId, audio)
-                requestAudioFocus()
-                audioPlayer.play(audio, priority)
-                lastCalloutTime = Instant.now()
-                return
-            } catch (_: Exception) { /* fall through to Tier 3 */ }
-        }
-
-        // Tier 3: Android TTS fallback
-        requestAudioFocus()
-        androidTts.speak(text, TextToSpeech.QUEUE_ADD, null, UUID.randomUUID().toString())
-        lastCalloutTime = Instant.now()
-    }
-
-    private fun canSpeak(): Boolean =
-        Duration.between(lastCalloutTime, Instant.now()) >= settings.minGap
-}
-```
-
-### Cost Analysis
-
-| Tier | Usage | Cost |
-|------|-------|------|
-| Tier 1 (pre-generated) | ~90% of callouts | One-time ~$5-10; $0 ongoing |
-| Tier 2 (runtime API) | ~10%, Premium only | ~$0.01-0.03 per session |
-| Tier 3 (Android TTS) | Fallback only | Free |
-
-Result: 90%+ of voice usage is free after initial generation.
+PulseFit's neurodivergent design is not an accessibility add-on — it is the core product differentiator. With 35 ND-specific features across 4 profiles, a composable voice coaching system with ND-aware verbosity, and deep integration between ND features and accessibility standards, PulseFit serves the 10-13% of adults with ADHD, ASD, or both who are completely ignored by every other fitness app on the market.
