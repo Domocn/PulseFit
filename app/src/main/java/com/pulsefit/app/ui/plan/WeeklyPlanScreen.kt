@@ -52,6 +52,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -74,6 +77,8 @@ fun WeeklyPlanScreen(
     val selectedCalendarId by viewModel.selectedCalendarId.collectAsState()
     val context = LocalContext.current
     var showCalendarPicker by remember { mutableStateOf(false) }
+    var showTemplatePicker by remember { mutableStateOf(false) }
+    var selectedDayIndex by remember { mutableStateOf(-1) }
 
     val calendarPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -221,6 +226,10 @@ fun WeeklyPlanScreen(
                     val canRemove = day.type == PlannedDayType.WORKOUT || day.type == PlannedDayType.CHALLENGE
                     PlannedDayCard(
                         day = day,
+                        onClick = {
+                            selectedDayIndex = index
+                            showTemplatePicker = true
+                        },
                         onRemove = if (canRemove) {{ viewModel.removeDay(context, index) }} else null
                     )
                 }
@@ -241,6 +250,18 @@ fun WeeklyPlanScreen(
                 viewModel.syncToCalendar(context)
             },
             onDismiss = { showCalendarPicker = false }
+        )
+    }
+
+    // Template picker bottom sheet
+    if (showTemplatePicker) {
+        TemplatePickerSheet(
+            templates = viewModel.allTemplates,
+            onSelect = { template ->
+                viewModel.changeTemplate(context, selectedDayIndex, template)
+                showTemplatePicker = false
+            },
+            onDismiss = { showTemplatePicker = false }
         )
     }
 }
@@ -269,7 +290,11 @@ private fun CalendarPickerDialog(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { onSelect(cal.id) }
+                                .semantics(mergeDescendants = true) {
+                                    contentDescription = "${cal.displayName.ifEmpty { "Unnamed calendar" }}, ${cal.accountName}" +
+                                        if (isSelected) ", selected" else ""
+                                }
+                                .clickable(role = Role.RadioButton) { onSelect(cal.id) }
                                 .padding(vertical = 8.dp, horizontal = 4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -315,7 +340,11 @@ private fun CalendarPickerDialog(
 }
 
 @Composable
-private fun PlannedDayCard(day: PlannedDay, onRemove: (() -> Unit)? = null) {
+private fun PlannedDayCard(
+    day: PlannedDay,
+    onClick: () -> Unit = {},
+    onRemove: (() -> Unit)? = null
+) {
     val (containerColor, contentColor) = when (day.type) {
         PlannedDayType.WORKOUT -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurface
         PlannedDayType.REST -> MaterialTheme.colorScheme.surface to MaterialTheme.colorScheme.onSurfaceVariant
@@ -330,8 +359,21 @@ private fun PlannedDayCard(day: PlannedDay, onRemove: (() -> Unit)? = null) {
         PlannedDayType.CHALLENGE -> Icons.Default.SportsScore
     }
 
+    val dayDescription = buildString {
+        append("${day.dayOfWeek.label}, ${day.type.label}")
+        if (day.templateName != null) append(", ${day.templateName}")
+        if (day.durationMinutes > 0) append(", ${day.durationMinutes} minutes")
+        if (day.focus.isNotBlank()) append(", ${day.focus}")
+        append(". Tap to change template")
+    }
+
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics(mergeDescendants = true) {
+                contentDescription = dayDescription
+            }
+            .clickable(role = Role.Button, onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = containerColor)
     ) {
         Row(

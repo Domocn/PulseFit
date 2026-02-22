@@ -293,6 +293,409 @@ class TemplateRegistry @Inject constructor() {
                 TemplatePhase("Power Row", 3, "Push", ExerciseStation.ROW,
                     listOf(PhaseExercise("row_power", 180)))
             )
+        ),
+
+        // ---- OTF_STYLE (12 new class formats) ----
+
+        WorkoutTemplateData(
+            id = "otf_2g_power", name = "2G Power",
+            description = "Tread + Floor, no rowing — classic 2-group power format",
+            durationMinutes = 60, type = "GUIDED",
+            category = TemplateCategory.OTF_STYLE, difficulty = 3,
+            phases = listOf(
+                TemplatePhase("Warm-Up", 5, "Warm-Up", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_power_walk", 300))),
+                TemplatePhase("Tread Block 1", 10, "Push", ExerciseStation.TREAD, listOf(
+                    PhaseExercise("tread_push_pace", 360),
+                    PhaseExercise("tread_all_out", 240)
+                )),
+                TemplatePhase("Floor Block 1", 10, "Active", ExerciseStation.FLOOR, listOf(
+                    PhaseExercise("floor_chest_press", 180),
+                    PhaseExercise("floor_push_ups", 120),
+                    PhaseExercise("floor_trx_rows", 300)
+                )),
+                TemplatePhase("Tread Block 2", 12, "Push", ExerciseStation.TREAD, listOf(
+                    PhaseExercise("tread_base_pace", 360),
+                    PhaseExercise("tread_push_pace", 240),
+                    PhaseExercise("tread_all_out", 120)
+                )),
+                TemplatePhase("Floor Block 2", 12, "Active", ExerciseStation.FLOOR, listOf(
+                    PhaseExercise("floor_squats", 240),
+                    PhaseExercise("floor_lunges", 240),
+                    PhaseExercise("floor_plank", 240)
+                )),
+                TemplatePhase("Tread Finisher", 6, "Peak", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_all_out", 360))),
+                TemplatePhase("Cool Down", 5, "Rest", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_power_walk", 300)))
+            )
+        ),
+
+        WorkoutTemplateData(
+            id = "otf_3g_endurance", name = "3G Endurance",
+            description = "Equal Tread/Row/Floor blocks — sustained effort all stations",
+            durationMinutes = 60, type = "GUIDED",
+            category = TemplateCategory.OTF_STYLE, difficulty = 3,
+            phases = listOf(
+                TemplatePhase("Warm-Up", 5, "Warm-Up", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_power_walk", 300))),
+                TemplatePhase("Tread Block", 14, "Active", ExerciseStation.TREAD, listOf(
+                    PhaseExercise("tread_base_pace", 480),
+                    PhaseExercise("tread_push_pace", 360)
+                )),
+                TemplatePhase("Row Block", 14, "Active", ExerciseStation.ROW, listOf(
+                    PhaseExercise("row_steady", 480),
+                    PhaseExercise("row_power", 360)
+                )),
+                TemplatePhase("Floor Block", 14, "Active", ExerciseStation.FLOOR, listOf(
+                    PhaseExercise("floor_squats", 210),
+                    PhaseExercise("floor_lunges", 210),
+                    PhaseExercise("floor_push_ups", 210),
+                    PhaseExercise("floor_plank", 210)
+                )),
+                TemplatePhase("Tread Finisher", 8, "Push", ExerciseStation.TREAD, listOf(
+                    PhaseExercise("tread_push_pace", 300),
+                    PhaseExercise("tread_all_out", 180)
+                )),
+                TemplatePhase("Cool Down", 5, "Rest", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_power_walk", 300)))
+            )
+        ),
+
+        WorkoutTemplateData(
+            id = "otf_3g_strength", name = "3G Strength",
+            description = "Heavy inclines + weights — strength-focused all stations",
+            durationMinutes = 60, type = "GUIDED",
+            category = TemplateCategory.OTF_STYLE, difficulty = 4,
+            phases = listOf(
+                TemplatePhase("Warm-Up", 5, "Warm-Up", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_power_walk", 300))),
+                TemplatePhase("Tread Inclines", 14, "Push", ExerciseStation.TREAD, listOf(
+                    PhaseExercise("tread_incline", 540),
+                    PhaseExercise("tread_push_pace", 300)
+                )),
+                TemplatePhase("Row Power", 14, "Push", ExerciseStation.ROW, listOf(
+                    PhaseExercise("row_power", 540),
+                    PhaseExercise("row_all_out", 300)
+                )),
+                TemplatePhase("Floor Strength", 14, "Active", ExerciseStation.FLOOR, listOf(
+                    PhaseExercise("floor_chest_press", 210),
+                    PhaseExercise("floor_goblet_squats", 210),
+                    PhaseExercise("floor_deadlifts", 210),
+                    PhaseExercise("floor_trx_rows", 210)
+                )),
+                TemplatePhase("Tread Finisher", 8, "Peak", ExerciseStation.TREAD, listOf(
+                    PhaseExercise("tread_push_pace", 300),
+                    PhaseExercise("tread_all_out", 180)
+                )),
+                TemplatePhase("Cool Down", 5, "Rest", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_power_walk", 300)))
+            )
+        ),
+
+        WorkoutTemplateData(
+            id = "otf_esp", name = "ESP",
+            description = "Endurance-Strength-Power rotation across all stations",
+            durationMinutes = 60, type = "GUIDED",
+            category = TemplateCategory.OTF_STYLE, difficulty = 4,
+            phases = listOf(
+                TemplatePhase("Warm-Up", 5, "Warm-Up", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_power_walk", 300))),
+                TemplatePhase("Endurance", 14, "Active", ExerciseStation.TREAD, listOf(
+                    PhaseExercise("tread_base_pace", 540),
+                    PhaseExercise("tread_push_pace", 300)
+                )),
+                TemplatePhase("Strength", 14, "Push", ExerciseStation.FLOOR, listOf(
+                    PhaseExercise("floor_chest_press", 210),
+                    PhaseExercise("floor_goblet_squats", 210),
+                    PhaseExercise("floor_deadlifts", 210),
+                    PhaseExercise("floor_lunges", 210)
+                )),
+                TemplatePhase("Power", 14, "Peak", null, listOf(
+                    PhaseExercise("tread_all_out", 180),
+                    PhaseExercise("row_all_out", 180),
+                    PhaseExercise("floor_push_ups", 120),
+                    PhaseExercise("floor_squats", 120),
+                    PhaseExercise("tread_all_out", 120),
+                    PhaseExercise("row_all_out", 120)
+                )),
+                TemplatePhase("Row Finisher", 8, "Push", ExerciseStation.ROW, listOf(
+                    PhaseExercise("row_power", 300),
+                    PhaseExercise("row_all_out", 180)
+                )),
+                TemplatePhase("Cool Down", 5, "Rest", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_power_walk", 300)))
+            )
+        ),
+
+        WorkoutTemplateData(
+            id = "otf_tornado", name = "Tornado",
+            description = "Rapid 3-min station rotations — high intensity",
+            durationMinutes = 45, type = "GUIDED",
+            category = TemplateCategory.OTF_STYLE, difficulty = 5,
+            phases = listOf(
+                TemplatePhase("Warm-Up", 3, "Warm-Up", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_power_walk", 180))),
+                TemplatePhase("Tread Round 1", 3, "Push", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_all_out", 180))),
+                TemplatePhase("Row Round 1", 3, "Push", ExerciseStation.ROW,
+                    listOf(PhaseExercise("row_all_out", 180))),
+                TemplatePhase("Floor Round 1", 3, "Active", ExerciseStation.FLOOR, listOf(
+                    PhaseExercise("floor_push_ups", 90),
+                    PhaseExercise("floor_squats", 90)
+                )),
+                TemplatePhase("Tread Round 2", 3, "Push", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_push_pace", 180))),
+                TemplatePhase("Row Round 2", 3, "Push", ExerciseStation.ROW,
+                    listOf(PhaseExercise("row_power", 180))),
+                TemplatePhase("Floor Round 2", 3, "Active", ExerciseStation.FLOOR, listOf(
+                    PhaseExercise("floor_lunges", 90),
+                    PhaseExercise("floor_plank", 90)
+                )),
+                TemplatePhase("Tread Round 3", 3, "Peak", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_all_out", 180))),
+                TemplatePhase("Row Round 3", 3, "Peak", ExerciseStation.ROW,
+                    listOf(PhaseExercise("row_all_out", 180))),
+                TemplatePhase("Floor Round 3", 3, "Active", ExerciseStation.FLOOR, listOf(
+                    PhaseExercise("floor_chest_press", 90),
+                    PhaseExercise("floor_goblet_squats", 90)
+                )),
+                TemplatePhase("Tread Finisher", 3, "Peak", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_all_out", 180))),
+                TemplatePhase("Row Finisher", 3, "Peak", ExerciseStation.ROW,
+                    listOf(PhaseExercise("row_all_out", 180))),
+                TemplatePhase("Cool Down", 5, "Rest", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_power_walk", 300)))
+            )
+        ),
+
+        WorkoutTemplateData(
+            id = "otf_inferno", name = "Inferno",
+            description = "Tread-heavy, max splat points — ultimate calorie burn",
+            durationMinutes = 45, type = "GUIDED",
+            category = TemplateCategory.OTF_STYLE, difficulty = 5,
+            phases = listOf(
+                TemplatePhase("Warm-Up", 3, "Warm-Up", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_power_walk", 180))),
+                TemplatePhase("Push Climb", 8, "Push", ExerciseStation.TREAD, listOf(
+                    PhaseExercise("tread_push_pace", 300),
+                    PhaseExercise("tread_incline", 180)
+                )),
+                TemplatePhase("All-Out Sprint", 4, "Peak", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_all_out", 240))),
+                TemplatePhase("Row Blast", 5, "Peak", ExerciseStation.ROW,
+                    listOf(PhaseExercise("row_all_out", 300))),
+                TemplatePhase("Floor Burn", 5, "Active", ExerciseStation.FLOOR, listOf(
+                    PhaseExercise("floor_burpees", 150),
+                    PhaseExercise("floor_push_ups", 150)
+                )),
+                TemplatePhase("Tread Push 2", 8, "Push", ExerciseStation.TREAD, listOf(
+                    PhaseExercise("tread_push_pace", 240),
+                    PhaseExercise("tread_all_out", 240)
+                )),
+                TemplatePhase("All-Out Finisher", 4, "Peak", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_all_out", 240))),
+                TemplatePhase("Cool Down", 8, "Rest", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_power_walk", 480)))
+            )
+        ),
+
+        WorkoutTemplateData(
+            id = "otf_lift45_upper", name = "Lift 45 Upper",
+            description = "Floor-focused upper body strength — 45 min",
+            durationMinutes = 45, type = "GUIDED",
+            category = TemplateCategory.OTF_STYLE, difficulty = 3,
+            phases = listOf(
+                TemplatePhase("Warm-Up", 5, "Warm-Up", ExerciseStation.ROW,
+                    listOf(PhaseExercise("row_steady", 300))),
+                TemplatePhase("Chest & Triceps", 10, "Active", ExerciseStation.FLOOR, listOf(
+                    PhaseExercise("floor_chest_press", 300),
+                    PhaseExercise("floor_push_ups", 300)
+                )),
+                TemplatePhase("Back & Biceps", 10, "Active", ExerciseStation.FLOOR, listOf(
+                    PhaseExercise("floor_trx_rows", 300),
+                    PhaseExercise("floor_bicep_curls", 300)
+                )),
+                TemplatePhase("Shoulders & Core", 10, "Active", ExerciseStation.FLOOR, listOf(
+                    PhaseExercise("floor_lateral_raises", 300),
+                    PhaseExercise("floor_plank", 300)
+                )),
+                TemplatePhase("Upper Finisher", 5, "Push", ExerciseStation.FLOOR, listOf(
+                    PhaseExercise("floor_push_ups", 150),
+                    PhaseExercise("floor_chest_press", 150)
+                )),
+                TemplatePhase("Cool Down", 5, "Rest", ExerciseStation.ROW,
+                    listOf(PhaseExercise("row_steady", 300)))
+            )
+        ),
+
+        WorkoutTemplateData(
+            id = "otf_lift45_lower", name = "Lift 45 Lower",
+            description = "Floor-focused lower body strength — 45 min",
+            durationMinutes = 45, type = "GUIDED",
+            category = TemplateCategory.OTF_STYLE, difficulty = 3,
+            phases = listOf(
+                TemplatePhase("Warm-Up", 5, "Warm-Up", ExerciseStation.ROW,
+                    listOf(PhaseExercise("row_steady", 300))),
+                TemplatePhase("Squats & Lunges", 10, "Active", ExerciseStation.FLOOR, listOf(
+                    PhaseExercise("floor_goblet_squats", 300),
+                    PhaseExercise("floor_lunges", 300)
+                )),
+                TemplatePhase("Deadlifts & Glutes", 10, "Active", ExerciseStation.FLOOR, listOf(
+                    PhaseExercise("floor_deadlifts", 300),
+                    PhaseExercise("floor_squats", 300)
+                )),
+                TemplatePhase("Core & Stability", 10, "Active", ExerciseStation.FLOOR, listOf(
+                    PhaseExercise("floor_plank", 300),
+                    PhaseExercise("floor_lateral_raises", 300)
+                )),
+                TemplatePhase("Lower Finisher", 5, "Push", ExerciseStation.FLOOR, listOf(
+                    PhaseExercise("floor_goblet_squats", 150),
+                    PhaseExercise("floor_lunges", 150)
+                )),
+                TemplatePhase("Cool Down", 5, "Rest", ExerciseStation.ROW,
+                    listOf(PhaseExercise("row_steady", 300)))
+            )
+        ),
+
+        WorkoutTemplateData(
+            id = "otf_23_burn", name = "23-Min Burn",
+            description = "Short high-intensity blast — max effort in minimal time",
+            durationMinutes = 23, type = "GUIDED",
+            category = TemplateCategory.OTF_STYLE, difficulty = 4,
+            phases = listOf(
+                TemplatePhase("Warm-Up", 2, "Warm-Up", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_power_walk", 120))),
+                TemplatePhase("Tread Push", 5, "Push", ExerciseStation.TREAD, listOf(
+                    PhaseExercise("tread_push_pace", 180),
+                    PhaseExercise("tread_all_out", 120)
+                )),
+                TemplatePhase("Row Blast", 4, "Peak", ExerciseStation.ROW,
+                    listOf(PhaseExercise("row_all_out", 240))),
+                TemplatePhase("Floor Burn", 5, "Active", ExerciseStation.FLOOR, listOf(
+                    PhaseExercise("floor_burpees", 100),
+                    PhaseExercise("floor_push_ups", 100),
+                    PhaseExercise("floor_squats", 100)
+                )),
+                TemplatePhase("Tread Finisher", 4, "Peak", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_all_out", 240))),
+                TemplatePhase("Cool Down", 3, "Rest", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_power_walk", 180)))
+            )
+        ),
+
+        WorkoutTemplateData(
+            id = "otf_90_marathon", name = "90-Min Marathon",
+            description = "Extended all-station deep workout — the ultimate session",
+            durationMinutes = 90, type = "GUIDED",
+            category = TemplateCategory.OTF_STYLE, difficulty = 4,
+            phases = listOf(
+                TemplatePhase("Warm-Up", 5, "Warm-Up", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_power_walk", 300))),
+                TemplatePhase("Tread Endurance", 20, "Active", ExerciseStation.TREAD, listOf(
+                    PhaseExercise("tread_base_pace", 600),
+                    PhaseExercise("tread_push_pace", 600)
+                )),
+                TemplatePhase("Row Endurance", 15, "Active", ExerciseStation.ROW, listOf(
+                    PhaseExercise("row_steady", 600),
+                    PhaseExercise("row_power", 300)
+                )),
+                TemplatePhase("Floor Block 1", 12, "Active", ExerciseStation.FLOOR, listOf(
+                    PhaseExercise("floor_chest_press", 180),
+                    PhaseExercise("floor_goblet_squats", 180),
+                    PhaseExercise("floor_deadlifts", 180),
+                    PhaseExercise("floor_plank", 180)
+                )),
+                TemplatePhase("Tread Push", 10, "Push", ExerciseStation.TREAD, listOf(
+                    PhaseExercise("tread_push_pace", 360),
+                    PhaseExercise("tread_all_out", 240)
+                )),
+                TemplatePhase("Row Power", 8, "Push", ExerciseStation.ROW, listOf(
+                    PhaseExercise("row_power", 240),
+                    PhaseExercise("row_all_out", 240)
+                )),
+                TemplatePhase("Floor Block 2", 10, "Active", ExerciseStation.FLOOR, listOf(
+                    PhaseExercise("floor_lunges", 200),
+                    PhaseExercise("floor_push_ups", 200),
+                    PhaseExercise("floor_trx_rows", 200)
+                )),
+                TemplatePhase("All-Out Finisher", 5, "Peak", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_all_out", 300))),
+                TemplatePhase("Cool Down", 5, "Rest", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_power_walk", 300)))
+            )
+        ),
+
+        WorkoutTemplateData(
+            id = "otf_partner", name = "Partner Throwdown",
+            description = "Alternating station buddy format — push each other",
+            durationMinutes = 60, type = "GUIDED",
+            category = TemplateCategory.OTF_STYLE, difficulty = 4,
+            phases = listOf(
+                TemplatePhase("Warm-Up", 5, "Warm-Up", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_power_walk", 300))),
+                TemplatePhase("Partner A: Tread / B: Row", 8, "Push", null, listOf(
+                    PhaseExercise("tread_push_pace", 480, notes = "Partner A on tread"),
+                    PhaseExercise("row_power", 480, notes = "Partner B on rower")
+                )),
+                TemplatePhase("Switch: A: Row / B: Tread", 8, "Push", null, listOf(
+                    PhaseExercise("row_power", 480, notes = "Partner A on rower"),
+                    PhaseExercise("tread_push_pace", 480, notes = "Partner B on tread")
+                )),
+                TemplatePhase("Partner A: Floor / B: Tread", 8, "Active", null, listOf(
+                    PhaseExercise("floor_push_ups", 120),
+                    PhaseExercise("floor_squats", 120),
+                    PhaseExercise("floor_plank", 240),
+                    PhaseExercise("tread_all_out", 480, notes = "Partner B all-out")
+                )),
+                TemplatePhase("Switch: A: Tread / B: Floor", 8, "Active", null, listOf(
+                    PhaseExercise("tread_all_out", 480, notes = "Partner A all-out"),
+                    PhaseExercise("floor_push_ups", 120),
+                    PhaseExercise("floor_squats", 120),
+                    PhaseExercise("floor_plank", 240)
+                )),
+                TemplatePhase("Both: Row All-Out", 8, "Peak", ExerciseStation.ROW,
+                    listOf(PhaseExercise("row_all_out", 480))),
+                TemplatePhase("Both: Tread Finisher", 10, "Peak", ExerciseStation.TREAD, listOf(
+                    PhaseExercise("tread_push_pace", 360),
+                    PhaseExercise("tread_all_out", 240)
+                )),
+                TemplatePhase("Cool Down", 5, "Rest", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_power_walk", 300)))
+            )
+        ),
+
+        WorkoutTemplateData(
+            id = "otf_benchmark", name = "Benchmark Day",
+            description = "Timed challenge benchmarks — test your limits",
+            durationMinutes = 60, type = "GUIDED",
+            category = TemplateCategory.OTF_STYLE, difficulty = 5,
+            phases = listOf(
+                TemplatePhase("Warm-Up", 5, "Warm-Up", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_power_walk", 300))),
+                TemplatePhase("Tread Benchmark", 12, "Peak", ExerciseStation.TREAD, listOf(
+                    PhaseExercise("tread_all_out", 720, notes = "12-min distance benchmark")
+                )),
+                TemplatePhase("Recovery", 3, "Rest", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_power_walk", 180))),
+                TemplatePhase("Row Benchmark", 10, "Peak", ExerciseStation.ROW, listOf(
+                    PhaseExercise("row_all_out", 600, notes = "Row for max distance")
+                )),
+                TemplatePhase("Recovery", 3, "Rest", ExerciseStation.ROW,
+                    listOf(PhaseExercise("row_steady", 180))),
+                TemplatePhase("Floor Benchmark", 12, "Push", ExerciseStation.FLOOR, listOf(
+                    PhaseExercise("floor_push_ups", 180, notes = "Max reps in 3 min"),
+                    PhaseExercise("floor_squats", 180, notes = "Max reps in 3 min"),
+                    PhaseExercise("floor_burpees", 180, notes = "Max reps in 3 min"),
+                    PhaseExercise("floor_plank", 180, notes = "Max hold time")
+                )),
+                TemplatePhase("Tread Finisher", 10, "Peak", ExerciseStation.TREAD, listOf(
+                    PhaseExercise("tread_push_pace", 360),
+                    PhaseExercise("tread_all_out", 240)
+                )),
+                TemplatePhase("Cool Down", 5, "Rest", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_power_walk", 300)))
+            )
         )
     )
 
