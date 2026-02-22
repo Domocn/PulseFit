@@ -8,6 +8,7 @@ import com.pulsefit.app.data.model.WorkoutTemplateData
 import com.pulsefit.app.data.remote.AuthRepository
 import com.pulsefit.app.data.repository.SensoryPreferencesRepository
 import com.pulsefit.app.domain.model.Workout
+import com.pulsefit.app.domain.repository.UserRepository
 import com.pulsefit.app.domain.repository.WorkoutRepository
 import com.pulsefit.app.domain.usecase.GetUserProfileUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,7 +24,8 @@ class AppViewModel @Inject constructor(
     private val getUserProfile: GetUserProfileUseCase,
     private val sensoryPreferencesRepository: SensoryPreferencesRepository,
     private val workoutRepository: WorkoutRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val _isOnboardingComplete = MutableStateFlow<Boolean?>(null)
@@ -62,7 +64,11 @@ class AppViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
-            val profile = getUserProfile.once()
+            var profile = getUserProfile.once()
+            // If Room is empty but user is authenticated, try restoring from Firestore
+            if (profile == null && authRepository.isAuthenticated) {
+                profile = userRepository.restoreFromCloud()
+            }
             _isOnboardingComplete.value = profile?.onboardingComplete == true
             _ndProfile.value = profile?.ndProfile ?: NdProfile.STANDARD
         }
@@ -73,9 +79,20 @@ class AppViewModel @Inject constructor(
         }
     }
 
+    fun resetOnboardingState() {
+        _isOnboardingComplete.value = null
+    }
+
     fun refreshOnboardingState() {
         viewModelScope.launch {
-            val profile = getUserProfile.once()
+            var profile = getUserProfile.once()
+            // If Room is empty but user is authenticated, try restoring from Firestore
+            if (profile == null && authRepository.isAuthenticated) {
+                profile = userRepository.restoreFromCloud()
+                if (profile != null) {
+                    _ndProfile.value = profile.ndProfile
+                }
+            }
             _isOnboardingComplete.value = profile?.onboardingComplete == true
         }
     }

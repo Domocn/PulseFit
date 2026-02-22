@@ -10,4 +10,5 @@ interface UserRepository {
     suspend fun updateXp(xp: Long, newLevel: Int)
     suspend fun updateStreak(streak: Int, shieldUsed: Boolean)
     suspend fun incrementWorkoutCount(burnPoints: Int, workoutTime: Long)
+    suspend fun restoreFromCloud(): UserProfile?
 }

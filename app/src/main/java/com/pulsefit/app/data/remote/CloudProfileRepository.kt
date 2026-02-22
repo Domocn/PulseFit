@@ -3,6 +3,9 @@ package com.pulsefit.app.data.remote
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
+import com.pulsefit.app.data.model.NdProfile
+import com.pulsefit.app.data.model.TreadMode
+import com.pulsefit.app.domain.model.UserProfile
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -19,8 +22,83 @@ data class CloudProfile(
     val weeklyBurnPoints: Int = 0,
     val lastWorkoutAt: Long? = null,
     val profileVisibility: String = "friends",
-    val createdAt: Long = System.currentTimeMillis()
-)
+    val createdAt: Long = System.currentTimeMillis(),
+    // Personal profile fields
+    val name: String = "",
+    val age: Int = 25,
+    val maxHeartRate: Int = 195,
+    val weight: Float? = null,
+    val height: Float? = null,
+    val restingHeartRate: Int? = null,
+    val biologicalSex: String = "male",
+    val ndProfile: String = "STANDARD",
+    val dailyTarget: Int = 12,
+    val units: String = "metric",
+    val customZoneThresholds: String? = null,
+    val treadMode: String = "RUNNER",
+    val equipmentProfileJson: String? = null,
+    val onboardingComplete: Boolean = false
+) {
+    companion object {
+        fun fromUserProfile(profile: UserProfile): CloudProfile = CloudProfile(
+            displayName = profile.displayName ?: profile.name,
+            photoUrl = profile.photoUrl,
+            xpLevel = profile.xpLevel,
+            totalXp = profile.totalXp,
+            totalWorkouts = profile.totalWorkouts,
+            totalBurnPoints = profile.totalBurnPoints,
+            currentStreak = profile.currentStreak,
+            longestStreak = profile.longestStreak,
+            weeklyBurnPoints = 0,
+            lastWorkoutAt = profile.lastWorkoutAt,
+            profileVisibility = profile.profileVisibility,
+            createdAt = profile.createdAt,
+            name = profile.name,
+            age = profile.age,
+            maxHeartRate = profile.maxHeartRate,
+            weight = profile.weight,
+            height = profile.height,
+            restingHeartRate = profile.restingHeartRate,
+            biologicalSex = profile.biologicalSex,
+            ndProfile = profile.ndProfile.name,
+            dailyTarget = profile.dailyTarget,
+            units = profile.units,
+            customZoneThresholds = profile.customZoneThresholds,
+            treadMode = profile.treadMode.name,
+            equipmentProfileJson = profile.equipmentProfileJson,
+            onboardingComplete = profile.onboardingComplete
+        )
+
+        fun CloudProfile.toDomainProfile(firebaseUid: String?): UserProfile = UserProfile(
+            name = name,
+            age = age,
+            maxHeartRate = maxHeartRate,
+            weight = weight,
+            height = height,
+            restingHeartRate = restingHeartRate,
+            biologicalSex = biologicalSex,
+            ndProfile = try { NdProfile.valueOf(ndProfile) } catch (_: Exception) { NdProfile.STANDARD },
+            dailyTarget = dailyTarget,
+            onboardingComplete = onboardingComplete,
+            xpLevel = xpLevel,
+            totalXp = totalXp,
+            currentStreak = currentStreak,
+            longestStreak = longestStreak,
+            totalBurnPoints = totalBurnPoints,
+            totalWorkouts = totalWorkouts,
+            createdAt = createdAt,
+            lastWorkoutAt = lastWorkoutAt,
+            customZoneThresholds = customZoneThresholds,
+            units = units,
+            displayName = displayName,
+            photoUrl = photoUrl,
+            profileVisibility = profileVisibility,
+            firebaseUid = firebaseUid,
+            treadMode = try { TreadMode.valueOf(treadMode) } catch (_: Exception) { TreadMode.RUNNER },
+            equipmentProfileJson = equipmentProfileJson
+        )
+    }
+}
 
 data class PublicProfile(
     val uid: String = "",

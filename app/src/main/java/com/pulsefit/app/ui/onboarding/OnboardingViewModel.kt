@@ -3,6 +3,7 @@ package com.pulsefit.app.ui.onboarding
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pulsefit.app.data.model.NdProfile
+import com.pulsefit.app.data.remote.AuthRepository
 import com.pulsefit.app.domain.model.UserProfile
 import com.pulsefit.app.domain.usecase.GetUserProfileUseCase
 import com.pulsefit.app.domain.usecase.SaveUserProfileUseCase
@@ -17,7 +18,8 @@ import javax.inject.Inject
 class OnboardingViewModel @Inject constructor(
     private val saveUserProfile: SaveUserProfileUseCase,
     private val getUserProfile: GetUserProfileUseCase,
-    private val ndProfileManager: NdProfileManager
+    private val ndProfileManager: NdProfileManager,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _name = MutableStateFlow("")
@@ -73,6 +75,7 @@ class OnboardingViewModel @Inject constructor(
 
     fun saveProfile(onComplete: () -> Unit) {
         viewModelScope.launch {
+            val firebaseUser = authRepository.currentUser
             val profile = UserProfile(
                 name = _name.value.trim(),
                 age = _age.value.toIntOrNull() ?: 25,
@@ -83,7 +86,9 @@ class OnboardingViewModel @Inject constructor(
                 ndProfile = _ndProfile.value,
                 dailyTarget = _dailyTarget.value,
                 biologicalSex = _biologicalSex.value,
-                onboardingComplete = true
+                onboardingComplete = true,
+                firebaseUid = firebaseUser?.uid,
+                displayName = firebaseUser?.displayName
             )
             saveUserProfile(profile)
             ndProfileManager.applyProfileDefaults(profile.ndProfile)

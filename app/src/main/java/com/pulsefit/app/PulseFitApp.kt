@@ -91,13 +91,8 @@ fun PulseFitApp(viewModel: AppViewModel = hiltViewModel()) {
                     composable(Screen.Login.route) {
                         LoginScreen(
                             onSignInSuccess = {
+                                viewModel.resetOnboardingState()
                                 viewModel.refreshOnboardingState()
-                                navController.navigate(
-                                    if (isOnboardingComplete == true) Screen.Home.route
-                                    else Screen.Welcome.route
-                                ) {
-                                    popUpTo(Screen.Login.route) { inclusive = true }
-                                }
                             },
                             onNavigateToSignUp = {
                                 navController.navigate(Screen.SignUp.route)
