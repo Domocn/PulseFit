@@ -1,8 +1,28 @@
--e 
+*.iml
+.gradle
+/local.properties
+/.idea
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+nul
+
+# APKs (uncommit explicitly with git add -f if needed)
+*.apk
+
 # Environment files
 *.env
 *.env.*
--e 
-# Environment files
-*.env
-*.env.*
+
+# Firebase config (contains project API keys)
+app/google-services.json
+
+# Keystore
+*.jks
+*.keystore
+
+# Logs
+*.log

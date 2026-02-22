@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Internet for Firebase -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <!-- BLE permissions for API 30 and below -->
     <uses-permission android:name="android.permission.BLUETOOTH"
         android:maxSdkVersion="30" />
@@ -11,12 +14,16 @@
         android:maxSdkVersion="30" />
 
     <!-- BLE permissions for API 31+ -->
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 
     <!-- Foreground service for BLE during workout -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+
+    <!-- Notifications -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- Health Connect permissions -->
     <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
@@ -31,6 +38,7 @@
     <application
         android:name=".PulseFitApplication"
         android:allowBackup="true"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
@@ -54,6 +62,18 @@
             android:name=".ble.HeartRateService"
             android:foregroundServiceType="connectedDevice"
             android:exported="false" />
+
+        <!-- Disable default WorkManager initialization (using custom Configuration.Provider) -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
 
         <!-- Health Connect intent filter -->
         <activity-alias

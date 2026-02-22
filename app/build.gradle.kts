@@ -4,14 +4,16 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.room)
+    alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.crashlytics)
 }
 
 android {
-    namespace = "com.example.pulsefit"
+    namespace = "com.pulsefit.app"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.pulsefit"
+        applicationId = "com.pulsefit.app"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
@@ -22,7 +24,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -38,6 +41,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     room {
@@ -88,8 +92,27 @@ dependencies {
     // Gson
     implementation(libs.gson)
 
+    // Lottie
+    implementation(libs.lottie.compose)
+
     // Health Connect
     implementation(libs.health.connect)
+
+    // WorkManager
+    implementation(libs.work.runtime.ktx)
+    implementation(libs.hilt.work)
+    ksp(libs.hilt.work.compiler)
+
+    // Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.analytics)
+    implementation(libs.play.services.auth)
+    implementation(libs.credential.manager)
+    implementation(libs.credential.manager.play)
+    implementation(libs.google.id.identity)
 
     // Desugaring
     coreLibraryDesugaring(libs.desugar.jdk.libs)
