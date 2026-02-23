@@ -103,7 +103,8 @@ class UserRepositoryImpl @Inject constructor(
         photoUrl = photoUrl,
         profileVisibility = profileVisibility,
         treadMode = treadMode,
-        equipmentProfileJson = equipmentProfileJson
+        equipmentProfileJson = equipmentProfileJson,
+        rewardCoins = rewardCoins
     )
 
     private fun UserProfile.toEntity() = UserProfileEntity(
@@ -135,6 +136,7 @@ class UserRepositoryImpl @Inject constructor(
         photoUrl = photoUrl,
         profileVisibility = profileVisibility,
         treadMode = treadMode,
-        equipmentProfileJson = equipmentProfileJson
+        equipmentProfileJson = equipmentProfileJson,
+        rewardCoins = rewardCoins
     )
 }

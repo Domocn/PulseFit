@@ -26,4 +26,10 @@ interface UserProfileDao {
 
     @Query("UPDATE user_profile SET totalWorkouts = totalWorkouts + 1, totalBurnPoints = totalBurnPoints + :burnPoints, lastWorkoutAt = :workoutTime WHERE id = 1")
     suspend fun incrementWorkoutCount(burnPoints: Int, workoutTime: Long)
+
+    @Query("UPDATE user_profile SET rewardCoins = rewardCoins + :coins WHERE id = 1")
+    suspend fun addRewardCoins(coins: Int)
+
+    @Query("UPDATE user_profile SET rewardCoins = rewardCoins - :coins WHERE id = 1")
+    suspend fun spendRewardCoins(coins: Int)
 }

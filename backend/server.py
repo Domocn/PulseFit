@@ -20,6 +20,9 @@ import json
 import io
 import csv
 import base64
+import hashlib
+import struct
+from urllib.parse import urlparse, parse_qs, urlencode
 
 # Load environment variables
 load_dotenv()
@@ -87,6 +90,8 @@ settings_collection = db["settings"]
 templates_collection = db["templates"]
 achievements_collection = db["achievements"]
 personal_bests_collection = db["personal_bests"]
+discount_codes_collection = db["discount_codes"]
+code_redemptions_collection = db["code_redemptions"]
 
 
 # ===================== Models =====================
@@ -1566,6 +1571,310 @@ async def get_tts_status():
         "provider": "elevenlabs",
         "presets_available": list(VOICE_PRESETS.keys())
     }
+
+
+# ----- AdMob SSV (Server-Side Verification) -----
+
+# Google's public key server for verifying rewarded ad callbacks
+ADMOB_SSV_KEYS_URL = "https://www.gstatic.com/admob/reward/verifier-keys.json"
+_ssv_keys_cache: Dict[str, Any] = {}
+_ssv_keys_fetched_at: Optional[datetime] = None
+
+import httpx
+from cryptography.hazmat.primitives.asymmetric.ec import ECDSA, EllipticCurvePublicKey
+from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
+from cryptography.hazmat.primitives.hashes import SHA256
+from cryptography.hazmat.primitives.serialization import load_der_public_key
+
+
+async def _fetch_ssv_keys():
+    """Fetch and cache Google's AdMob SSV public keys."""
+    global _ssv_keys_cache, _ssv_keys_fetched_at
+    now = datetime.now(timezone.utc)
+    # Refresh keys every 24 hours
+    if _ssv_keys_fetched_at and (now - _ssv_keys_fetched_at).total_seconds() < 86400:
+        return _ssv_keys_cache
+
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(ADMOB_SSV_KEYS_URL, timeout=10)
+            resp.raise_for_status()
+            data = resp.json()
+            _ssv_keys_cache = {str(k["keyId"]): k["base64"] for k in data.get("keys", [])}
+            _ssv_keys_fetched_at = now
+            logger.info(f"Fetched {len(_ssv_keys_cache)} AdMob SSV public keys")
+    except Exception as e:
+        logger.error(f"Failed to fetch AdMob SSV keys: {e}")
+    return _ssv_keys_cache
+
+
+def _verify_ssv_signature(query_string: str) -> bool:
+    """Verify the ECDSA signature on an AdMob SSV callback.
+
+    Google signs everything in the query string up to &signature=,
+    using the key identified by &key_id=.
+    """
+    # Parse the raw query string to preserve parameter order
+    # The message to verify is everything before "&signature="
+    sig_index = query_string.find("&signature=")
+    if sig_index == -1:
+        return False
+
+    message = query_string[:sig_index]
+    params = parse_qs(query_string)
+
+    signature_b64 = params.get("signature", [None])[0]
+    key_id = params.get("key_id", [None])[0]
+
+    if not signature_b64 or not key_id:
+        return False
+
+    key_b64 = _ssv_keys_cache.get(str(key_id))
+    if not key_b64:
+        return False
+
+    try:
+        # Decode the public key (DER-encoded)
+        pub_key_bytes = base64.b64decode(key_b64)
+        pub_key = load_der_public_key(pub_key_bytes)
+
+        # Decode the signature
+        sig_bytes = base64.urlsafe_b64decode(signature_b64 + "==")
+
+        # Verify ECDSA with SHA-256
+        pub_key.verify(sig_bytes, message.encode("utf-8"), ECDSA(SHA256()))
+        return True
+    except Exception as e:
+        logger.warning(f"SSV signature verification failed: {e}")
+        return False
+
+
+# SSV tracking collection
+ssv_callbacks_collection = db["ssv_callbacks"]
+
+
+from starlette.requests import Request
+
+
+@app.get("/api/ads/ssv-callback")
+async def admob_ssv_callback(request: Request):
+    """AdMob Server-Side Verification callback.
+
+    Google hits this URL after a user watches a rewarded ad.
+    We verify the ECDSA signature, then credit coins to the user.
+    """
+    query_string = str(request.url.query)
+    params = parse_qs(query_string)
+
+    # Fetch/refresh Google's public keys
+    await _fetch_ssv_keys()
+
+    # Verify signature
+    if not _verify_ssv_signature(query_string):
+        logger.warning("SSV callback: invalid signature")
+        raise HTTPException(status_code=403, detail="Invalid signature")
+
+    # Extract reward info
+    user_id = params.get("user_id", [None])[0]
+    custom_data = params.get("custom_data", [None])[0]
+    reward_amount = params.get("reward_amount", ["10"])[0]
+    reward_item = params.get("reward_item", ["coins"])[0]
+    transaction_id = params.get("transaction_id", [None])[0]
+
+    if not user_id:
+        raise HTTPException(status_code=400, detail="Missing user_id")
+
+    # Deduplicate: check if we already processed this transaction
+    if transaction_id:
+        existing = await ssv_callbacks_collection.find_one({"transaction_id": transaction_id})
+        if existing:
+            logger.info(f"SSV callback: duplicate transaction {transaction_id}")
+            return {"status": "already_processed"}
+
+    # Credit coins to user
+    coins = int(reward_amount) if reward_amount.isdigit() else 10
+    await users_collection.update_one(
+        {"_id": ObjectId(user_id)} if len(user_id) == 24 else {"firebase_uid": user_id},
+        {"$inc": {"reward_coins": coins}}
+    )
+
+    # Record the callback for deduplication and audit
+    await ssv_callbacks_collection.insert_one({
+        "user_id": user_id,
+        "custom_data": custom_data,
+        "reward_amount": coins,
+        "reward_item": reward_item,
+        "transaction_id": transaction_id,
+        "query_string": query_string,
+        "verified_at": datetime.now(timezone.utc).isoformat()
+    })
+
+    logger.info(f"SSV callback: credited {coins} coins to user {user_id}")
+    return {"status": "ok"}
+
+
+# ----- Discount Code Models -----
+
+class DiscountCodeCreate(BaseModel):
+    brand: str
+    description: str
+    percent_off: int = Field(ge=1, le=100)
+    code: str
+    category: str = "general"
+    expiry_date: str
+    coin_cost: int = Field(default=50, ge=1)
+    max_redemptions: int = Field(default=100, ge=1)
+
+
+class DiscountCodeResponse(BaseModel):
+    id: str
+    brand: str
+    description: str
+    percent_off: int
+    code: str
+    category: str
+    expiry_date: str
+    coin_cost: int
+    active: bool
+    max_redemptions: int
+    redeemed_count: int
+
+
+# ----- Discount Code Endpoints -----
+
+@app.get("/api/discount-codes")
+async def get_discount_codes(caller_uid: Optional[str] = Depends(verify_firebase_token)):
+    """List active, non-expired discount codes"""
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    codes = await discount_codes_collection.find({"active": True}).to_list(None)
+
+    result = []
+    for c in codes:
+        expiry = c.get("expiry_date", "")
+        if expiry and expiry < today:
+            continue
+        if c.get("redeemed_count", 0) >= c.get("max_redemptions", 100):
+            continue
+        c["id"] = str(c.pop("_id"))
+        result.append(c)
+
+    return {"discount_codes": result}
+
+
+@app.post("/api/admin/discount-codes")
+async def create_discount_code(
+    code_data: DiscountCodeCreate,
+    caller_uid: Optional[str] = Depends(verify_firebase_token)
+):
+    """Create a new discount code (admin only)"""
+    # In production, add proper admin role check
+    doc = {
+        "brand": code_data.brand,
+        "description": code_data.description,
+        "percent_off": code_data.percent_off,
+        "code": code_data.code,
+        "category": code_data.category,
+        "expiry_date": code_data.expiry_date,
+        "coin_cost": code_data.coin_cost,
+        "active": True,
+        "max_redemptions": code_data.max_redemptions,
+        "redeemed_count": 0,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+
+    result = await discount_codes_collection.insert_one(doc)
+    doc["id"] = str(result.inserted_id)
+    return doc
+
+
+@app.post("/api/users/{user_id}/redeem-code/{code_id}")
+async def redeem_discount_code(
+    user_id: str,
+    code_id: str,
+    caller_uid: Optional[str] = Depends(verify_firebase_token)
+):
+    """Redeem a discount code (owner only, coin check, duplicate check)"""
+    require_owner(caller_uid, user_id)
+
+    try:
+        code_doc = await discount_codes_collection.find_one({"_id": ObjectId(code_id)})
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid code ID")
+
+    if not code_doc:
+        raise HTTPException(status_code=404, detail="Discount code not found")
+
+    if not code_doc.get("active", False):
+        raise HTTPException(status_code=400, detail="Discount code is no longer active")
+
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    if code_doc.get("expiry_date", "") < today:
+        raise HTTPException(status_code=400, detail="Discount code has expired")
+
+    if code_doc.get("redeemed_count", 0) >= code_doc.get("max_redemptions", 100):
+        raise HTTPException(status_code=400, detail="Discount code is fully redeemed")
+
+    # Check duplicate
+    existing = await code_redemptions_collection.find_one({
+        "user_id": user_id,
+        "discount_code_id": code_id
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="You have already redeemed this code")
+
+    # Check user has enough coins
+    user = await users_collection.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    coin_cost = code_doc.get("coin_cost", 50)
+    user_coins = user.get("reward_coins", 0)
+    if user_coins < coin_cost:
+        raise HTTPException(status_code=400, detail=f"Not enough coins. Need {coin_cost}, have {user_coins}")
+
+    # Deduct coins
+    await users_collection.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$inc": {"reward_coins": -coin_cost}}
+    )
+
+    # Increment redeemed count
+    await discount_codes_collection.update_one(
+        {"_id": ObjectId(code_id)},
+        {"$inc": {"redeemed_count": 1}}
+    )
+
+    # Create redemption record
+    redemption = {
+        "user_id": user_id,
+        "discount_code_id": code_id,
+        "brand": code_doc.get("brand", ""),
+        "code": code_doc.get("code", ""),
+        "percent_off": code_doc.get("percent_off", 0),
+        "description": code_doc.get("description", ""),
+        "redeemed_at": datetime.now(timezone.utc).isoformat(),
+        "expiry_date": code_doc.get("expiry_date", "")
+    }
+
+    result = await code_redemptions_collection.insert_one(redemption)
+    redemption["id"] = str(result.inserted_id)
+
+    return redemption
+
+
+@app.get("/api/users/{user_id}/redeemed-codes")
+async def get_redeemed_codes(
+    user_id: str,
+    caller_uid: Optional[str] = Depends(verify_firebase_token)
+):
+    """List user's redeemed discount codes (owner only)"""
+    require_owner(caller_uid, user_id)
+
+    redemptions = await code_redemptions_collection.find({"user_id": user_id}).to_list(None)
+    for r in redemptions:
+        r["id"] = str(r.pop("_id"))
+
+    return {"redeemed_codes": redemptions}
 
 
 if __name__ == "__main__":
