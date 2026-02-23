@@ -138,8 +138,16 @@ class CloudProfileRepository @Inject constructor(
 
     suspend fun pushProfile(profile: CloudProfile) {
         val uid = currentUid ?: return
+        // Use mergeFields to avoid overwriting weeklyBurnPoints (managed by syncAfterWorkout)
         usersCollection.document(uid)
-            .set(profile, SetOptions.merge())
+            .set(profile, SetOptions.mergeFields(listOf(
+                "displayName", "photoUrl", "xpLevel", "totalXp", "totalWorkouts",
+                "totalBurnPoints", "currentStreak", "longestStreak", "lastWorkoutAt",
+                "profileVisibility", "createdAt", "name", "age", "maxHeartRate",
+                "weight", "height", "restingHeartRate", "biologicalSex", "ndProfile",
+                "dailyTarget", "units", "customZoneThresholds", "treadMode",
+                "equipmentProfileJson", "onboardingComplete"
+            )))
             .await()
     }
 

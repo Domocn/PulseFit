@@ -31,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pulsefit.app.adhd.CelebrationConfig
+import com.pulsefit.app.data.model.AnimationLevel
 import com.pulsefit.app.data.model.CelebrationStyle
 import kotlinx.coroutines.delay
 
@@ -38,6 +39,7 @@ import kotlinx.coroutines.delay
 fun CelebrationOverlay(
     config: CelebrationConfig?,
     message: String = "Well done!",
+    animationLevel: AnimationLevel = AnimationLevel.FULL,
     onDismiss: () -> Unit
 ) {
     var visible by remember { mutableStateOf(false) }
@@ -54,8 +56,8 @@ fun CelebrationOverlay(
 
     AnimatedVisibility(
         visible = visible,
-        enter = scaleIn() + fadeIn(),
-        exit = scaleOut() + fadeOut()
+        enter = if (animationLevel == AnimationLevel.OFF) fadeIn() else scaleIn() + fadeIn(),
+        exit = if (animationLevel == AnimationLevel.OFF) fadeOut() else scaleOut() + fadeOut()
     ) {
         Box(
             modifier = Modifier

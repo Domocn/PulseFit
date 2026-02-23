@@ -2,9 +2,10 @@
 PulseFit Backend - Heart Rate Zone Training API
 Full Feature Implementation with ElevenLabs Voice
 """
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Response, Depends, Security
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timezone, timedelta
@@ -29,13 +30,49 @@ app = FastAPI(title="PulseFit API", version="2.1.0")
 ELEVENLABS_API_KEY = os.environ.get("ELEVENLABS_API_KEY")
 eleven_client = ElevenLabs(api_key=ELEVENLABS_API_KEY) if ELEVENLABS_API_KEY else None
 
+ALLOWED_ORIGINS = os.environ.get("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allow_headers=["Authorization", "Content-Type"],
 )
+
+# Firebase Admin SDK for token verification
+import logging
+logger = logging.getLogger(__name__)
+
+try:
+    import firebase_admin
+    from firebase_admin import auth as firebase_auth
+    firebase_admin.initialize_app()
+    FIREBASE_AUTH_ENABLED = True
+except Exception:
+    FIREBASE_AUTH_ENABLED = False
+    logger.warning("Firebase Admin SDK not configured - auth middleware disabled")
+
+security_scheme = HTTPBearer(auto_error=False)
+
+async def verify_firebase_token(
+    credentials: HTTPAuthorizationCredentials = Security(security_scheme)
+) -> Optional[str]:
+    """Verify Firebase ID token and return the caller's UID, or None if auth is disabled."""
+    if not FIREBASE_AUTH_ENABLED:
+        return None
+    if credentials is None:
+        raise HTTPException(status_code=401, detail="Authorization header required")
+    try:
+        decoded = firebase_auth.verify_id_token(credentials.credentials)
+        return decoded["uid"]
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+def require_owner(caller_uid: Optional[str], user_id: str):
+    """Ensure the authenticated caller owns the requested resource."""
+    if caller_uid is not None and caller_uid != user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
 
 # MongoDB connection
 MONGO_URL = os.environ.get("MONGO_URL")
@@ -570,7 +607,7 @@ async def create_user(user: UserCreate):
 
 
 @app.get("/api/users/{user_id}", response_model=UserResponse)
-async def get_user(user_id: str):
+async def get_user(user_id: str, caller_uid: Optional[str] = Depends(verify_firebase_token)):
     try:
         user = await users_collection.find_one({"_id": ObjectId(user_id)})
     except:
@@ -578,7 +615,8 @@ async def get_user(user_id: str):
     
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
+    require_owner(caller_uid, user_id)
     user["id"] = str(user["_id"])
     # Ensure all fields exist with defaults
     user.setdefault("streak_freezes_available", 1)
@@ -588,7 +626,8 @@ async def get_user(user_id: str):
 
 
 @app.patch("/api/users/{user_id}", response_model=UserResponse)
-async def update_user(user_id: str, update: UserUpdate):
+async def update_user(user_id: str, update: UserUpdate, caller_uid: Optional[str] = Depends(verify_firebase_token)):
+    require_owner(caller_uid, user_id)
     update_data = {k: v for k, v in update.dict().items() if v is not None}
     
     if not update_data:
@@ -612,7 +651,8 @@ async def update_user(user_id: str, update: UserUpdate):
 
 
 @app.post("/api/users/{user_id}/use-streak-freeze")
-async def use_streak_freeze(user_id: str):
+async def use_streak_freeze(user_id: str, caller_uid: Optional[str] = Depends(verify_firebase_token)):
+    require_owner(caller_uid, user_id)
     """Use a streak freeze to preserve streak"""
     user = await users_collection.find_one({"_id": ObjectId(user_id)})
     if not user:
@@ -679,7 +719,8 @@ async def get_settings(user_id: str):
 
 
 @app.put("/api/users/{user_id}/settings")
-async def update_settings(user_id: str, settings: dict):
+async def update_settings(user_id: str, settings: dict, caller_uid: Optional[str] = Depends(verify_firebase_token)):
+    require_owner(caller_uid, user_id)
     settings["user_id"] = user_id
     settings["updated_at"] = datetime.now(timezone.utc).isoformat()
     
@@ -1152,7 +1193,8 @@ async def get_personal_bests(user_id: str):
 # ----- Export Endpoints -----
 
 @app.get("/api/users/{user_id}/export")
-async def export_user_data(user_id: str, format: str = "json"):
+async def export_user_data(user_id: str, format: str = "json", caller_uid: Optional[str] = Depends(verify_firebase_token)):
+    require_owner(caller_uid, user_id)
     """Export all user data"""
     user = await users_collection.find_one({"_id": ObjectId(user_id)})
     if not user:
@@ -1397,7 +1439,8 @@ async def get_elevenlabs_voices():
         ]
         return {"voices": voices}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch voices: {str(e)}")
+        logger.exception("Failed to fetch ElevenLabs voices")
+        raise HTTPException(status_code=500, detail="Failed to fetch voices. Please try again.")
 
 
 @app.post("/api/tts/generate", response_model=TTSResponse)
@@ -1455,8 +1498,8 @@ async def generate_tts(request: TTSRequest):
             print(f"ElevenLabs API quota exceeded: {str(e)}")
             raise HTTPException(status_code=429, detail="ElevenLabs API quota exceeded. Using browser TTS fallback.")
         else:
-            print(f"ElevenLabs TTS generation failed: {str(e)}")
-            raise HTTPException(status_code=500, detail=f"TTS generation failed: {str(e)}")
+            logger.exception("ElevenLabs TTS generation failed")
+            raise HTTPException(status_code=500, detail="TTS generation failed. Please try again.")
 
 
 @app.post("/api/tts/workout-announcement")

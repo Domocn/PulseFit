@@ -10,6 +10,8 @@ import com.pulsefit.app.adhd.VariableDropEngine
 import com.pulsefit.app.asd.AudioPalette
 import com.pulsefit.app.asd.TransitionWarning
 import com.pulsefit.app.asd.TransitionWarningManager
+import com.pulsefit.app.data.model.ChallengeMetric
+import com.pulsefit.app.data.remote.UserChallengeRepository
 import com.pulsefit.app.ble.BlePreferences
 import com.pulsefit.app.ble.HeartRateSource
 import com.pulsefit.app.ble.RealHeartRate
@@ -72,7 +74,8 @@ class WorkoutViewModel @Inject constructor(
     private val templateRegistry: TemplateRegistry,
     private val exerciseRegistry: ExerciseRegistry,
     private val groupChallengeRepository: GroupChallengeRepository,
-    private val coachingTargetRegistry: CoachingTargetRegistry
+    private val coachingTargetRegistry: CoachingTargetRegistry,
+    private val userChallengeRepository: UserChallengeRepository
 ) : ViewModel() {
 
     private val heartRateSource: HeartRateSource
@@ -525,6 +528,18 @@ class WorkoutViewModel @Inject constructor(
                 }
             } catch (_: Exception) {}
 
+            // Record progress toward active user challenges
+            try {
+                userChallengeRepository.recordProgress(ChallengeMetric.WORKOUTS_COMPLETED, 1)
+                userChallengeRepository.recordProgress(ChallengeMetric.TOTAL_BURN_POINTS, _burnPoints.value)
+                val durationMinutes = (_elapsedSeconds.value / 60)
+                userChallengeRepository.recordProgress(ChallengeMetric.TOTAL_MINUTES, durationMinutes)
+                val peakMinutes = ((_zoneTime.value[HeartRateZone.PEAK] ?: 0L) / 60).toInt()
+                if (peakMinutes > 0) {
+                    userChallengeRepository.recordProgress(ChallengeMetric.PEAK_ZONE_MINUTES, peakMinutes)
+                }
+            } catch (_: Exception) {}
+
             _isFinished.value = true
         }
     }
@@ -534,6 +549,7 @@ class WorkoutViewModel @Inject constructor(
         timerJob?.cancel()
         heartRateSource.disconnect()
         voiceCoachEngine.shutdown()
+        audioPalette.shutdown()
         if (bodyDoubleActive) {
             viewModelScope.launch { try { bodyDoubleRepository.leaveSession() } catch (_: Exception) {} }
         }

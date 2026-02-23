@@ -31,6 +31,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
+import kotlin.math.roundToInt
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pulsefit.app.data.model.AnimationLevel
 import com.pulsefit.app.data.model.CelebrationStyle
@@ -197,7 +198,7 @@ private fun SensorySlider(
         val currentValue = values.getOrElse(selectedIndex) { "" }
         Slider(
             value = selectedIndex.toFloat(),
-            onValueChange = { onValueChange(it.toInt()) },
+            onValueChange = { onValueChange(it.roundToInt().coerceIn(0, values.size - 1)) },
             valueRange = 0f..(values.size - 1).toFloat(),
             steps = values.size - 2,
             modifier = Modifier

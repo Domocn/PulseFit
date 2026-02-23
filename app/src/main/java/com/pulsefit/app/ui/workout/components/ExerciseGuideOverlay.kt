@@ -37,12 +37,14 @@ import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
+import com.pulsefit.app.data.model.AnimationLevel
 import com.pulsefit.app.data.model.ExerciseStation
 import com.pulsefit.app.ui.workout.GuidedState
 
 @Composable
 fun ExerciseGuideOverlay(
     guidedState: GuidedState,
+    animationLevel: AnimationLevel = AnimationLevel.FULL,
     modifier: Modifier = Modifier
 ) {
     val exercise = guidedState.currentExercise
@@ -101,7 +103,14 @@ fun ExerciseGuideOverlay(
         // Exercise animation or fallback icon
         AnimatedContent(
             targetState = exercise?.id ?: "",
-            transitionSpec = { fadeIn() + slideInVertically() togetherWith fadeOut() + slideOutVertically() },
+            transitionSpec = {
+                if (animationLevel == AnimationLevel.OFF) {
+                    androidx.compose.animation.EnterTransition.None togetherWith
+                        androidx.compose.animation.ExitTransition.None
+                } else {
+                    fadeIn() + slideInVertically() togetherWith fadeOut() + slideOutVertically()
+                }
+            },
             label = "exerciseAnim"
         ) { exerciseId ->
             Box(
@@ -110,14 +119,28 @@ fun ExerciseGuideOverlay(
                 contentAlignment = Alignment.Center
             ) {
                 val lottieAsset = exercise?.lottieAsset
-                if (lottieAsset != null) {
+                if (lottieAsset != null && animationLevel != AnimationLevel.OFF) {
                     val composition by rememberLottieComposition(
                         LottieCompositionSpec.Asset(lottieAsset)
                     )
                     LottieAnimation(
                         composition = composition,
-                        iterations = LottieConstants.IterateForever,
+                        iterations = if (animationLevel == AnimationLevel.FULL) LottieConstants.IterateForever else 1,
                         modifier = Modifier.size(80.dp)
+                    )
+                } else if (lottieAsset != null) {
+                    // Static fallback icon when animation is OFF
+                    val station = exercise?.station
+                    Icon(
+                        imageVector = when (station) {
+                            ExerciseStation.TREAD -> Icons.Default.DirectionsRun
+                            ExerciseStation.ROW -> Icons.Default.Rowing
+                            ExerciseStation.FLOOR -> Icons.Default.FitnessCenter
+                            else -> Icons.Default.FitnessCenter
+                        },
+                        contentDescription = exercise?.name,
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 } else {
                     // Fallback: station icon

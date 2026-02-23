@@ -41,6 +41,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.pulsefit.app.data.model.AnimationLevel
 import com.pulsefit.app.data.model.HeartRateZone
 import com.pulsefit.app.domain.model.HeartRateReading
 import com.pulsefit.app.ui.components.CelebrationOverlay
@@ -68,6 +69,7 @@ fun SummaryScreen(
     val maxHr by viewModel.maxHr.collectAsState()
     val celebrationConfig by viewModel.celebrationConfig.collectAsState()
     val coachTip by viewModel.coachTip.collectAsState()
+    val animationLevel by viewModel.animationLevel.collectAsState()
 
     val context = LocalContext.current
 
@@ -318,6 +320,7 @@ fun SummaryScreen(
     CelebrationOverlay(
         config = celebrationConfig,
         message = "Well done!",
+        animationLevel = animationLevel,
         onDismiss = viewModel::dismissCelebration
     )
 
