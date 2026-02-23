@@ -12,6 +12,8 @@ import com.pulsefit.app.domain.model.Workout
 import com.pulsefit.app.data.remote.CloudProfileRepository
 import com.pulsefit.app.data.remote.SharedWorkout
 import com.pulsefit.app.domain.repository.WorkoutRepository
+import com.pulsefit.app.data.model.AnimationLevel
+import com.pulsefit.app.data.repository.SensoryPreferencesRepository
 import com.pulsefit.app.domain.usecase.GenerateCoachTipUseCase
 import com.pulsefit.app.domain.usecase.GetUserProfileUseCase
 import com.pulsefit.app.util.CalorieCalculator
@@ -29,7 +31,8 @@ class SummaryViewModel @Inject constructor(
     private val celebrationEngine: CelebrationEngine,
     private val generateCoachTip: GenerateCoachTipUseCase,
     private val cloudProfileRepository: CloudProfileRepository,
-    private val firebaseAuth: FirebaseAuth
+    private val firebaseAuth: FirebaseAuth,
+    private val sensoryPreferencesRepository: SensoryPreferencesRepository
 ) : ViewModel() {
 
     private val _isShared = MutableStateFlow(false)
@@ -58,6 +61,9 @@ class SummaryViewModel @Inject constructor(
 
     private val _celebrationConfig = MutableStateFlow<CelebrationConfig?>(null)
     val celebrationConfig: StateFlow<CelebrationConfig?> = _celebrationConfig
+
+    private val _animationLevel = MutableStateFlow(AnimationLevel.FULL)
+    val animationLevel: StateFlow<AnimationLevel> = _animationLevel
 
     private val _coachTip = MutableStateFlow<String?>(null)
     val coachTip: StateFlow<String?> = _coachTip
@@ -88,6 +94,10 @@ class SummaryViewModel @Inject constructor(
                     durationMinutes = it.durationSeconds / 60
                 )
             }
+
+            // Load animation level
+            val prefs = sensoryPreferencesRepository.getPreferencesOnce()
+            _animationLevel.value = prefs.animationLevel
 
             // Celebration config
             val ndProfile = profile?.ndProfile ?: NdProfile.STANDARD

@@ -135,8 +135,12 @@ class WorkoutRepositoryImpl @Inject constructor(
     )
 
     private fun parseZoneTimeJson(json: String): Map<HeartRateZone, Long> {
-        val type = object : TypeToken<Map<String, Long>>() {}.type
-        val stringMap: Map<String, Long> = gson.fromJson(json, type) ?: emptyMap()
-        return stringMap.mapKeys { HeartRateZone.valueOf(it.key) }
+        return try {
+            val type = object : TypeToken<Map<String, Long>>() {}.type
+            val stringMap: Map<String, Long> = gson.fromJson(json, type) ?: emptyMap()
+            stringMap.mapKeys { HeartRateZone.valueOf(it.key) }
+        } catch (_: Exception) {
+            emptyMap()
+        }
     }
 }

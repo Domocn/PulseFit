@@ -1,6 +1,9 @@
 package com.pulsefit.app.ui.workout
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -9,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -78,7 +82,11 @@ fun ShutdownRoutineScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        AnimatedContent(targetState = phase, label = "shutdown_phase") { currentPhase ->
+        AnimatedContent(
+            targetState = phase,
+            transitionSpec = { fadeIn() togetherWith fadeOut() },
+            label = "shutdown_phase"
+        ) { currentPhase ->
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 when (currentPhase) {
                     0 -> {
@@ -162,6 +170,15 @@ fun ShutdownRoutineScreen(
                     }
                 }
             }
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        TextButton(onClick = onComplete) {
+            Text(
+                text = "Skip wind-down",
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

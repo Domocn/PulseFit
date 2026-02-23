@@ -5,6 +5,9 @@ import android.media.AudioFormat
 import android.media.AudioTrack
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -17,7 +20,7 @@ import kotlin.math.sin
 @Singleton
 class AudioPalette @Inject constructor() {
 
-    private val playScope = CoroutineScope(Dispatchers.IO)
+    private val playScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     enum class SoundEvent {
         ZONE_UP,       // rising tone
@@ -58,7 +61,11 @@ class AudioPalette @Inject constructor() {
         }
     }
 
-    private fun playTone(frequencyHz: Int, durationMs: Int) {
+    fun shutdown() {
+        playScope.coroutineContext.cancelChildren()
+    }
+
+    private suspend fun playTone(frequencyHz: Int, durationMs: Int) {
         val sampleRate = 44100
         val numSamples = (sampleRate * durationMs / 1000.0).toInt()
         val samples = ShortArray(numSamples)
@@ -93,7 +100,7 @@ class AudioPalette @Inject constructor() {
 
         audioTrack.write(samples, 0, samples.size)
         audioTrack.play()
-        Thread.sleep(durationMs.toLong() + 50)
+        delay(durationMs.toLong() + 50)
         audioTrack.stop()
         audioTrack.release()
     }

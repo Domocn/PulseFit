@@ -208,12 +208,15 @@ fun WorkoutScreen(
                 horizontalArrangement = Arrangement.Center,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                IconButton(onClick = viewModel::togglePause) {
+                IconButton(
+                    onClick = viewModel::togglePause,
+                    modifier = Modifier.size(48.dp)
+                ) {
                     Icon(
                         if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
-                        contentDescription = if (isPaused) "Resume" else "Pause",
+                        contentDescription = if (isPaused) "Resume workout" else "Pause workout",
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(32.dp)
                     )
                 }
                 val minutes = elapsed / 60
@@ -281,7 +284,7 @@ fun WorkoutScreen(
             val currentGuidedState = guidedState
             if (isGuidedMode && currentGuidedState != null) {
                 Spacer(modifier = Modifier.height(12.dp))
-                ExerciseGuideOverlay(guidedState = currentGuidedState)
+                ExerciseGuideOverlay(guidedState = currentGuidedState, animationLevel = animationLevel)
             }
 
             Spacer(modifier = Modifier.height(24.dp))
