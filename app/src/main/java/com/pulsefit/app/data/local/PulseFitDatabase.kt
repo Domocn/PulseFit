@@ -7,6 +7,7 @@ import com.pulsefit.app.data.local.dao.AchievementDao
 import com.pulsefit.app.data.local.dao.DailyQuestDao
 import com.pulsefit.app.data.local.dao.HeartRateReadingDao
 import com.pulsefit.app.data.local.dao.NotificationPreferencesDao
+import com.pulsefit.app.data.local.dao.RewardAdTrackingDao
 import com.pulsefit.app.data.local.dao.SensoryPreferencesDao
 import com.pulsefit.app.data.local.dao.UserProfileDao
 import com.pulsefit.app.data.local.dao.WeeklyRoutineDao
@@ -15,6 +16,7 @@ import com.pulsefit.app.data.local.entity.AchievementEntity
 import com.pulsefit.app.data.local.entity.DailyQuestEntity
 import com.pulsefit.app.data.local.entity.HeartRateReadingEntity
 import com.pulsefit.app.data.local.entity.NotificationPreferencesEntity
+import com.pulsefit.app.data.local.entity.RewardAdTrackingEntity
 import com.pulsefit.app.data.local.entity.SensoryPreferencesEntity
 import com.pulsefit.app.data.local.entity.UserProfileEntity
 import com.pulsefit.app.data.local.entity.WeeklyRoutineEntity
@@ -29,9 +31,10 @@ import com.pulsefit.app.data.local.entity.WorkoutEntity
         WeeklyRoutineEntity::class,
         DailyQuestEntity::class,
         AchievementEntity::class,
-        NotificationPreferencesEntity::class
+        NotificationPreferencesEntity::class,
+        RewardAdTrackingEntity::class
     ],
-    version = 10,
+    version = 11,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -44,4 +47,5 @@ abstract class PulseFitDatabase : RoomDatabase() {
     abstract fun dailyQuestDao(): DailyQuestDao
     abstract fun achievementDao(): AchievementDao
     abstract fun notificationPreferencesDao(): NotificationPreferencesDao
+    abstract fun rewardAdTrackingDao(): RewardAdTrackingDao
 }

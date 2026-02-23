@@ -33,7 +33,8 @@ data class UserProfile(
     val photoUrl: String? = null,
     val profileVisibility: String = "friends",
     val treadMode: TreadMode = TreadMode.RUNNER,
-    val equipmentProfileJson: String? = null
+    val equipmentProfileJson: String? = null,
+    val rewardCoins: Int = 0
 ) {
     fun getEquipmentProfile(): EquipmentProfile {
         if (equipmentProfileJson == null) return EquipmentProfile()

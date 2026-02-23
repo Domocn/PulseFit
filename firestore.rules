@@ -99,5 +99,18 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow write: if isOwner(sessionId);
     }
+
+    // Discount codes (admin-managed, read-only for users)
+    match /discount_codes/{codeId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // Code redemptions (users can read their own and create new ones)
+    match /code_redemptions/{redemptionId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false;
+    }
   }
 }

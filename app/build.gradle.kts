@@ -95,6 +95,9 @@ dependencies {
     // Lottie
     implementation(libs.lottie.compose)
 
+    // Ads
+    implementation(libs.play.services.ads)
+
     // Health Connect
     implementation(libs.health.connect)
 
