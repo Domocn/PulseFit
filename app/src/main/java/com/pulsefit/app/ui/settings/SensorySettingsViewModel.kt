@@ -7,6 +7,7 @@ import com.pulsefit.app.data.model.AnimationLevel
 import com.pulsefit.app.data.model.AppTheme
 import com.pulsefit.app.data.model.CelebrationStyle
 import com.pulsefit.app.data.model.ColourIntensity
+import com.pulsefit.app.data.model.GamificationLevel
 import com.pulsefit.app.data.model.HapticLevel
 import com.pulsefit.app.data.model.SoundLevel
 import com.pulsefit.app.data.model.VoiceCoachStyle
@@ -55,6 +56,11 @@ class SensorySettingsViewModel @Inject constructor(
     fun updateUiLocked(locked: Boolean) = update { it.copy(uiLocked = locked) }
     fun updateSocialPressureShield(enabled: Boolean) = update { it.copy(socialPressureShield = enabled) }
     fun updateAppTheme(theme: AppTheme) = update { it.copy(appTheme = theme) }
+    fun updateGamificationLevel(level: GamificationLevel) = update { it.copy(gamificationLevel = level) }
+    fun updatePdaMode(enabled: Boolean) = update { it.copy(pdaMode = enabled) }
+    fun updateSpoonBudgetEnabled(enabled: Boolean) = update { it.copy(spoonBudgetEnabled = enabled) }
+    fun updateHyperfocusGuardEnabled(enabled: Boolean) = update { it.copy(hyperfocusGuardEnabled = enabled) }
+    fun updateHyperfocusThreshold(minutes: Int) = update { it.copy(hyperfocusThresholdMinutes = minutes) }
 
     fun previewVoiceStyle() {
         voiceCoachEngine.initialize()

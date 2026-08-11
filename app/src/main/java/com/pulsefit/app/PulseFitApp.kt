@@ -54,6 +54,28 @@ import com.pulsefit.app.ui.workout.ShutdownRoutineScreen
 import com.pulsefit.app.ui.workout.SummaryScreen
 import com.pulsefit.app.ui.workout.WorkoutScreen
 import com.pulsefit.app.ui.workout.WorkoutTemplatesScreen
+import com.pulsefit.app.ui.gym.GymProfileScreen
+import com.pulsefit.app.ui.ritual.RitualScreen
+import com.pulsefit.app.ui.social.BodyDoubleSessionsScreen
+import com.pulsefit.app.ui.social.BuddyMatchScreen
+import com.pulsefit.app.ui.plan.CalendarBlockScreen
+import com.pulsefit.app.ui.recovery.RecoveryContentScreen
+import com.pulsefit.app.ui.caregiver.CaregiverSetupScreen
+import com.pulsefit.app.ui.caregiver.CaregiverDashboardScreen
+import com.pulsefit.app.ui.gear.GearGuideScreen
+import com.pulsefit.app.ui.workout.StrengthWorkoutScreen
+import com.pulsefit.app.ui.workout.StrengthWorkoutViewModel
+import com.pulsefit.app.ui.workout.ExerciseDetailScreen
+import com.pulsefit.app.ui.workout.ExerciseDetailViewModel
+import com.pulsefit.app.ui.workout.WorkoutBuilderScreen
+import com.pulsefit.app.ui.workout.WorkoutBuilderViewModel
+import com.pulsefit.app.ui.progress.BodyMeasurementsScreen
+import com.pulsefit.app.ui.progress.BodyMeasurementsViewModel
+import com.pulsefit.app.ui.progress.MuscleFatigueScreen
+import com.pulsefit.app.ui.progress.MuscleFatigueViewModel
+import com.pulsefit.app.ui.progress.StrengthCalculatorScreen
+import com.pulsefit.app.ui.social.GroupSessionsScreen
+import com.pulsefit.app.ui.social.GroupSessionsViewModel
 
 @Composable
 fun PulseFitApp(viewModel: AppViewModel = hiltViewModel()) {
@@ -179,6 +201,9 @@ fun PulseFitApp(viewModel: AppViewModel = hiltViewModel()) {
                             },
                             onNavigateToWeeklyPlan = {
                                 navController.navigate(Screen.WeeklyPlan.route)
+                            },
+                            onNavigateToRecovery = {
+                                navController.navigate(Screen.RecoveryContent.route)
                             }
                         )
                     }
@@ -257,6 +282,21 @@ fun PulseFitApp(viewModel: AppViewModel = hiltViewModel()) {
                             },
                             onNavigateToProgress = {
                                 navController.navigate(Screen.ProgressDashboard.route)
+                            },
+                            onNavigateToGymProfiles = {
+                                navController.navigate(Screen.GymProfiles.route)
+                            },
+                            onNavigateToRituals = {
+                                navController.navigate(Screen.TransitionRitual.route)
+                            },
+                            onNavigateToCalendarBlock = {
+                                navController.navigate(Screen.CalendarBlock.route)
+                            },
+                            onNavigateToCaregiverSetup = {
+                                navController.navigate(Screen.CaregiverSetup.route)
+                            },
+                            onNavigateToGearGuide = {
+                                navController.navigate(Screen.GearGuide.route)
                             }
                         )
                     }
@@ -330,6 +370,15 @@ fun PulseFitApp(viewModel: AppViewModel = hiltViewModel()) {
                             },
                             onNavigateToGroups = {
                                 navController.navigate(Screen.Groups.route)
+                            },
+                            onNavigateToBodyDoubleSessions = {
+                                navController.navigate(Screen.BodyDoubleSessions.route)
+                            },
+                            onNavigateToBuddyMatch = {
+                                navController.navigate(Screen.BuddyMatch.route)
+                            },
+                            onNavigateToGroupSessions = {
+                                navController.navigate(Screen.GroupSessions.route)
                             }
                         )
                     }
@@ -420,6 +469,112 @@ fun PulseFitApp(viewModel: AppViewModel = hiltViewModel()) {
                     }
                     composable(Screen.EquipmentSetup.route) {
                         EquipmentSetupScreen(
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
+
+                    // ND Feature screens
+                    composable(Screen.GymProfiles.route) {
+                        GymProfileScreen()
+                    }
+                    composable(Screen.TransitionRitual.route) {
+                        RitualScreen()
+                    }
+                    composable(Screen.BodyDoubleSessions.route) {
+                        BodyDoubleSessionsScreen()
+                    }
+                    composable(Screen.BuddyMatch.route) {
+                        BuddyMatchScreen()
+                    }
+                    composable(Screen.CalendarBlock.route) {
+                        CalendarBlockScreen()
+                    }
+                    composable(Screen.RecoveryContent.route) {
+                        RecoveryContentScreen()
+                    }
+                    composable(Screen.CaregiverSetup.route) {
+                        CaregiverSetupScreen(
+                            onNavigateToDashboard = {
+                                navController.navigate(Screen.CaregiverDashboard.route)
+                            }
+                        )
+                    }
+                    composable(Screen.CaregiverDashboard.route) {
+                        CaregiverDashboardScreen()
+                    }
+                    composable(Screen.GearGuide.route) {
+                        GearGuideScreen()
+                    }
+
+                    // Strength / Gym Coach screens
+                    composable(
+                        Screen.StrengthWorkout.route,
+                        arguments = listOf(navArgument("workoutName") { type = NavType.StringType })
+                    ) { backStackEntry ->
+                        val workoutName = backStackEntry.arguments?.getString("workoutName") ?: "Strength Workout"
+                        val strengthViewModel: StrengthWorkoutViewModel = hiltViewModel()
+                        StrengthWorkoutScreen(
+                            viewModel = strengthViewModel,
+                            ndProfile = ndProfile,
+                            animationLevel = com.pulsefit.app.data.model.AnimationLevel.FULL,
+                            onFinish = { workoutId ->
+                                navController.navigate(Screen.Summary.createRoute(workoutId)) {
+                                    popUpTo(Screen.Home.route)
+                                }
+                            },
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
+                    composable(
+                        Screen.ExerciseDetail.route,
+                        arguments = listOf(navArgument("exerciseId") { type = NavType.StringType })
+                    ) { backStackEntry ->
+                        val exerciseId = backStackEntry.arguments?.getString("exerciseId") ?: return@composable
+                        val detailViewModel: ExerciseDetailViewModel = hiltViewModel()
+                        ExerciseDetailScreen(
+                            exerciseId = exerciseId,
+                            viewModel = detailViewModel,
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
+                    composable(Screen.WorkoutBuilder.route) {
+                        val builderViewModel: WorkoutBuilderViewModel = hiltViewModel()
+                        val strengthViewModel: StrengthWorkoutViewModel = hiltViewModel()
+                        WorkoutBuilderScreen(
+                            viewModel = builderViewModel,
+                            onStartWorkout = { name, exercises ->
+                                strengthViewModel.startWorkout(exercises, name)
+                                navController.navigate(Screen.StrengthWorkout.createRoute(name))
+                            },
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
+                    composable(Screen.BodyMeasurements.route) {
+                        val bmViewModel: BodyMeasurementsViewModel = hiltViewModel()
+                        BodyMeasurementsScreen(
+                            viewModel = bmViewModel,
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
+                    composable(Screen.MuscleFatigue.route) {
+                        val mfViewModel: MuscleFatigueViewModel = hiltViewModel()
+                        MuscleFatigueScreen(
+                            viewModel = mfViewModel,
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
+                    composable(Screen.StrengthCalculator.route) {
+                        StrengthCalculatorScreen(
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
+                    composable(Screen.GroupSessions.route) {
+                        val gsViewModel: GroupSessionsViewModel = hiltViewModel()
+                        GroupSessionsScreen(
+                            viewModel = gsViewModel,
+                            onStartWorkout = { name, _ ->
+                                navController.navigate(Screen.StrengthWorkout.createRoute(name))
+                            },
                             onBack = { navController.popBackStack() }
                         )
                     }

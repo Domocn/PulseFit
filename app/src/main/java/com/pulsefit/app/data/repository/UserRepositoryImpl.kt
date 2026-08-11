@@ -104,7 +104,9 @@ class UserRepositoryImpl @Inject constructor(
         profileVisibility = profileVisibility,
         treadMode = treadMode,
         equipmentProfileJson = equipmentProfileJson,
-        rewardCoins = rewardCoins
+        rewardCoins = rewardCoins,
+        calibratedMaxHr = calibratedMaxHr,
+        gamificationLevel = gamificationLevel
     )
 
     private fun UserProfile.toEntity() = UserProfileEntity(
@@ -137,6 +139,8 @@ class UserRepositoryImpl @Inject constructor(
         profileVisibility = profileVisibility,
         treadMode = treadMode,
         equipmentProfileJson = equipmentProfileJson,
-        rewardCoins = rewardCoins
+        rewardCoins = rewardCoins,
+        calibratedMaxHr = calibratedMaxHr,
+        gamificationLevel = gamificationLevel
     )
 }

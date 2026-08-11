@@ -1,0 +1,10 @@
+# Third-party APK dumps: 115MB of .dex/.arsc binaries.
+# Unreadable by the indexer and would wreck the index budget.
+# The distilled, useful version lives in reference/*-analysis.md
+reference/apks/
+
+# Build output
+app/build/
+build/
+.gradle/
+*.apk

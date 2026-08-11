@@ -5,6 +5,7 @@ import com.pulsefit.app.domain.repository.UserRepository
 import com.pulsefit.app.domain.repository.WorkoutRepository
 import com.pulsefit.app.health.HealthConnectRepository
 import com.pulsefit.app.util.CalorieCalculator
+import com.pulsefit.app.util.MaxHrCalibrator
 import java.time.Instant
 import javax.inject.Inject
 
@@ -16,7 +17,8 @@ class EndWorkoutUseCase @Inject constructor(
     suspend operator fun invoke(
         workoutId: Long,
         burnPoints: Int,
-        zoneTime: Map<HeartRateZone, Long>
+        zoneTime: Map<HeartRateZone, Long>,
+        hrrScore: Int? = null
     ) {
         val workout = workoutRepository.getWorkoutById(workoutId) ?: return
         val now = Instant.now()
@@ -44,12 +46,28 @@ class EndWorkoutUseCase @Inject constructor(
             averageHeartRate = avgHr,
             maxHeartRate = maxHr,
             zoneTime = zoneTime,
-            estimatedCalories = estimatedCalories
+            estimatedCalories = estimatedCalories,
+            hrrScore = hrrScore
         )
         workoutRepository.updateWorkout(updatedWorkout)
 
         // Update user stats
         userRepository.incrementWorkoutCount(burnPoints, now.toEpochMilli())
+
+        // Self-calibrating MaxHR
+        if (profile != null && maxHr > 0) {
+            val ageFormulaMax = 220 - profile.age
+            val newCalibratedMax = MaxHrCalibrator.calibrate(
+                observedMaxHr = maxHr,
+                currentCalibratedMax = profile.calibratedMaxHr,
+                ageFormulaMax = ageFormulaMax,
+                workoutCount = profile.totalWorkouts + 1
+            )
+            if (newCalibratedMax != null && newCalibratedMax != profile.calibratedMaxHr) {
+                val updatedProfile = profile.copy(calibratedMaxHr = newCalibratedMax)
+                userRepository.saveUserProfile(updatedProfile)
+            }
+        }
 
         // Sync to Health Connect
         healthConnectRepository.writeWorkout(updatedWorkout, readings)

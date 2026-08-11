@@ -2,12 +2,15 @@ package com.pulsefit.app.ui.progress
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pulsefit.app.data.local.dao.WorkoutDao
 import com.pulsefit.app.data.model.HeartRateZone
 import com.pulsefit.app.domain.model.UserProfile
 import com.pulsefit.app.domain.model.WorkoutStats
 import com.pulsefit.app.domain.repository.WorkoutRepository
 import com.pulsefit.app.domain.usecase.GetUserProfileUseCase
 import com.pulsefit.app.domain.usecase.GetWorkoutStatsUseCase
+import com.pulsefit.app.util.OverloadTracker
+import com.pulsefit.app.util.OverloadTrend
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -24,7 +27,9 @@ data class WeeklyBurnPoints(val weekLabel: String, val burnPoints: Int)
 class ProgressDashboardViewModel @Inject constructor(
     private val getUserProfile: GetUserProfileUseCase,
     private val getWorkoutStats: GetWorkoutStatsUseCase,
-    private val workoutRepository: WorkoutRepository
+    private val workoutRepository: WorkoutRepository,
+    private val workoutDao: WorkoutDao,
+    private val overloadTracker: OverloadTracker
 ) : ViewModel() {
 
     val userProfile: StateFlow<UserProfile?> = getUserProfile()
@@ -45,6 +50,9 @@ class ProgressDashboardViewModel @Inject constructor(
     private val _targetHitRate = MutableStateFlow(0f)
     val targetHitRate: StateFlow<Float> = _targetHitRate
 
+    private val _overloadTrend = MutableStateFlow<OverloadTrend?>(null)
+    val overloadTrend: StateFlow<OverloadTrend?> = _overloadTrend
+
     init {
         viewModelScope.launch {
             _weeklyStats.value = getWorkoutStats.getWeeklyStats()
@@ -52,6 +60,7 @@ class ProgressDashboardViewModel @Inject constructor(
             loadWeeklyBpHistory()
             loadZoneDistribution()
             loadTargetHitRate()
+            loadOverloadTrend()
         }
     }
 
@@ -103,5 +112,10 @@ class ProgressDashboardViewModel @Inject constructor(
         if (workouts.isEmpty()) return
         val hits = workouts.count { it.burnPoints >= profile.dailyTarget }
         _targetHitRate.value = hits.toFloat() / workouts.size
+    }
+
+    private suspend fun loadOverloadTrend() {
+        val allWorkouts = workoutDao.getCompletedWorkouts()
+        _overloadTrend.value = overloadTracker.analyze(allWorkouts)
     }
 }

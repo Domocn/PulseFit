@@ -1,0 +1,9 @@
+# Development / CI only — never installed into the production image.
+-r requirements.txt
+
+pytest==9.0.2
+requests==2.32.5       # used by tests/test_tts_endpoints.py
+black==26.1.0
+flake8==7.3.0
+isort==7.0.0
+mypy==1.19.1

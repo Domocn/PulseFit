@@ -295,6 +295,57 @@ class TemplateRegistry @Inject constructor() {
             )
         ),
 
+        // ---- RECOVERY (3 gentle templates) ----
+
+        WorkoutTemplateData(
+            id = "recovery_5min", name = "5-Min Reset",
+            description = "Ultra-gentle 5-minute movement for low-energy days",
+            durationMinutes = 5, type = "GUIDED",
+            category = TemplateCategory.RECOVERY, difficulty = 1,
+            phases = listOf(
+                TemplatePhase("Gentle Walk", 3, "Warm-Up", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_power_walk", 180))),
+                TemplatePhase("Light Stretch", 2, "Rest", ExerciseStation.FLOOR,
+                    listOf(PhaseExercise("floor_plank", 120, notes = "Gentle hold or skip")))
+            )
+        ),
+
+        WorkoutTemplateData(
+            id = "recovery_10min", name = "10-Min Gentle",
+            description = "Easy movement to get blood flowing without strain",
+            durationMinutes = 10, type = "GUIDED",
+            category = TemplateCategory.RECOVERY, difficulty = 1,
+            phases = listOf(
+                TemplatePhase("Walk", 4, "Warm-Up", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_power_walk", 240))),
+                TemplatePhase("Easy Row", 3, "Warm-Up", ExerciseStation.ROW,
+                    listOf(PhaseExercise("row_steady", 180))),
+                TemplatePhase("Floor Stretch", 3, "Rest", ExerciseStation.FLOOR, listOf(
+                    PhaseExercise("floor_squats", 90, notes = "Slow bodyweight only"),
+                    PhaseExercise("floor_plank", 90, notes = "Hold gently or skip")
+                ))
+            )
+        ),
+
+        WorkoutTemplateData(
+            id = "recovery_15min", name = "15-Min Restore",
+            description = "Restorative session with walking, light rowing, and stretching",
+            durationMinutes = 15, type = "GUIDED",
+            category = TemplateCategory.RECOVERY, difficulty = 1,
+            phases = listOf(
+                TemplatePhase("Walk", 5, "Warm-Up", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_power_walk", 300))),
+                TemplatePhase("Gentle Row", 4, "Warm-Up", ExerciseStation.ROW,
+                    listOf(PhaseExercise("row_steady", 240))),
+                TemplatePhase("Floor Mobility", 4, "Rest", ExerciseStation.FLOOR, listOf(
+                    PhaseExercise("floor_squats", 120, notes = "Slow and gentle"),
+                    PhaseExercise("floor_lunges", 120, notes = "No weights, easy pace")
+                )),
+                TemplatePhase("Cool Down", 2, "Rest", ExerciseStation.TREAD,
+                    listOf(PhaseExercise("tread_power_walk", 120)))
+            )
+        ),
+
         // ---- OTF_STYLE (12 new class formats) ----
 
         WorkoutTemplateData(

@@ -49,6 +49,7 @@ fun ProgressDashboardScreen(viewModel: ProgressDashboardViewModel = hiltViewMode
     val weeklyBpHistory by viewModel.weeklyBpHistory.collectAsState()
     val zoneDistribution by viewModel.zoneDistribution.collectAsState()
     val targetHitRate by viewModel.targetHitRate.collectAsState()
+    val overloadTrend by viewModel.overloadTrend.collectAsState()
 
     Column(
         modifier = Modifier
@@ -132,6 +133,58 @@ fun ProgressDashboardScreen(viewModel: ProgressDashboardViewModel = hiltViewMode
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 ZoneLegend(distribution = zoneDistribution)
+            }
+        }
+
+        // Cardio Progress (Overload Tracking)
+        overloadTrend?.let { trend ->
+            Spacer(modifier = Modifier.height(24.dp))
+            Text("Cardio Progress", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.height(8.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    if (trend.plateauDetected) {
+                        Text(
+                            text = "Plateau Detected",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                    trend.recommendation?.let { rec ->
+                        Text(
+                            text = rec,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    // Show 8-week avg burn points trend
+                    val trendData = trend.avgBurnPointsTrend
+                    if (trendData.any { it > 0f }) {
+                        Text(
+                            text = "Avg burn points per workout (8 weeks):",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            trendData.forEach { avg ->
+                                Text(
+                                    text = if (avg > 0f) String.format("%.0f", avg) else "-",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
 

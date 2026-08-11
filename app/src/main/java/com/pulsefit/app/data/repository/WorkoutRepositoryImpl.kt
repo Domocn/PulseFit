@@ -97,7 +97,14 @@ class WorkoutRepositoryImpl @Inject constructor(
         isJustFiveMin = isJustFiveMin,
         estimatedCalories = estimatedCalories,
         notes = notes,
-        templateId = templateId
+        templateId = templateId,
+        hrrScore = hrrScore,
+        isRecoveryMode = isRecoveryMode,
+        workoutMode = workoutMode,
+        totalVolumeKg = totalVolumeKg,
+        totalSets = totalSets,
+        totalReps = totalReps,
+        planId = planId
     )
 
     private fun Workout.toEntity() = WorkoutEntity(
@@ -115,7 +122,14 @@ class WorkoutRepositoryImpl @Inject constructor(
         isJustFiveMin = isJustFiveMin,
         estimatedCalories = estimatedCalories,
         notes = notes,
-        templateId = templateId
+        templateId = templateId,
+        hrrScore = hrrScore,
+        isRecoveryMode = isRecoveryMode,
+        workoutMode = workoutMode,
+        totalVolumeKg = totalVolumeKg,
+        totalSets = totalSets,
+        totalReps = totalReps,
+        planId = planId
     )
 
     private fun HeartRateReadingEntity.toDomain() = HeartRateReading(

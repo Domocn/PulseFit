@@ -33,11 +33,13 @@ import com.pulsefit.app.data.exercise.TemplateRegistry
 import com.pulsefit.app.data.model.ExerciseStation
 import com.pulsefit.app.data.model.TemplateCategory
 import com.pulsefit.app.data.model.WorkoutTemplateData
+import com.pulsefit.app.util.PredictedIntensity
 
 @Composable
 fun WorkoutTemplatesScreen(
     onSelectTemplate: ((WorkoutTemplateData) -> Unit)? = null,
-    templateRegistry: TemplateRegistry = TemplateRegistry()
+    templateRegistry: TemplateRegistry = TemplateRegistry(),
+    predictions: Map<String, PredictedIntensity> = emptyMap()
 ) {
     val allTemplates = templateRegistry.getAll()
     val grouped = allTemplates.groupBy { it.category }
@@ -99,6 +101,34 @@ fun WorkoutTemplatesScreen(
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                            // Intensity prediction badge
+                            predictions[template.id]?.let { pred ->
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = pred.difficultyLabel,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.secondary
+                                    )
+                                    Text(
+                                        text = "~${pred.estimatedBurnPoints.first}-${pred.estimatedBurnPoints.last} pts",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    pred.estimatedCalories.let { cal ->
+                                        if (cal.first > 0) {
+                                            Text(
+                                                text = "~${cal.first}-${cal.last} cal",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                             Spacer(modifier = Modifier.height(8.dp))
                             Row(
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),

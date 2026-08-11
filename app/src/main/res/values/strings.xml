@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">PulseFit</string>
+    <string name="widget_description">Your workout progress at a glance — next workout, weekly streak, and muscle recovery status.</string>
 </resources>

@@ -52,4 +52,41 @@ class BodyDoubleRepository @Inject constructor(
         }
         awaitClose { listener.remove() }
     }
+
+    private val scheduledCollection = firestore.collection("scheduledBodyDoubles")
+
+    suspend fun createScheduledSession(title: String, scheduledAt: Long, durationMinutes: Int): String? {
+        val uid = currentUid ?: return null
+        val doc = scheduledCollection.document()
+        doc.set(
+            mapOf(
+                "title" to title,
+                "scheduledAt" to scheduledAt,
+                "durationMinutes" to durationMinutes,
+                "createdByUid" to uid,
+                "participants" to listOf(uid)
+            )
+        ).await()
+        return doc.id
+    }
+
+    suspend fun joinScheduledSession(sessionId: String) {
+        val uid = currentUid ?: return
+        scheduledCollection.document(sessionId).update(
+            "participants", com.google.firebase.firestore.FieldValue.arrayUnion(uid)
+        ).await()
+    }
+
+    fun getScheduledSessions(): Flow<List<Map<String, Any>>> = callbackFlow {
+        val listener = scheduledCollection
+            .whereGreaterThan("scheduledAt", System.currentTimeMillis())
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) { trySend(emptyList()); return@addSnapshotListener }
+                val sessions = snapshot?.documents?.mapNotNull { doc ->
+                    doc.data?.plus("id" to doc.id)
+                } ?: emptyList()
+                trySend(sessions)
+            }
+        awaitClose { listener.remove() }
+    }
 }

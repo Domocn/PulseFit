@@ -179,6 +179,30 @@ fun ExerciseGuideOverlay(
             )
         }
 
+        // Form tips (F9)
+        if (exercise != null && exercise.formTips.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(4.dp))
+            exercise.formTips.forEach { tip ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 4.dp),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Text(
+                        text = "\u2022 ",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = tip,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.height(8.dp))
 
         // Time remaining

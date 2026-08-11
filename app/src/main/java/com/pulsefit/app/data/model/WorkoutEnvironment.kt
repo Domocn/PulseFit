@@ -44,7 +44,15 @@ enum class Equipment(
     BOSU_BALL("Bosu Ball", EquipmentCategory.FLOOR, defaultForGym = true),
 
     // Body only (always available)
-    BODYWEIGHT("Bodyweight Only", EquipmentCategory.BODYWEIGHT, defaultForGym = true, defaultForHome = true)
+    BODYWEIGHT("Bodyweight Only", EquipmentCategory.BODYWEIGHT, defaultForGym = true, defaultForHome = true),
+
+    // Machines
+    MACHINE("Machine", EquipmentCategory.RESISTANCE, defaultForGym = true),
+    SMITH_MACHINE("Smith Machine", EquipmentCategory.FREE_WEIGHTS, defaultForGym = true),
+
+    // Specialty bars
+    EZ_BAR("EZ Bar", EquipmentCategory.FREE_WEIGHTS, defaultForGym = true),
+    LANDMINE("Landmine", EquipmentCategory.FREE_WEIGHTS)
 }
 
 enum class EquipmentCategory(val label: String) {

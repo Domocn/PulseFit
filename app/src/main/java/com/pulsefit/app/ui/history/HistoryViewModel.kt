@@ -38,6 +38,9 @@ class HistoryViewModel @Inject constructor(
     private val _weeklyTrend = MutableStateFlow<List<Pair<String, Int>>>(emptyList())
     val weeklyTrend: StateFlow<List<Pair<String, Int>>> = _weeklyTrend
 
+    private val _dailyActivity = MutableStateFlow<Map<LocalDate, Float>>(emptyMap())
+    val dailyActivity: StateFlow<Map<LocalDate, Float>> = _dailyActivity
+
     private var dailyTarget = 12
 
     init {
@@ -46,6 +49,7 @@ class HistoryViewModel @Inject constructor(
             dailyTarget = profile?.dailyTarget ?: 12
             loadMonthData()
             loadWeeklyTrend()
+            loadYearlyActivity()
         }
     }
 
@@ -104,5 +108,25 @@ class HistoryViewModel @Inject constructor(
         }
 
         _weeklyTrend.value = data
+    }
+
+    private suspend fun loadYearlyActivity() {
+        val zone = ZoneId.systemDefault()
+        val today = LocalDate.now(zone)
+        val yearAgo = today.minusYears(1)
+        val startMillis = yearAgo.atStartOfDay(zone).toInstant().toEpochMilli()
+        val endMillis = today.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+
+        val workouts = workoutRepository.getWorkoutsInDateRange(startMillis, endMillis)
+
+        val activity = mutableMapOf<LocalDate, Float>()
+        for (w in workouts) {
+            val date = w.startTime.atZone(zone).toLocalDate()
+            // Use total volume for strength, burn points for cardio
+            val value = w.totalVolumeKg ?: w.burnPoints.toFloat()
+            activity[date] = (activity[date] ?: 0f) + value
+        }
+
+        _dailyActivity.value = activity
     }
 }

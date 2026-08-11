@@ -7,7 +7,8 @@ data class Exercise(
     val station: ExerciseStation,
     val muscleGroups: List<String>,
     val lottieAsset: String?,
-    val defaultDurationSeconds: Int
+    val defaultDurationSeconds: Int,
+    val formTips: List<String> = emptyList()
 )
 
 enum class ExerciseStation(val label: String) {

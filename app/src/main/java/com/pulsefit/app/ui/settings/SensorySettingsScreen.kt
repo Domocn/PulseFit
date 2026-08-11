@@ -36,6 +36,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.pulsefit.app.data.model.AnimationLevel
 import com.pulsefit.app.data.model.CelebrationStyle
 import com.pulsefit.app.data.model.ColourIntensity
+import com.pulsefit.app.data.model.GamificationLevel
 import com.pulsefit.app.data.model.HapticLevel
 import com.pulsefit.app.data.model.SoundLevel
 import com.pulsefit.app.data.model.VoiceCoachStyle
@@ -139,6 +140,28 @@ fun SensorySettingsScreen(viewModel: SensorySettingsViewModel = hiltViewModel())
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // Gamification Level
+        Text(
+            text = "Gamification",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        SensorySlider(
+            label = "Gamification Level",
+            values = GamificationLevel.entries.map { it.label },
+            selectedIndex = prefs?.gamificationLevel?.ordinal ?: 0,
+            onValueChange = { viewModel.updateGamificationLevel(GamificationLevel.entries[it]) }
+        )
+        Text(
+            text = GamificationLevel.entries.getOrNull(prefs?.gamificationLevel?.ordinal ?: 0)?.description ?: "",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp)
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
         // Minimal Mode Toggle
         ToggleRow(
             label = "Minimal Mode",
@@ -166,6 +189,55 @@ fun SensorySettingsScreen(viewModel: SensorySettingsViewModel = hiltViewModel())
             checked = prefs?.socialPressureShield ?: false,
             onCheckedChange = { viewModel.updateSocialPressureShield(it) }
         )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // ND-Specific Features
+        Text(
+            text = "ND Features",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // PDA Mode (F5)
+        ToggleRow(
+            label = "PDA Mode",
+            description = "Replace demanding language with choice-based phrases",
+            checked = prefs?.pdaMode ?: false,
+            onCheckedChange = { viewModel.updatePdaMode(it) }
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Spoon Budget (F7)
+        ToggleRow(
+            label = "Spoon Budget",
+            description = "Track daily energy budget before and after workouts",
+            checked = prefs?.spoonBudgetEnabled ?: false,
+            onCheckedChange = { viewModel.updateSpoonBudgetEnabled(it) }
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Hyperfocus Guard (F17)
+        ToggleRow(
+            label = "Hyperfocus Guard",
+            description = "Alert when workout exceeds safe duration",
+            checked = prefs?.hyperfocusGuardEnabled ?: false,
+            onCheckedChange = { viewModel.updateHyperfocusGuardEnabled(it) }
+        )
+
+        if (prefs?.hyperfocusGuardEnabled == true) {
+            Spacer(modifier = Modifier.height(8.dp))
+            val threshold = prefs?.hyperfocusThresholdMinutes ?: 90
+            SensorySlider(
+                label = "Hyperfocus Threshold",
+                values = (60..180 step 15).map { "${it} min" },
+                selectedIndex = ((threshold - 60) / 15).coerceIn(0, 8),
+                onValueChange = { viewModel.updateHyperfocusThreshold(60 + it * 15) }
+            )
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
     }

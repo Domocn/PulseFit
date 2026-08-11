@@ -32,6 +32,11 @@ import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Stars
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.SupervisorAccount
+import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -81,6 +86,11 @@ fun SettingsScreen(
     onNavigateToTemplates: (() -> Unit)? = null,
     onNavigateToRewardShop: (() -> Unit)? = null,
     onNavigateToProgress: (() -> Unit)? = null,
+    onNavigateToGymProfiles: (() -> Unit)? = null,
+    onNavigateToRituals: (() -> Unit)? = null,
+    onNavigateToCalendarBlock: (() -> Unit)? = null,
+    onNavigateToCaregiverSetup: (() -> Unit)? = null,
+    onNavigateToGearGuide: (() -> Unit)? = null,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val profile by viewModel.profile.collectAsState()
@@ -152,6 +162,26 @@ fun SettingsScreen(
             }
             onNavigateToRewardShop?.let {
                 SettingsNavCard(icon = Icons.Default.Stars, title = "Reward Shop", subtitle = "Spend your XP on rewards", onClick = it)
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            onNavigateToGymProfiles?.let {
+                SettingsNavCard(icon = Icons.Default.Place, title = "Sensory Gym Map", subtitle = "Rate gym sensory environments", onClick = it)
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            onNavigateToRituals?.let {
+                SettingsNavCard(icon = Icons.Default.Checklist, title = "Transition Rituals", subtitle = "Pre/post workout checklists", onClick = it)
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            onNavigateToCalendarBlock?.let {
+                SettingsNavCard(icon = Icons.Default.CalendarMonth, title = "Calendar Blocking", subtitle = "Block time for workouts", onClick = it)
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            onNavigateToCaregiverSetup?.let {
+                SettingsNavCard(icon = Icons.Default.SupervisorAccount, title = "Caregiver Link", subtitle = "Share readiness with a caregiver", onClick = it)
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            onNavigateToGearGuide?.let {
+                SettingsNavCard(icon = Icons.Default.Headphones, title = "Sensory Gear Guide", subtitle = "ND-friendly workout gear", onClick = it)
                 Spacer(modifier = Modifier.height(8.dp))
             }
 

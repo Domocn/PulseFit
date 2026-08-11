@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.pulsefit.app.ui.history.components.CalendarHeatmap
 import com.pulsefit.app.ui.history.components.CalendarView
 import com.pulsefit.app.ui.history.components.TrendChart
 import com.pulsefit.app.ui.history.components.WorkoutCard
@@ -30,6 +31,7 @@ fun HistoryScreen(
     val currentYearMonth by viewModel.currentYearMonth.collectAsState()
     val dayStatuses by viewModel.dayStatuses.collectAsState()
     val weeklyTrend by viewModel.weeklyTrend.collectAsState()
+    val dailyActivity by viewModel.dailyActivity.collectAsState()
 
     LazyColumn(
         modifier = Modifier
@@ -52,6 +54,18 @@ fun HistoryScreen(
                 dayStatuses = dayStatuses,
                 onPreviousMonth = viewModel::previousMonth,
                 onNextMonth = viewModel::nextMonth,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        // Yearly activity heatmap
+        item {
+            CalendarHeatmap(
+                dailyActivity = dailyActivity,
+                onDayClick = { date ->
+                    // Find workouts on that date and navigate
+                },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(16.dp))

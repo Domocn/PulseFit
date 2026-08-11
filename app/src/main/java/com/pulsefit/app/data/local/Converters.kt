@@ -3,6 +3,7 @@ package com.pulsefit.app.data.local
 import androidx.room.TypeConverter
 import com.pulsefit.app.data.model.AnimationLevel
 import com.pulsefit.app.data.model.AppTheme
+import com.pulsefit.app.data.model.GamificationLevel
 import com.pulsefit.app.data.model.CelebrationStyle
 import com.pulsefit.app.data.model.ColourIntensity
 import com.pulsefit.app.data.model.HapticLevel
@@ -11,6 +12,10 @@ import com.pulsefit.app.data.model.NdProfile
 import com.pulsefit.app.data.model.QuestType
 import com.pulsefit.app.data.model.SoundLevel
 import com.pulsefit.app.data.model.VoiceCoachStyle
+import com.pulsefit.app.data.model.RitualType
+import com.pulsefit.app.data.model.BodyRegion
+import com.pulsefit.app.data.model.ExerciseCategory
+import com.pulsefit.app.data.model.MuscleGroup
 import com.pulsefit.app.data.model.WorkoutType
 
 class Converters {
@@ -79,4 +84,34 @@ class Converters {
 
     @TypeConverter
     fun toAppTheme(value: String): AppTheme = AppTheme.valueOf(value)
+
+    @TypeConverter
+    fun fromGamificationLevel(value: GamificationLevel): String = value.name
+
+    @TypeConverter
+    fun toGamificationLevel(value: String): GamificationLevel = GamificationLevel.valueOf(value)
+
+    @TypeConverter
+    fun fromRitualType(value: RitualType): String = value.name
+
+    @TypeConverter
+    fun toRitualType(value: String): RitualType = RitualType.valueOf(value)
+
+    @TypeConverter
+    fun fromMuscleGroup(value: MuscleGroup): String = value.name
+
+    @TypeConverter
+    fun toMuscleGroup(value: String): MuscleGroup = MuscleGroup.valueOf(value)
+
+    @TypeConverter
+    fun fromBodyRegion(value: BodyRegion): String = value.name
+
+    @TypeConverter
+    fun toBodyRegion(value: String): BodyRegion = BodyRegion.valueOf(value)
+
+    @TypeConverter
+    fun fromExerciseCategory(value: ExerciseCategory): String = value.name
+
+    @TypeConverter
+    fun toExerciseCategory(value: String): ExerciseCategory = ExerciseCategory.valueOf(value)
 }

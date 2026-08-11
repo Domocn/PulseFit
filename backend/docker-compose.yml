@@ -1,0 +1,50 @@
+# Deployment for a single Hetzner box. Caddy terminates TLS and issues
+# certificates automatically; the API is never exposed directly.
+#
+# Usage:  docker compose up -d --build
+# Secrets come from a .env file sitting next to this one (never committed).
+
+services:
+  api:
+    build: .
+    restart: unless-stopped
+    environment:
+      PORT: 8001
+      MONGO_URL: ${MONGO_URL:?MONGO_URL is required}
+      DB_NAME: ${DB_NAME:-pulsefit}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?set this to your app origin, not *}
+      # server.py:51 calls firebase_admin.initialize_app() with no arguments,
+      # so credentials must arrive via one of these. If neither is set the app
+      # still boots — with authentication silently DISABLED. See runbook step 6.
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/firebase.json
+    volumes:
+      - ./firebase-service-account.json:/run/secrets/firebase.json:ro
+    expose:
+      - "8001"
+    # Fail fast if the footprint regresses: the container is killed rather than
+    # silently ballooning. Raise once you know the real post-slim number.
+    mem_limit: 1g
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -16,6 +16,9 @@ import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Handshake
 import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Diversity3
+import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -41,6 +44,9 @@ fun SocialHubScreen(
     onNavigateToFeed: () -> Unit,
     onNavigateToAccountability: () -> Unit = {},
     onNavigateToGroups: () -> Unit = {},
+    onNavigateToBodyDoubleSessions: () -> Unit = {},
+    onNavigateToBuddyMatch: () -> Unit = {},
+    onNavigateToGroupSessions: () -> Unit = {},
     viewModel: SocialHubViewModel = hiltViewModel()
 ) {
     val isShielded by viewModel.isShielded.collectAsState()
@@ -136,6 +142,33 @@ fun SocialHubScreen(
             title = "Groups",
             subtitle = "Family & team workout events",
             onClick = onNavigateToGroups
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        SocialNavCard(
+            icon = Icons.Default.Schedule,
+            title = "Body Double Sessions",
+            subtitle = "Scheduled parallel workouts",
+            onClick = onNavigateToBodyDoubleSessions
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        SocialNavCard(
+            icon = Icons.Default.Diversity3,
+            title = "Buddy Match",
+            subtitle = "Find an ND-friendly workout buddy",
+            onClick = onNavigateToBuddyMatch
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        SocialNavCard(
+            icon = Icons.Default.FitnessCenter,
+            title = "Group Workouts",
+            subtitle = "Work out together — live or async",
+            onClick = onNavigateToGroupSessions
         )
     }
 }

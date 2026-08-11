@@ -19,5 +19,12 @@ data class Workout(
     val isJustFiveMin: Boolean = false,
     val estimatedCalories: Int? = null,
     val notes: String? = null,
-    val templateId: String? = null
+    val templateId: String? = null,
+    val hrrScore: Int? = null,
+    val isRecoveryMode: Boolean = false,
+    val workoutMode: String = "CARDIO",
+    val totalVolumeKg: Float? = null,
+    val totalSets: Int? = null,
+    val totalReps: Int? = null,
+    val planId: String? = null
 )

@@ -2,6 +2,7 @@ package com.pulsefit.app.ui.workout
 
 import android.content.Intent
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,10 +13,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -31,6 +36,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -39,20 +46,27 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pulsefit.app.data.model.AnimationLevel
 import com.pulsefit.app.data.model.HeartRateZone
+import com.pulsefit.app.domain.model.ExerciseLog
 import com.pulsefit.app.domain.model.HeartRateReading
+import com.pulsefit.app.domain.model.PersonalRecord
 import com.pulsefit.app.ui.components.CelebrationOverlay
 import com.pulsefit.app.ui.components.StatCard
 import com.pulsefit.app.ui.components.ZoneTimeBar
 import com.pulsefit.app.ui.theme.ZoneActive
+import com.pulsefit.app.util.PdfReportGenerator
 import com.pulsefit.app.ui.theme.ZonePeak
 import com.pulsefit.app.ui.theme.ZonePush
 import com.pulsefit.app.ui.theme.ZoneRest
 import com.pulsefit.app.ui.theme.ZoneWarmUp
 import com.pulsefit.app.util.TimeFormatter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun SummaryScreen(
@@ -70,8 +84,11 @@ fun SummaryScreen(
     val celebrationConfig by viewModel.celebrationConfig.collectAsState()
     val coachTip by viewModel.coachTip.collectAsState()
     val animationLevel by viewModel.animationLevel.collectAsState()
+    val exerciseLogs by viewModel.exerciseLogs.collectAsState()
+    val personalRecords by viewModel.personalRecords.collectAsState()
 
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(workoutId) {
         viewModel.load(workoutId)
@@ -131,6 +148,7 @@ fun SummaryScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
             ) {
+                // Text share
                 IconButton(onClick = {
                     val shareText = buildString {
                         append("PulseFit Workout\n")
@@ -151,8 +169,68 @@ fun SummaryScreen(
                 }) {
                     Icon(
                         Icons.Default.Share,
-                        contentDescription = "Share workout",
+                        contentDescription = "Share workout text",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                // Image share card
+                IconButton(onClick = {
+                    scope.launch {
+                        val bitmap = withContext(Dispatchers.IO) {
+                            WorkoutCardRenderer.renderToBitmap(
+                                workout = w,
+                                exerciseLogs = exerciseLogs,
+                                personalRecords = personalRecords,
+                                context = context
+                            )
+                        }
+                        val intent = WorkoutCardRenderer.createShareIntent(context, bitmap)
+                        context.startActivity(Intent.createChooser(intent, "Share Workout Card"))
+                    }
+                }) {
+                    Icon(
+                        Icons.Default.Share,
+                        contentDescription = "Share workout card",
                         tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            // PDF export button
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                Button(
+                    onClick = {
+                        scope.launch {
+                            val file = withContext(Dispatchers.IO) {
+                                val generator = PdfReportGenerator(context)
+                                val reportData = PdfReportGenerator.ReportData(
+                                    workout = w,
+                                    exerciseLogs = exerciseLogs,
+                                    personalRecords = personalRecords
+                                )
+                                generator.generate(reportData)
+                            }
+                            val uri = PdfReportGenerator(context).getShareUri(file)
+                            val intent = Intent(Intent.ACTION_SEND).apply {
+                                type = "application/pdf"
+                                putExtra(Intent.EXTRA_STREAM, uri)
+                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            }
+                            context.startActivity(Intent.createChooser(intent, "Export PDF Report"))
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    modifier = Modifier.height(36.dp)
+                ) {
+                    Text(
+                        "Export PDF",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -260,6 +338,17 @@ fun SummaryScreen(
                         }
                     }
                 }
+            }
+
+            // Strength workout section
+            if (exerciseLogs.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(24.dp))
+                StrengthSummarySection(
+                    exerciseLogs = exerciseLogs,
+                    personalRecords = personalRecords,
+                    totalVolumeKg = w.totalVolumeKg,
+                    totalSets = w.totalSets
+                )
             }
 
             // Coach tip
@@ -391,5 +480,169 @@ private fun HeartRateLineChart(
         }
 
         drawPath(path, Color.White, style = Stroke(width = 2.dp.toPx()))
+    }
+}
+
+@Composable
+private fun StrengthSummarySection(
+    exerciseLogs: List<ExerciseLog>,
+    personalRecords: List<PersonalRecord>,
+    totalVolumeKg: Float?,
+    totalSets: Int?
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.FitnessCenter,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    "Strength Breakdown",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Volume and sets summary
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                totalVolumeKg?.let { vol ->
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "${vol.toInt()}",
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "kg total",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                totalSets?.let { sets ->
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "$sets",
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "sets",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "${exerciseLogs.size}",
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "exercises",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Per-exercise breakdown
+            exerciseLogs.forEach { log ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = log.exerciseName,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "${log.setsCompleted}/${log.setsPlanned} sets" +
+                                    log.bestSetReps?.let { " • up to ${it} reps" }.orEmpty(),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Column(horizontalAlignment = Alignment.End) {
+                        if (log.maxWeightKg != null && log.maxWeightKg > 0) {
+                            Text(
+                                text = "${log.maxWeightKg.toInt()}kg",
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        Text(
+                            text = "${log.totalVolumeKg.toInt()}kg vol",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            // Personal Records
+            if (personalRecords.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.EmojiEvents,
+                        contentDescription = null,
+                        tint = Color(0xFFFFD700),
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        "Personal Records",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color(0xFFFFD700)
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                personalRecords.forEach { pr ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                Color(0xFFFFD700).copy(alpha = 0.08f),
+                                RoundedCornerShape(8.dp)
+                            )
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = pr.exerciseName,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "1RM: ${pr.estimatedOneRmKg.toInt()}kg",
+                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                            color = Color(0xFFFFD700)
+                        )
+                    }
+                }
+            }
+        }
     }
 }

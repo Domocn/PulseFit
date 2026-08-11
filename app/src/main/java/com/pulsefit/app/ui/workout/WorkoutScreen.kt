@@ -62,13 +62,20 @@ import com.pulsefit.app.ui.theme.ZonePeak
 import com.pulsefit.app.ui.theme.ZonePush
 import com.pulsefit.app.ui.theme.ZoneRest
 import com.pulsefit.app.ui.theme.ZoneWarmUp
+import com.pulsefit.app.nd.PdaLanguage
 import com.pulsefit.app.ui.workout.components.BurnPointsDisplay
 import com.pulsefit.app.ui.workout.components.ExerciseGuideOverlay
 import com.pulsefit.app.ui.workout.components.HeartRateDisplay
 import com.pulsefit.app.ui.workout.components.MiniHeartRateGraph
 import com.pulsefit.app.ui.workout.components.TimeBlindnessCircle
 import com.pulsefit.app.ui.workout.components.ZoneBar
+import com.pulsefit.app.util.HyperfocusGuard
 import com.pulsefit.app.util.TimeFormatter
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import kotlinx.coroutines.delay
 
 @Composable
@@ -97,6 +104,10 @@ fun WorkoutScreen(
     val guidedState by viewModel.guidedState.collectAsState()
     val isGuidedMode by viewModel.isGuidedMode.collectAsState()
     val animationLevel by viewModel.animationLevel.collectAsState()
+    val hyperfocusAlert by viewModel.hyperfocusAlert.collectAsState()
+    val isRecoveryMode by viewModel.isRecoveryMode.collectAsState()
+    val pdaMode by viewModel.pdaMode.collectAsState()
+    val showMusicSheet by viewModel.showMusicSheet.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -271,6 +282,56 @@ fun WorkoutScreen(
                 }
             }
 
+            // Hyperfocus guard banner (F17) - non-dismissible warning
+            if (hyperfocusAlert != null) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (hyperfocusAlert?.severity == HyperfocusGuard.Severity.FIRM)
+                            MaterialTheme.colorScheme.errorContainer
+                        else MaterialTheme.colorScheme.tertiaryContainer
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            text = hyperfocusAlert?.message ?: "",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (hyperfocusAlert?.severity == HyperfocusGuard.Severity.FIRM)
+                                MaterialTheme.colorScheme.onErrorContainer
+                            else MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Your body needs a break. Consider finishing up.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (hyperfocusAlert?.severity == HyperfocusGuard.Severity.FIRM)
+                                MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.7f)
+                            else MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                        )
+                    }
+                }
+            }
+
+            // Recovery mode banner (F6)
+            if (isRecoveryMode) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
+                ) {
+                    Text(
+                        text = "Recovery mode - gentle movement, no pressure",
+                        modifier = Modifier.padding(12.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(8.dp))
 
             ZoneBar(
@@ -316,25 +377,28 @@ fun WorkoutScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                BurnPointsDisplay(points = burnPoints)
-                if (estimatedCalories > 0) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "$estimatedCalories",
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "kcal",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+            // Hide gamification in recovery mode (F6)
+            if (!isRecoveryMode) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    BurnPointsDisplay(points = burnPoints)
+                    if (estimatedCalories > 0) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = "$estimatedCalories",
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "kcal",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             }
@@ -382,8 +446,34 @@ fun WorkoutScreen(
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
             ) {
-                Text("End Workout", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = PdaLanguage.transform("End Workout", pdaMode),
+                    style = MaterialTheme.typography.titleMedium
+                )
             }
+        }
+
+        // Music suggestion FAB (F8)
+        FloatingActionButton(
+            onClick = viewModel::toggleMusicSheet,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = 80.dp),
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        ) {
+            Icon(
+                Icons.Default.MusicNote,
+                contentDescription = "Music suggestions",
+                tint = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        }
+
+        // Music suggestion bottom sheet (F8)
+        if (showMusicSheet) {
+            MusicSuggestionSheet(
+                currentZone = zone,
+                onDismiss = viewModel::toggleMusicSheet
+            )
         }
 
         // Reward/drop pop animation overlay

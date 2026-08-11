@@ -13,6 +13,8 @@ object NotificationHelper {
     const val CHANNEL_STREAK = "pulsefit_streak"
     const val CHANNEL_WEEKLY = "pulsefit_weekly"
     const val CHANNEL_ACCOUNTABILITY = "pulsefit_accountability"
+    const val CHANNEL_QUICK_LAUNCH = "pulsefit_quick_launch"
+    const val CHANNEL_MICRO_WORKOUT = "pulsefit_micro_workout"
 
     fun createChannels(context: Context) {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -33,7 +35,15 @@ object NotificationHelper {
             CHANNEL_ACCOUNTABILITY, "Accountability Alarm", NotificationManager.IMPORTANCE_HIGH
         ).apply { description = "Escalating workout reminders" }
 
-        manager.createNotificationChannels(listOf(reminderChannel, streakChannel, weeklyChannel, accountabilityChannel))
+        val quickLaunchChannel = NotificationChannel(
+            CHANNEL_QUICK_LAUNCH, "Quick Launch", NotificationManager.IMPORTANCE_DEFAULT
+        ).apply { description = "Pre-workout quick launch reminders" }
+
+        val microWorkoutChannel = NotificationChannel(
+            CHANNEL_MICRO_WORKOUT, "Micro Workouts", NotificationManager.IMPORTANCE_DEFAULT
+        ).apply { description = "Micro workout movement nudges" }
+
+        manager.createNotificationChannels(listOf(reminderChannel, streakChannel, weeklyChannel, accountabilityChannel, quickLaunchChannel, microWorkoutChannel))
     }
 
     fun buildReminderNotification(context: Context): NotificationCompat.Builder {
@@ -66,6 +76,24 @@ object NotificationHelper {
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(priority)
+            .setAutoCancel(true)
+    }
+
+    fun buildQuickLaunchNotification(context: Context): NotificationCompat.Builder {
+        return NotificationCompat.Builder(context, CHANNEL_QUICK_LAUNCH)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentTitle("Workout starting soon")
+            .setContentText("Your workout is in 5 minutes. Tap to jump right in.")
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+    }
+
+    fun buildMicroWorkoutNotification(context: Context): NotificationCompat.Builder {
+        return NotificationCompat.Builder(context, CHANNEL_MICRO_WORKOUT)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentTitle("Movement snack time")
+            .setContentText("2 minutes of movement. No changing clothes needed.")
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
     }
 

@@ -7,10 +7,14 @@ import com.pulsefit.app.adhd.CelebrationEngine
 import com.pulsefit.app.adhd.CelebrationType
 import com.pulsefit.app.data.model.HeartRateZone
 import com.pulsefit.app.data.model.NdProfile
+import com.pulsefit.app.domain.model.ExerciseLog
 import com.pulsefit.app.domain.model.HeartRateReading
+import com.pulsefit.app.domain.model.PersonalRecord
 import com.pulsefit.app.domain.model.Workout
 import com.pulsefit.app.data.remote.CloudProfileRepository
 import com.pulsefit.app.data.remote.SharedWorkout
+import com.pulsefit.app.domain.repository.ExerciseLogRepository
+import com.pulsefit.app.domain.repository.PersonalRecordRepository
 import com.pulsefit.app.domain.repository.WorkoutRepository
 import com.pulsefit.app.data.model.AnimationLevel
 import com.pulsefit.app.data.repository.SensoryPreferencesRepository
@@ -27,6 +31,8 @@ import javax.inject.Inject
 @HiltViewModel
 class SummaryViewModel @Inject constructor(
     private val workoutRepository: WorkoutRepository,
+    private val exerciseLogRepository: ExerciseLogRepository,
+    private val personalRecordRepository: PersonalRecordRepository,
     private val getUserProfile: GetUserProfileUseCase,
     private val celebrationEngine: CelebrationEngine,
     private val generateCoachTip: GenerateCoachTipUseCase,
@@ -67,6 +73,12 @@ class SummaryViewModel @Inject constructor(
 
     private val _coachTip = MutableStateFlow<String?>(null)
     val coachTip: StateFlow<String?> = _coachTip
+
+    private val _exerciseLogs = MutableStateFlow<List<ExerciseLog>>(emptyList())
+    val exerciseLogs: StateFlow<List<ExerciseLog>> = _exerciseLogs
+
+    private val _personalRecords = MutableStateFlow<List<PersonalRecord>>(emptyList())
+    val personalRecords: StateFlow<List<PersonalRecord>> = _personalRecords
 
     private var currentWorkoutId: Long = 0
 
@@ -109,6 +121,17 @@ class SummaryViewModel @Inject constructor(
             w?.let {
                 _coachTip.value = generateCoachTip(it, profile?.dailyTarget ?: 12)
             }
+
+            // Load strength workout data
+            val logs = exerciseLogRepository.getByWorkoutId(workoutId)
+            _exerciseLogs.value = logs
+
+            // Load PRs for exercises in this workout
+            val prs = mutableListOf<PersonalRecord>()
+            for (log in logs) {
+                personalRecordRepository.getCurrentBest(log.exerciseId)?.let { prs.add(it) }
+            }
+            _personalRecords.value = prs.distinctBy { it.exerciseId }
         }
     }
 

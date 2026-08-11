@@ -37,5 +37,7 @@ data class UserProfileEntity(
     val profileVisibility: String = "friends",
     val treadMode: TreadMode = TreadMode.RUNNER,
     val equipmentProfileJson: String? = null,
-    val rewardCoins: Int = 0
+    val rewardCoins: Int = 0,
+    val calibratedMaxHr: Int? = null,
+    val gamificationLevel: String = "FULL"
 )

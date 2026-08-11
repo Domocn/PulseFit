@@ -21,7 +21,7 @@ object DatabaseModule {
             PulseFitDatabase::class.java,
             "pulsefit.db"
         )
-            .fallbackToDestructiveMigration(dropAllTables = true)
+            .addMigrations(PulseFitDatabase.MIGRATION_13_14, PulseFitDatabase.MIGRATION_14_15)
             .build()
     }
 
@@ -51,4 +51,40 @@ object DatabaseModule {
 
     @Provides
     fun provideRewardAdTrackingDao(db: PulseFitDatabase) = db.rewardAdTrackingDao()
+
+    @Provides
+    fun provideReadinessDataDao(db: PulseFitDatabase) = db.readinessDataDao()
+
+    @Provides
+    fun provideGymProfileDao(db: PulseFitDatabase) = db.gymProfileDao()
+
+    @Provides
+    fun provideRitualStepDao(db: PulseFitDatabase) = db.ritualStepDao()
+
+    @Provides
+    fun provideScheduledBodyDoubleDao(db: PulseFitDatabase) = db.scheduledBodyDoubleDao()
+
+    @Provides
+    fun provideSpoonBudgetDao(db: PulseFitDatabase) = db.spoonBudgetDao()
+
+    @Provides
+    fun provideCaregiverLinkDao(db: PulseFitDatabase) = db.caregiverLinkDao()
+
+    @Provides
+    fun provideStrengthWorkoutDao(db: PulseFitDatabase) = db.strengthWorkoutDao()
+
+    @Provides
+    fun provideExerciseLogDao(db: PulseFitDatabase) = db.exerciseLogDao()
+
+    @Provides
+    fun provideBodyMeasurementDao(db: PulseFitDatabase) = db.bodyMeasurementDao()
+
+    @Provides
+    fun provideMuscleFatigueDao(db: PulseFitDatabase) = db.muscleFatigueDao()
+
+    @Provides
+    fun provideOneRmDao(db: PulseFitDatabase) = db.oneRmDao()
+
+    @Provides
+    fun provideGroupSessionDao(db: PulseFitDatabase) = db.groupSessionDao()
 }

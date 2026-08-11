@@ -6,6 +6,7 @@ import com.pulsefit.app.data.model.AnimationLevel
 import com.pulsefit.app.data.model.AppTheme
 import com.pulsefit.app.data.model.CelebrationStyle
 import com.pulsefit.app.data.model.ColourIntensity
+import com.pulsefit.app.data.model.GamificationLevel
 import com.pulsefit.app.data.model.HapticLevel
 import com.pulsefit.app.data.model.SoundLevel
 import com.pulsefit.app.data.model.VoiceCoachStyle
@@ -23,5 +24,10 @@ data class SensoryPreferencesEntity(
     val uiLocked: Boolean = false,
     val socialPressureShield: Boolean = false,
     val appTheme: AppTheme = AppTheme.MIDNIGHT,
-    val bodyDoubleEnabled: Boolean = false
+    val bodyDoubleEnabled: Boolean = false,
+    val gamificationLevel: GamificationLevel = GamificationLevel.FULL,
+    val pdaMode: Boolean = false,
+    val spoonBudgetEnabled: Boolean = false,
+    val hyperfocusGuardEnabled: Boolean = false,
+    val hyperfocusThresholdMinutes: Int = 90
 )

@@ -42,6 +42,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.pulsefit.app.data.model.GamificationLevel
 import com.pulsefit.app.data.model.NdProfile
 import com.pulsefit.app.ui.components.BurnPointsRing
 import com.pulsefit.app.ui.components.ConnectionStatusIndicator
@@ -55,6 +56,7 @@ fun HomeScreen(
     onNavigateToShop: (() -> Unit)? = null,
     onNavigateToChallenges: (() -> Unit)? = null,
     onNavigateToWeeklyPlan: (() -> Unit)? = null,
+    onNavigateToRecovery: (() -> Unit)? = null,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val profile by viewModel.userProfile.collectAsState()
@@ -69,6 +71,24 @@ fun HomeScreen(
     val avgBurnPoints by viewModel.avgBurnPoints.collectAsState()
     val weeklyTheme by viewModel.weeklyTheme.collectAsState()
     val daysSinceLastWorkout by viewModel.daysSinceLastWorkout.collectAsState()
+    val readiness by viewModel.readiness.collectAsState()
+    val adjustedTarget by viewModel.adjustedTarget.collectAsState()
+    val recommendations by viewModel.recommendations.collectAsState()
+    val showEnergyDialog by viewModel.showEnergyDialog.collectAsState()
+    val gamificationLevel by viewModel.gamificationLevel.collectAsState()
+    val spoonBudget by viewModel.spoonBudget.collectAsState()
+    val spoonBudgetEnabled by viewModel.spoonBudgetEnabled.collectAsState()
+    val pdaMode by viewModel.pdaMode.collectAsState()
+    val decisionResult by viewModel.decisionResult.collectAsState()
+    val busyPrediction by viewModel.busyPrediction.collectAsState()
+    val currentMicro by viewModel.currentMicro.collectAsState()
+
+    if (showEnergyDialog) {
+        EnergyCheckDialog(
+            onDismiss = viewModel::dismissEnergyCheck,
+            onEnergySelected = viewModel::onEnergySelected
+        )
+    }
 
     LaunchedEffect(workoutId) {
         workoutId?.let {
@@ -96,7 +116,7 @@ fun HomeScreen(
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
-                    text = "Ready to earn some burn points?",
+                    text = viewModel.pdaTransform("Ready to earn some burn points?"),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -106,8 +126,9 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Streak + Level row
-        if (currentStreak > 0 || (profile?.xpLevel ?: 1) > 1) {
+        // Streak + Level row (hidden in MINIMAL/OFF gamification)
+        if ((gamificationLevel == GamificationLevel.FULL || gamificationLevel == GamificationLevel.MODERATE) &&
+            (currentStreak > 0 || (profile?.xpLevel ?: 1) > 1)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
@@ -155,6 +176,37 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
+        // Spoon Budget (F7)
+        if (spoonBudgetEnabled && spoonBudget != null) {
+            SpoonBudgetCard(
+                dailySpoons = spoonBudget!!.dailySpoons,
+                usedSpoons = spoonBudget!!.usedSpoons
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        // Gym Busyness (F15)
+        busyPrediction?.let { prediction ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Gym: ${prediction.label}",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = prediction.suggestion,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
         // Rest day suggestion (Anti-Burnout System)
         if (shouldRest) {
             Card(
@@ -193,6 +245,78 @@ fun HomeScreen(
                         text = theme,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        // Readiness score card
+        readiness?.let { r ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = when {
+                        r.score >= 60 -> MaterialTheme.colorScheme.surface
+                        r.score >= 40 -> MaterialTheme.colorScheme.surfaceVariant
+                        else -> MaterialTheme.colorScheme.errorContainer
+                    }
+                )
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Readiness: ${r.score}",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = r.label,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    r.factors.forEach { factor ->
+                        Text(
+                            text = "${factor.name}: ${factor.status}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    if (r.score < 20) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Rest day recommended - your body needs recovery",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        // Adjusted target card (sleep-aware scaling)
+        adjustedTarget?.let { scaled ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Today's target: ${scaled.adjustedTarget} burn points",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = scaled.reason,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -252,6 +376,23 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // Recovery link (F6/F12) when readiness is low
+        if (shouldRest || (readiness != null && readiness!!.score < 30)) {
+            onNavigateToRecovery?.let {
+                OutlinedButton(
+                    onClick = it,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = viewModel.pdaTransform("Need something gentle?"),
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+        }
+
         // GO button
         Button(
             onClick = viewModel::onStartWorkout,
@@ -260,7 +401,7 @@ fun HomeScreen(
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
             Text(
-                text = "GO",
+                text = viewModel.pdaTransform("GO"),
                 fontSize = 32.sp,
                 style = MaterialTheme.typography.displaySmall
             )
@@ -291,6 +432,90 @@ fun HomeScreen(
             }
         }
 
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Energy check button
+        OutlinedButton(
+            onClick = viewModel::showEnergyCheck,
+            modifier = Modifier.height(40.dp),
+            shape = RoundedCornerShape(20.dp)
+        ) {
+            Text(
+                text = "How are you feeling?",
+                color = MaterialTheme.colorScheme.secondary,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
+        // Decide for Me (F2)
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedButton(
+            onClick = viewModel::decideForMe,
+            modifier = Modifier.height(40.dp),
+            shape = RoundedCornerShape(20.dp)
+        ) {
+            Text(
+                text = viewModel.pdaTransform("Decide for Me"),
+                color = MaterialTheme.colorScheme.tertiary,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
+        // Decision result
+        decisionResult?.let { decision ->
+            Spacer(modifier = Modifier.height(8.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        text = decision.template.name,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                    Text(
+                        text = "${decision.template.durationMinutes} min - ${decision.reason}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                }
+            }
+        }
+
+        // Workout recommendations (shown after energy selection)
+        if (recommendations.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = "Recommended for you",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            recommendations.forEach { rec ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            text = rec.template.name,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "${rec.template.durationMinutes} min - ${rec.reason}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.height(20.dp))
 
         // Weekly stats row
@@ -304,13 +529,25 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Micro Workout card (F14)
+        currentMicro?.let { micro ->
+            MicroWorkoutCard(
+                microWorkout = micro,
+                onComplete = viewModel::completeMicro,
+                onShuffle = viewModel::shuffleMicro
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
         // Weekly goal card
         WeeklyGoalCard(currentWorkouts = weeklyWorkouts)
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Daily quests card
-        DailyQuestsCard(quests = dailyQuests)
+        // Daily quests card (hidden in MINIMAL/OFF gamification)
+        if (gamificationLevel == GamificationLevel.FULL || gamificationLevel == GamificationLevel.MODERATE) {
+            DailyQuestsCard(quests = dailyQuests)
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 

@@ -57,4 +57,28 @@ sealed class Screen(val route: String) {
     // Weekly Plan
     data object WeeklyPlan : Screen("weekly_plan")
     data object EquipmentSetup : Screen("equipment_setup")
+
+    // ND Features (Phase 3)
+    data object GymProfiles : Screen("gym_profiles")
+    data object TransitionRitual : Screen("transition_ritual")
+    data object BodyDoubleSessions : Screen("body_double_sessions")
+    data object CalendarBlock : Screen("calendar_block")
+    data object RecoveryContent : Screen("recovery_content")
+    data object BuddyMatch : Screen("buddy_match")
+    data object CaregiverSetup : Screen("caregiver_setup")
+    data object CaregiverDashboard : Screen("caregiver_dashboard")
+    data object GearGuide : Screen("gear_guide")
+
+    // Strength / Gym Coach
+    data object StrengthWorkout : Screen("strength_workout/{workoutName}") {
+        fun createRoute(workoutName: String) = "strength_workout/$workoutName"
+    }
+    data object ExerciseDetail : Screen("exercise_detail/{exerciseId}") {
+        fun createRoute(exerciseId: String) = "exercise_detail/$exerciseId"
+    }
+    data object WorkoutBuilder : Screen("workout_builder")
+    data object BodyMeasurements : Screen("body_measurements")
+    data object MuscleFatigue : Screen("muscle_fatigue")
+    data object StrengthCalculator : Screen("strength_calculator")
+    data object GroupSessions : Screen("group_sessions")
 }

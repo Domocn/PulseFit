@@ -26,3 +26,7 @@ app/google-services.json
 
 # Logs
 *.log
+
+# Third-party reference material (competitive analysis only).
+# Never commit: proprietary/copyrighted app contents. Repo is public.
+/reference/apks/

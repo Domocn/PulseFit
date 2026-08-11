@@ -35,6 +35,9 @@ import com.pulsefit.app.domain.usecase.GetWorkoutStatsUseCase
 import com.pulsefit.app.domain.usecase.RecordHeartRateUseCase
 import com.pulsefit.app.data.model.TreadMode
 import com.pulsefit.app.util.CalorieCalculator
+import com.pulsefit.app.util.HrrCalculator
+import com.pulsefit.app.util.MaxHrCalibrator
+import com.pulsefit.app.util.HyperfocusGuard
 import com.pulsefit.app.util.ZoneCalculator
 import com.pulsefit.app.voice.CoachingTargetRegistry
 import com.pulsefit.app.voice.VoiceCoachEngine
@@ -75,7 +78,8 @@ class WorkoutViewModel @Inject constructor(
     private val exerciseRegistry: ExerciseRegistry,
     private val groupChallengeRepository: GroupChallengeRepository,
     private val coachingTargetRegistry: CoachingTargetRegistry,
-    private val userChallengeRepository: UserChallengeRepository
+    private val userChallengeRepository: UserChallengeRepository,
+    private val hyperfocusGuard: HyperfocusGuard
 ) : ViewModel() {
 
     private val heartRateSource: HeartRateSource
@@ -186,6 +190,8 @@ class WorkoutViewModel @Inject constructor(
     private var previousZone = HeartRateZone.REST
     private var previousBurnPoints = 0
     private var audioPaletteEnabled = false
+    private var peakHeartRate = 0
+    private val recoveryReadings = mutableListOf<Pair<Long, Int>>()
 
     // Voice coach engagement tracking
     private var dailyTarget = 12
@@ -194,6 +200,27 @@ class WorkoutViewModel @Inject constructor(
     private var previousBestBurnPoints = 0
     private var encouragementIntervalSeconds = 180  // ND-adaptive: ASD=300, ADHD=90, default=180
     private var treadMode = TreadMode.RUNNER
+    private var hyperfocusEnabled = false
+    private var hyperfocusThreshold = 90
+
+    // Hyperfocus Guard alert (F17)
+    private val _hyperfocusAlert = MutableStateFlow<HyperfocusGuard.HyperfocusAlert?>(null)
+    val hyperfocusAlert: StateFlow<HyperfocusGuard.HyperfocusAlert?> = _hyperfocusAlert
+
+    // Recovery mode (F6)
+    private val _isRecoveryMode = MutableStateFlow(false)
+    val isRecoveryMode: StateFlow<Boolean> = _isRecoveryMode
+
+    // PDA mode (F5)
+    private val _pdaMode = MutableStateFlow(false)
+    val pdaMode: StateFlow<Boolean> = _pdaMode
+
+    // Music suggestion (F8)
+    private val _showMusicSheet = MutableStateFlow(false)
+    val showMusicSheet: StateFlow<Boolean> = _showMusicSheet
+
+    fun toggleMusicSheet() { _showMusicSheet.value = !_showMusicSheet.value }
+    fun dismissHyperfocusAlert() { _hyperfocusAlert.value = null }
 
     fun start(workoutId: Long, templateId: String? = null) {
         this.workoutId = workoutId
@@ -203,6 +230,14 @@ class WorkoutViewModel @Inject constructor(
         variableDropEngine.reset()
         transitionWarningManager.reset()
         voiceCoachEngine.initialize()
+
+        // Check if recovery template (F6)
+        if (templateId != null) {
+            val tmpl = templateRegistry.getById(templateId)
+            if (tmpl != null && tmpl.category == com.pulsefit.app.data.model.TemplateCategory.RECOVERY) {
+                _isRecoveryMode.value = true
+            }
+        }
 
         // Initialize guided workout if template is GUIDED
         if (templateId != null) {
@@ -246,7 +281,9 @@ class WorkoutViewModel @Inject constructor(
             voiceCoachEngine.updateStyle()
 
             val profile = getUserProfile.once()
-            maxHr = profile?.maxHeartRate ?: 190
+            maxHr = if (profile != null) {
+                MaxHrCalibrator.getEffectiveMaxHr(profile.calibratedMaxHr, profile.age)
+            } else 190
             ndProfile = profile?.ndProfile ?: NdProfile.STANDARD
             _ndProfileState.value = ndProfile
             userAge = profile?.age ?: 25
@@ -290,6 +327,9 @@ class WorkoutViewModel @Inject constructor(
             val prefs = sensoryPreferencesRepository.getPreferencesOnce()
             _isMinimalMode.value = prefs.minimalMode
             _animationLevel.value = prefs.animationLevel
+            _pdaMode.value = prefs.pdaMode
+            hyperfocusEnabled = prefs.hyperfocusGuardEnabled
+            hyperfocusThreshold = prefs.hyperfocusThresholdMinutes
             bodyDoubleActive = prefs.bodyDoubleEnabled
             _bodyDoubleEnabled.value = prefs.bodyDoubleEnabled
             if (bodyDoubleActive) {
@@ -349,6 +389,7 @@ class WorkoutViewModel @Inject constructor(
                 val hr = heartRateSource.heartRate.value
                 if (hr != null && hr > 0) {
                     _currentHeartRate.value = hr
+                    if (hr > peakHeartRate) peakHeartRate = hr
                     val zone = ZoneCalculator.getZone(hr, maxHr)
                     _currentZone.value = zone
 
@@ -436,6 +477,19 @@ class WorkoutViewModel @Inject constructor(
                     }
                 }
 
+                // Hyperfocus Guard check (F17)
+                if (hyperfocusEnabled && _elapsedSeconds.value % 30 == 0) {
+                    val alert = hyperfocusGuard.check(
+                        elapsedSeconds = _elapsedSeconds.value,
+                        thresholdMinutes = hyperfocusThreshold,
+                        averageHeartRate = if (hrCount > 0) (hrSum / hrCount).toInt() else 0,
+                        maxHeartRate = maxHr
+                    )
+                    if (alert.shouldAlert) {
+                        _hyperfocusAlert.value = alert
+                    }
+                }
+
                 // Guided workout tick
                 guidedWorkoutManager?.onTick(_elapsedSeconds.value)
 
@@ -459,7 +513,6 @@ class WorkoutViewModel @Inject constructor(
 
     fun endWorkout() {
         timerJob?.cancel()
-        heartRateSource.disconnect()
         if (audioPaletteEnabled) {
             audioPalette.play(AudioPalette.SoundEvent.WORKOUT_END)
         }
@@ -467,8 +520,25 @@ class WorkoutViewModel @Inject constructor(
             viewModelScope.launch { try { bodyDoubleRepository.leaveSession() } catch (_: Exception) {} }
         }
         // Don't shutdown voice engine yet — we need it for completion clips
+        // Collect 60s of HR recovery data for HRR scoring
         viewModelScope.launch {
-            endWorkoutUseCase(workoutId, _burnPoints.value, _zoneTime.value)
+            val recoveryStartTime = System.currentTimeMillis()
+            recoveryReadings.clear()
+            for (i in 0 until 60) {
+                delay(1000)
+                val hr = heartRateSource.heartRate.value
+                if (hr != null && hr > 0) {
+                    recoveryReadings.add(System.currentTimeMillis() to hr)
+                }
+            }
+            heartRateSource.disconnect()
+
+            // Calculate HRR
+            val hrrResult = if (peakHeartRate > 0 && recoveryReadings.size >= 5) {
+                HrrCalculator.calculateHrr(peakHeartRate, recoveryReadings)
+            } else null
+
+            endWorkoutUseCase(workoutId, _burnPoints.value, _zoneTime.value, hrrResult?.hrrValue)
 
             val xp = awardXpUseCase(_burnPoints.value, streakMultiplier)
             _xpEarned.value = xp

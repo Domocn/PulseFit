@@ -2,8 +2,14 @@ package com.pulsefit.app.health
 
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
+import androidx.health.connect.client.records.RestingHeartRateRecord
+import androidx.health.connect.client.records.SleepSessionRecord
+import androidx.health.connect.client.request.ReadRecordsRequest
+import androidx.health.connect.client.time.TimeRangeFilter
 import com.pulsefit.app.domain.model.HeartRateReading
 import com.pulsefit.app.domain.model.Workout
+import com.pulsefit.app.util.SleepData
+import java.time.Instant
 import java.time.ZoneOffset
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -63,6 +69,74 @@ class HealthConnectRepository @Inject constructor(
             } catch (_: Exception) {
                 // Silently fail
             }
+        }
+    }
+
+    /**
+     * Read last night's sleep data from Health Connect.
+     * Looks for sleep sessions in the last 24 hours.
+     */
+    suspend fun readLastNightSleep(): SleepData? {
+        val client = healthConnectManager.getClient() ?: return null
+        return try {
+            val now = Instant.now()
+            val yesterday = now.minusSeconds(24 * 60 * 60)
+            val response = client.readRecords(
+                ReadRecordsRequest(
+                    recordType = SleepSessionRecord::class,
+                    timeRangeFilter = TimeRangeFilter.between(yesterday, now)
+                )
+            )
+            if (response.records.isEmpty()) return null
+
+            val session = response.records.last()
+            val durationMs = session.endTime.toEpochMilli() - session.startTime.toEpochMilli()
+            val totalHours = durationMs / (1000f * 60f * 60f)
+
+            // Derive quality from stages if available
+            val stages = session.stages
+            val quality = if (stages.isNotEmpty()) {
+                val deepMs = stages.filter {
+                    it.stage == SleepSessionRecord.STAGE_TYPE_DEEP
+                }.sumOf { it.endTime.toEpochMilli() - it.startTime.toEpochMilli() }
+                val remMs = stages.filter {
+                    it.stage == SleepSessionRecord.STAGE_TYPE_REM
+                }.sumOf { it.endTime.toEpochMilli() - it.startTime.toEpochMilli() }
+
+                val deepPct = if (durationMs > 0) deepMs.toFloat() / durationMs else 0f
+                val remPct = if (durationMs > 0) remMs.toFloat() / durationMs else 0f
+
+                when {
+                    deepPct >= 0.20f && remPct >= 0.20f -> "GOOD"
+                    deepPct >= 0.10f || remPct >= 0.10f -> "FAIR"
+                    else -> "POOR"
+                }
+            } else null
+
+            SleepData(totalHours = totalHours, quality = quality)
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    /**
+     * Read the most recent resting heart rate from Health Connect.
+     * Looks back up to 7 days.
+     */
+    suspend fun readRestingHeartRate(): Int? {
+        val client = healthConnectManager.getClient() ?: return null
+        return try {
+            val now = Instant.now()
+            val weekAgo = now.minusSeconds(7 * 24 * 60 * 60)
+            val response = client.readRecords(
+                ReadRecordsRequest(
+                    recordType = RestingHeartRateRecord::class,
+                    timeRangeFilter = TimeRangeFilter.between(weekAgo, now)
+                )
+            )
+            response.records.lastOrNull()?.beatsPerMinute?.toInt()
+        } catch (_: Exception) {
+            null
         }
     }
 }

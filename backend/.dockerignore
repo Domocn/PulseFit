@@ -1,0 +1,19 @@
+# Keep the build context — and therefore the image — small.
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+tests/
+backend_test.py
+requirements-dev.txt
+requirements.railway-freeze.txt
+
+.env
+.env.*
+!.env.example
+
+.git/
+.gitignore
+*.md
