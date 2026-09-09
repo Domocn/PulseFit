@@ -30,3 +30,6 @@ app/google-services.json
 # Third-party reference material (competitive analysis only).
 # Never commit: proprietary/copyrighted app contents. Repo is public.
 /reference/apks/
+
+app/build/
+*.apk
